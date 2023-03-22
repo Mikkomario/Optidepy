@@ -5,10 +5,11 @@ import utopia.flow.collection.immutable.caching.cache.Cache
 import utopia.flow.operator.EqualsExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.file.container.ObjectsFileContainer
+import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
-import vf.optidepy.controller.{Deploy, IndexCounter}
+import vf.optidepy.controller.{Deploy, IndexCounter, Merge}
 import vf.optidepy.model.{Binding, DeployedProject, Project}
 import vf.optidepy.util.Common._
 
@@ -32,14 +33,33 @@ object OptidepyApp extends App
 	}
 	private var lastDeployment: Option[DeployedProject] = None
 	
+	private def findProject(projectName: String) = {
+		// Finds the project
+		val result = projectName.notEmpty match {
+			case Some(projectName) => projects.current.find { _.name ~== projectName }
+			case None => lastDeployment
+		}
+		// Displays a warning if no project was found
+		if (result.isEmpty) {
+			if (projects.current.isEmpty)
+				println("Please add a new project first using the 'add' command")
+			else {
+				if (projectName.isEmpty)
+					println("The name of the targeted project must be specified as a command argument")
+				else
+					println(s"$projectName didn't match any existing project")
+				println("Registered projects:")
+				projects.current.foreach { p => println(s"- ${p.name}") }
+			}
+		}
+		result
+	}
 	private def deploy(project: DeployedProject) = {
 		println(s"Deploying ${ project.name }...")
 		Deploy(project)(counters(project), log) match {
 			case Success(project) =>
 				lastDeployment = Some(project)
 				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
-				if (StdIn.ask(s"${ project.name } deployed. Do you want to open the output directory?"))
-					project.output.openInDesktop().logFailure
 			case Failure(error) => log(error, s"Failed to deploy ${ project.name }")
 		}
 	}
@@ -81,26 +101,30 @@ object OptidepyApp extends App
 			else
 				println("Parameters 'project' and 'input' are required")
 		},
-		Command("deploy", "dep", "deploys a project")(
+		Command("deploy", "dep", "Deploys a project")(
 			ArgumentSchema("project", "name", help = "Name of the project to deploy (default = last project)")) { args =>
-			val projectName = args("project").getString
-			val project = projectName.notEmpty match {
-				case Some(projectName) => projects.current.find { _.name ~== projectName }
-				case None => lastDeployment
-			}
-			project match {
-				case Some(project) => deploy(project)
-				case None =>
-					if (projects.current.isEmpty)
-						println("Please add a new project first using the 'add' command")
-					else {
-						if (projectName.isEmpty)
-							println("The name of the targeted project must be specified as a command argument")
-						else
-							println(s"$projectName didn't match any existing project")
-						println("Registered projects:")
-						projects.current.foreach { p => println(s"- ${ p.name }") }
-					}
+			findProject(args("project").getString).foreach(deploy)
+		},
+		Command("merge", "m", "Merges recent builds into a single build")(
+			ArgumentSchema("project", "name", help = "Targeted project. Default = Last deployed project."),
+			ArgumentSchema("since", "t",
+				help = "Earliest targeted deployment date or time. Default = merge all previous builds.")) { args =>
+			findProject(args("project").getString).foreach { project =>
+				val since = args("since").instant
+				since match {
+					case Some(since) => println(s"Merges builds since ${ since.toLocalDateTime }...")
+					case None => println("Merges all recent builds...")
+				}
+				Merge(project, since) match {
+					case Success(result) =>
+						result match {
+							case Some(directory) =>
+								if (StdIn.ask("Merging completed. Do you want to open the created directory?"))
+									directory.openInDesktop().logFailure
+							case None => println("There were no builds to merge")
+						}
+					case Failure(error) => log(error, "Merging failed")
+				}
 			}
 		}
 	)

@@ -4,6 +4,7 @@ import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.Model
 import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.time.TimeExtensions._
 import utopia.flow.parse.file.FileExtensions._
 
 import scala.util.Try
@@ -54,4 +55,14 @@ case class Project(name: String, mainBinding: Binding, relativeBindings: Vector[
 	
 	override def toModel: Model =
 		Model.from("name" -> name, "root" -> mainBinding, "bindings" -> relativeBindings)
+	
+	
+	// OTHER    ---------------------
+	
+	/**
+	 * @param deployment Targeted deployment
+	 * @return A directory where that deployment should be stored
+	 */
+	def directoryForDeployment(deployment: Deployment) =
+		output/s"build-${ deployment.index }-${deployment.timestamp.toLocalDate.toString}"
 }

@@ -3,7 +3,6 @@ package vf.optidepy.controller
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
-import utopia.flow.time.Today
 import utopia.flow.util.logging.Logger
 import vf.optidepy.model.{DeployedProject, Deployment, Project}
 
@@ -40,42 +39,47 @@ object Deploy
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
 		// TODO: Also check for removed files
-		project.sourceCorrectedBindings.tryFlatMap { binding =>
-			// Checks which files have been altered
-			binding.source.iterateChildren {
-				_.filter { p =>
-					lastDeployment.forall { d =>
-						p.lastModified match {
-							case Success(t) =>
-								t > d.timestamp
-							case Failure(error) =>
-								log(error, s"Couldn't read the last modified -time of $p")
-								true
-						}
-					}
+		project.sourceCorrectedBindings
+			.tryFlatMap { binding =>
+				val alteredFiles = lastDeployment match {
+					// Case: Time threshold specified => Checks which files have been altered
+					case Some(d) =>
+						binding.source.allChildrenIterator.filter {
+							case Success(path) =>
+								if (path.isDirectory)
+									false
+								else
+									path.lastModified match {
+										case Success(t) => t > d.timestamp
+										case Failure(error) =>
+											log(error, s"Couldn't read the last modified -time of $path")
+											true
+									}
+							case Failure(_) => true
+						}.toTry
+					// Case: No time threshold specified => Targets all files
+					case None => binding.source.children
 				}
-				.map { binding/_.relativeTo(binding.source).either }.toVector
+				alteredFiles
+					.map { _.map { binding / _.relativeTo(binding.source).either }.toVector }
 			}
-		}.flatMap { altered =>
-			// Case: No file was altered => No need for a deployment
-			if (altered.isEmpty)
-				Success(None)
-			// Case: Files were altered
-			else {
-				val deployment = Deployment()
-				// Copies the altered files to a specific build directory
-				// Updates the full copy -directory, also
-				val outputDirectories = Vector(
-					project.output/s"build-${ deployment.index }-${Today.toLocalDate.toString}",
-					project.fullOutputDirectory
-				)
-				altered.tryMap { binding =>
-					outputDirectories.tryMap { output =>
-						val absolute = binding.underTarget(output)
-						absolute.target.createParentDirectories().flatMap { p => absolute.source.copyAs(p) }
-					}
-				}.map { _ => Some(deployment) }
+			.flatMap { altered =>
+				// Case: No file was altered => No need for a deployment
+				if (altered.isEmpty)
+					Success(None)
+				// Case: Files were altered
+				else {
+					val deployment = Deployment()
+					// Copies the altered files to a specific build directory
+					// Updates the full copy -directory, also
+					val outputDirectories = Vector(project.directoryForDeployment(deployment), project.fullOutputDirectory)
+					altered.tryMap { binding =>
+						outputDirectories.tryMap { output =>
+							val absolute = binding.underTarget(output)
+							absolute.target.createParentDirectories().flatMap { p => absolute.source.copyAs(p) }
+						}
+					}.map { _ => Some(deployment) }
+				}
 			}
-		}
 	}
 }
