@@ -1,11 +1,13 @@
 package vf.optidepy.controller
 
 import utopia.flow.collection.CollectionExtensions._
+import utopia.flow.collection.immutable.Pair
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.logging.Logger
 import vf.optidepy.model.{DeployedProject, Deployment, Project}
 
+import java.nio.file.Path
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -41,22 +43,36 @@ object Deploy
 		// TODO: Also check for removed files
 		project.sourceCorrectedBindings
 			.tryFlatMap { binding =>
+				lazy val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
 				val alteredFiles = lastDeployment match {
 					// Case: Time threshold specified => Checks which files have been altered
 					case Some(d) =>
-						binding.source.allChildrenIterator.filter {
-							case Success(path) =>
-								if (path.isDirectory)
-									false
-								else
-									path.lastModified match {
-										case Success(t) => t > d.timestamp
-										case Failure(error) =>
-											log(error, s"Couldn't read the last modified -time of $path")
-											true
-									}
-							case Failure(_) => true
-						}.toTry
+						binding.source.allChildrenIterator
+							.filter {
+								case Success(path) =>
+									// Only moves regular files
+									if (path.isDirectory)
+										false
+									else
+										path.lastModified match {
+											// Case: Last modified available => Checks whether it has updated
+											case Success(t) => t > d.timestamp
+											// Case: Last-modified couldn't be read => Considers it changed
+											case Failure(error) =>
+												log(error, s"Couldn't read the last modified -time of $path")
+												true
+										}
+								case Failure(_) => true
+							}
+							// Also makes sure either the file size or file contents are different
+							.filter {
+								case Success(path) =>
+									val relativePath = path.relativeTo(binding.source).either
+									val fullTargetPath = absoluteBinding.target/relativePath
+									hasUpdated(path, fullTargetPath)
+								case Failure(_) => true
+							}
+							.toTry
 					// Case: No time threshold specified => Targets all files
 					case None => binding.source.children
 				}
@@ -72,7 +88,8 @@ object Deploy
 					val deployment = Deployment()
 					// Copies the altered files to a specific build directory
 					// Updates the full copy -directory, also
-					val outputDirectories = Vector(project.directoryForDeployment(deployment), project.fullOutputDirectory)
+					val outputDirectories = Vector(project.directoryForDeployment(deployment),
+						project.fullOutputDirectory)
 					altered.tryMap { binding =>
 						outputDirectories.tryMap { output =>
 							val absolute = binding.underTarget(output)
@@ -81,5 +98,26 @@ object Deploy
 					}.map { _ => Some(deployment) }
 				}
 			}
+	}
+	
+	// Tests whether two paths should be considered different files.
+	// Intended for regular files only.
+	// Last modified should be tested first.
+	private def hasUpdated(source: Path, target: Path) = {
+		// Case: No target file present => Considers changed
+		if (!target.exists)
+			true
+		// Case: Files have different sizes => Changed
+		else if (source.size.toOption.forall { size => !target.size.toOption.contains(size) })
+			true
+		// Case: Same size => Checks whether the content is equal, also
+		else
+			source.tryReadWith { sourceStream =>
+				target.readWith { targetStream =>
+					Pair(sourceStream, targetStream)
+						.map { stream => Iterator.continually { stream.read() }.takeWhile { _ >= 0 } }
+						.isAsymmetric
+				}
+			}.getOrElse(true) // Considers changed on a read failure
 	}
 }

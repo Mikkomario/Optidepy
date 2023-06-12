@@ -56,7 +56,7 @@ object Merge
 											val relative = path.relativeTo(dir).either
 											if (!movedPaths.contains(relative)) {
 												movedPaths += relative
-												path.moveTo(targetDirectory)
+												path.moveAs(targetDirectory/relative)
 											}
 											else
 												Success(())
