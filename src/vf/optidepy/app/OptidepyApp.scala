@@ -54,9 +54,9 @@ object OptidepyApp extends App
 		}
 		result
 	}
-	private def deploy(project: DeployedProject) = {
+	private def deploy(project: DeployedProject, skipSeparateBuild: Boolean = false) = {
 		println(s"Deploying ${ project.name }...")
-		Deploy(project)(counters(project), log) match {
+		Deploy(project, skipSeparateBuild)(counters(project), log) match {
 			case Success(project) =>
 				lastDeployment = Some(project)
 				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
@@ -102,8 +102,10 @@ object OptidepyApp extends App
 				println("Parameters 'project' and 'input' are required")
 		},
 		Command("deploy", "dep", "Deploys a project")(
-			ArgumentSchema("project", "name", help = "Name of the project to deploy (default = last project)")) { args =>
-			findProject(args("project").getString).foreach(deploy)
+			ArgumentSchema("project", "name", help = "Name of the project to deploy (default = last project)"),
+			ArgumentSchema.flag("onlyFull", "F",
+				help = "Whether no separate build directory should be created, resulting in only the \"full\" directory being created")) { args =>
+			findProject(args("project").getString).foreach { deploy(_, args("onlyFull").getBoolean) }
 		},
 		Command("merge", "m", "Merges recent builds into a single build")(
 			ArgumentSchema("project", "name", help = "Targeted project. Default = Last deployed project."),

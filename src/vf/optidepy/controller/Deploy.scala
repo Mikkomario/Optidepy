@@ -19,12 +19,14 @@ object Deploy
 {
 	/**
 	 * @param project A project
+	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
-	def apply(project: DeployedProject)(implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
-		apply(project.project, project.lastDeployment).map {
+	def apply(project: DeployedProject, skipSeparateBuildDirectory: Boolean)
+	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
+		apply(project.project, project.lastDeployment, skipSeparateBuildDirectory).map {
 			case Some(d) => project + d
 			case None => project
 		}
@@ -33,11 +35,13 @@ object Deploy
 	 * Deploys a new project version
 	 * @param project Project to deploy
 	 * @param lastDeployment Last deployment instance (default = None = not deployed before)
+	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
+	 *                                   Default = false = create a separate build directory.
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: Project, lastDeployment: Option[Deployment] = None)
+	def apply(project: Project, lastDeployment: Option[Deployment] = None, skipSeparateBuildDirectory: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
 		// TODO: Also check for removed files
@@ -86,10 +90,14 @@ object Deploy
 				// Case: Files were altered
 				else {
 					val deployment = Deployment()
-					// Copies the altered files to a specific build directory
+					// Copies the altered files to a specific build directory (optional feature)
 					// Updates the full copy -directory, also
-					val outputDirectories = Vector(project.directoryForDeployment(deployment),
-						project.fullOutputDirectory)
+					val outputDirectories = {
+						if (skipSeparateBuildDirectory)
+							Vector(project.fullOutputDirectory)
+						else
+							Vector(project.directoryForDeployment(deployment), project.fullOutputDirectory)
+					}
 					altered.tryMap { binding =>
 						outputDirectories.tryMap { output =>
 							val absolute = binding.underTarget(output)

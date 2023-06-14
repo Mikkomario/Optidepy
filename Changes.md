@@ -6,6 +6,8 @@ List of Changes
 - 12.6.2023 - Development started
 ### Bugfixes
 - Merging now preserves folder structure
+### New Features
+- Added `F` flag to `deploy` command for disabling build-specific directory-creation
 ### Other Changes
 - Tests for file size and/or content changes before considering files changed
 
