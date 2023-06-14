@@ -13,7 +13,7 @@ import vf.optidepy.controller.{Deploy, IndexCounter, Merge}
 import vf.optidepy.model.{Binding, DeployedProject, Project}
 import vf.optidepy.util.Common._
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 import scala.io.StdIn
 import scala.util.{Failure, Success}
 
@@ -72,13 +72,17 @@ object OptidepyApp extends App
 		) { args =>
 			if (args.containsValuesFor("project", "input")) {
 				val projectName = args("project").getString
-				val input: Path = args("input").getString
+				val input = args("input").string.map { Paths.get(_) }
 				val output: Path = args("output").stringOr(s"data/$projectName")
-				println(s"Please specify directories or files under ${
-					input.fileName } that should be copied during deployment.\nEmpty line ends input.")
+				println(s"Please specify directories or files${
+					input.map { i => s" under $i" }.getOrElse("") } that should be copied during deployment.\nEmpty line ends input.")
 				val bindings = StdIn.readLineIteratorWithPrompt("Next file").takeWhile { _.nonEmpty }.flatMap { inputLine =>
 					val sourcePath: Path = inputLine
-					if ((input/sourcePath).exists ||
+					val inputSourcePath = input match {
+						case Some(i) => i/sourcePath
+						case None => sourcePath
+					}
+					if (inputSourcePath.exists ||
 						StdIn.ask(s"${ sourcePath.fileName } doesn't exist. Add it anyway?")) {
 						val default = output/sourcePath
 						val out = StdIn.readNonEmptyLine(s"Where do you want to store ${
@@ -92,7 +96,7 @@ object OptidepyApp extends App
 					else
 						None
 				}.toVector
-				val newProject = DeployedProject(Project(projectName, Binding(input, output), bindings))
+				val newProject = DeployedProject(Project(projectName, input, output, bindings))
 				projects.current :+= newProject
 				println(s"$projectName added as a new project")
 				if (StdIn.ask(s"Do you want to deploy $projectName now?"))

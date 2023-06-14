@@ -7,16 +7,22 @@ import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.parse.file.FileExtensions._
 
-import scala.util.Try
+import java.nio.file.{Path, Paths}
+import scala.util.{Success, Try}
 
 object Project extends FromModelFactory[Project]
 {
-	override def apply(model: ModelLike[Property]): Try[Project] =
-		Binding(model("root").getModel).flatMap { main =>
+	override def apply(model: ModelLike[Property]): Try[Project] = {
+		val inputOutput = model("output").string match {
+			case Some(out) => Success(model("input").string.map { Paths.get(_) } -> Paths.get(out))
+			case None => Binding(model("root").getModel).map { b => Some(b.source) -> b.target }
+		}
+		inputOutput.flatMap { case (input, output) =>
 			model("bindings").tryVectorWith { v => Binding(v.getModel) }.map { bindings =>
-				apply(model("name").getString, main, bindings)
+				apply(model("name").getString, input, output, bindings)
 			}
 		}
+	}
 }
 
 /**
@@ -24,21 +30,14 @@ object Project extends FromModelFactory[Project]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  * @param name Name of this project
- * @param mainBinding Binding that corresponds to the project input and output root directories
+ * @param input The root input directory (if applicable)
+ * @param output The root output directory
  * @param relativeBindings Bindings that determine, which files are moved to where (relative to the main binding)
  */
-case class Project(name: String, mainBinding: Binding, relativeBindings: Vector[Binding]) extends ModelConvertible
+case class Project(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding])
+	extends ModelConvertible
 {
 	// COMPUTED -----------------------
-	
-	/**
-	 * @return The root input directory
-	 */
-	def input = mainBinding.source
-	/**
-	 * @return The root output directory
-	 */
-	def output = mainBinding.target
 	
 	/**
 	 * @return The directory that will contain the full project output
@@ -48,13 +47,17 @@ case class Project(name: String, mainBinding: Binding, relativeBindings: Vector[
 	/**
 	 * @return Directory bindings where input is absolute and output is relative
 	 */
-	def sourceCorrectedBindings = relativeBindings.map { _.underSource(input) }
+	def sourceCorrectedBindings = input match {
+		case Some(i) => relativeBindings.map { _.underSource(i) }
+		case None => relativeBindings
+	}
 	
 	
 	// IMPLEMENTED  ------------------
 	
 	override def toModel: Model =
-		Model.from("name" -> name, "root" -> mainBinding, "bindings" -> relativeBindings)
+		Model.from("name" -> name, "input" -> input.map { _.toJson }, "output" -> output.toJson,
+			"bindings" -> relativeBindings)
 	
 	
 	// OTHER    ---------------------
