@@ -2,12 +2,14 @@ package vf.optidepy.controller
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
+import utopia.flow.operator.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.logging.Logger
 import vf.optidepy.model.{DeployedProject, Deployment, Project}
 
 import java.nio.file.Path
+import scala.io.Codec
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -17,6 +19,9 @@ import scala.util.{Failure, Success, Try}
  */
 object Deploy
 {
+	private implicit val iteratorEquals: EqualsFunction[Iterator[Any]] = _ sameElements _
+	private implicit val codec: Codec = Codec.UTF8
+	
 	/**
 	 * @param project A project
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
@@ -37,20 +42,22 @@ object Deploy
 	 * @param lastDeployment Last deployment instance (default = None = not deployed before)
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 *                                   Default = false = create a separate build directory.
+	 * @param skipFileRemoval Whether the file-removal process should be skipped (default = false)
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: Project, lastDeployment: Option[Deployment] = None, skipSeparateBuildDirectory: Boolean = false)
+	def apply(project: Project, lastDeployment: Option[Deployment] = None, skipSeparateBuildDirectory: Boolean = false,
+	          skipFileRemoval: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
-		// TODO: Also check for removed files
 		project.sourceCorrectedBindings
 			.tryFlatMap { binding =>
 				lazy val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
 				val alteredFiles = lastDeployment match {
 					// Case: Time threshold specified => Checks which files have been altered
 					case Some(d) =>
+						println(s"Looking for new and modified files under ${binding.source}...")
 						binding.source.allChildrenIterator
 							.filter {
 								case Success(path) =>
@@ -85,27 +92,74 @@ object Deploy
 			}
 			.flatMap { altered =>
 				// Case: No file was altered => No need for a deployment
-				if (altered.isEmpty)
+				if (altered.isEmpty) {
+					println("Everything is up to date!")
 					Success(None)
+				}
 				// Case: Files were altered
 				else {
 					val deployment = Deployment()
 					// Copies the altered files to a specific build directory (optional feature)
 					// Updates the full copy -directory, also
-					val outputDirectories = {
+					val buildDirectory = {
 						if (skipSeparateBuildDirectory)
-							Vector(project.fullOutputDirectory)
+							None
 						else
-							Vector(project.directoryForDeployment(deployment), project.fullOutputDirectory)
+							Some(project.directoryForDeployment(deployment))
 					}
+					val outputDirectories = buildDirectory.toVector :+ project.fullOutputDirectory
+					println(s"Copying ${altered.size} files to ${outputDirectories.mkString(" and ")}...")
 					altered.tryMap { binding =>
 						outputDirectories.tryMap { output =>
 							val absolute = binding.underTarget(output)
 							absolute.target.createParentDirectories().flatMap { p => absolute.source.copyAs(p) }
 						}
-					}.map { _ => Some(deployment) }
+					}.flatMap { _ =>
+						println("All files successfully copied")
+						// Handles removed files as well (unless disabled)
+						if (skipFileRemoval || lastDeployment.isEmpty)
+							Success(Some(deployment))
+						else
+							checkForRemovedFiles(project, buildDirectory, deployment.index).map { _ => Some(deployment) }
+					}
 				}
 			}
+	}
+	
+	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int)
+	                                (implicit log: Logger) =
+	{
+		// Deletes all files from the "full" directory that no longer appear under the project source
+		project.sourceCorrectedBindings.flatMap { binding =>
+			val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
+			println(s"Deleting old files from ${absoluteBinding.target}...")
+			absoluteBinding.target.toTree.bottomToTopNodesIterator.flatMap { node =>
+				val targetPath = node.nav
+				val relativePath = targetPath.relativeTo(absoluteBinding.target).either
+				val sourcePath = binding.source/relativePath
+				
+				// Case: File was deleted from the source => Deletes the file from "full" and records the event
+				if (sourcePath.notExists)
+					Some(targetPath.delete().map { _ => relativePath })
+				// Case: File still present => No action needed
+				else
+					None
+			}
+		}.toTryCatch.logToTryWithMessage("Failed to delete some of the old files").flatMap { deleted =>
+			// Records the deleted files to the build directory (build mode only)
+			if (deleted.nonEmpty)
+				buildDirectory match {
+					// Case: Files were deleted and build directory was specified => Writes a note
+					case Some(buildDirectory) =>
+						(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
+							writer.println(s"The following ${deleted.size} files were deleted in this build:")
+							deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
+						}.map { Some(_) }
+					case None => Success(None)
+				}
+			else
+				Success(None)
+		}
 	}
 	
 	// Tests whether two paths should be considered different files.
@@ -122,8 +176,9 @@ object Deploy
 		else
 			source.tryReadWith { sourceStream =>
 				target.readWith { targetStream =>
+					// Compares the first < 100 000 bytes of both files
 					Pair(sourceStream, targetStream)
-						.map { stream => Iterator.continually { stream.read() }.takeWhile { _ >= 0 } }
+						.map { stream => Iterator.continually { stream.read() }.take(100000).takeWhile { _ >= 0 } }
 						.isAsymmetric
 				}
 			}.getOrElse(true) // Considers changed on a read failure

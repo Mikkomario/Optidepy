@@ -4,6 +4,7 @@ import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.{Constant, Model}
 import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.util.Mutate
 import utopia.flow.view.template.Extender
 
 import scala.util.Try
@@ -44,6 +45,12 @@ case class DeployedProject(project: Project, deployments: Vector[Deployment] = V
 	 * @return A copy of this project with that deployment included
 	 */
 	def +(deployment: Deployment) = copy(deployments = deployments :+ deployment)
+	
+	/**
+	 * @param f A mapping function to apply to the wrapped project
+	 * @return A modified copy of this project
+	 */
+	def modify(f: Mutate[Project]) = copy(project = f(project))
 	
 	
 	// IMPLEMENTED  ---------------------

@@ -33,37 +33,6 @@ object OptidepyApp extends App
 	}
 	private var lastDeployment: Option[DeployedProject] = None
 	
-	private def findProject(projectName: String) = {
-		// Finds the project
-		val result = projectName.notEmpty match {
-			case Some(projectName) => projects.current.find { _.name ~== projectName }
-			case None => lastDeployment
-		}
-		// Displays a warning if no project was found
-		if (result.isEmpty) {
-			if (projects.current.isEmpty)
-				println("Please add a new project first using the 'add' command")
-			else {
-				if (projectName.isEmpty)
-					println("The name of the targeted project must be specified as a command argument")
-				else
-					println(s"$projectName didn't match any existing project")
-				println("Registered projects:")
-				projects.current.foreach { p => println(s"- ${p.name}") }
-			}
-		}
-		result
-	}
-	private def deploy(project: DeployedProject, skipSeparateBuild: Boolean = false) = {
-		println(s"Deploying ${ project.name }...")
-		Deploy(project, skipSeparateBuild)(counters(project), log) match {
-			case Success(project) =>
-				lastDeployment = Some(project)
-				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
-			case Failure(error) => log(error, s"Failed to deploy ${ project.name }")
-		}
-	}
-	
 	private val commands = Vector(
 		Command("add", "a", help = "Registers a new project")(
 			ArgumentSchema("project", "name", help = "Name of the new project"),
@@ -72,44 +41,85 @@ object OptidepyApp extends App
 		) { args =>
 			if (args.containsValuesFor("project", "input")) {
 				val projectName = args("project").getString
-				val input = args("input").string.map { Paths.get(_) }
-				val output: Path = args("output").stringOr(s"data/$projectName")
-				println(s"Please specify directories or files${
-					input.map { i => s" under $i" }.getOrElse("") } that should be copied during deployment.\nEmpty line ends input.")
-				val bindings = StdIn.readLineIteratorWithPrompt("Next file").takeWhile { _.nonEmpty }.flatMap { inputLine =>
-					val sourcePath: Path = inputLine
-					val inputSourcePath = input match {
-						case Some(i) => i/sourcePath
-						case None => sourcePath
-					}
-					if (inputSourcePath.exists ||
-						StdIn.ask(s"${ sourcePath.fileName } doesn't exist. Add it anyway?")) {
-						val default = output/sourcePath
-						val out = StdIn.readNonEmptyLine(s"Where do you want to store ${
-							sourcePath.fileName } under $output?\nDefault = $sourcePath") match
-						{
-							case Some(out) => out: Path
-							case None => default
-						}
-						Some(Binding(sourcePath, out))
-					}
-					else
-						None
-				}.toVector
-				val newProject = DeployedProject(Project(projectName, input, output, bindings))
-				projects.current :+= newProject
-				println(s"$projectName added as a new project")
-				if (StdIn.ask(s"Do you want to deploy $projectName now?"))
-					deploy(newProject)
+				// The project name must be unique
+				if (projects.current.exists { _.name ~== projectName })
+					println("Project with the same name exists already. Terminates.")
+				else {
+					val input = args("input").string.map { Paths.get(_) }
+					val output: Path = args("output").stringOr(s"data/$projectName")
+					println(s"Please specify directories or files${
+						input.map { i => s" under $i" }.getOrElse("")
+					} that should be copied during deployment.\nEmpty line ends input.")
+					val bindings = collectBindings(input, output)
+					val newProject = DeployedProject(Project(projectName, input, output, bindings))
+					projects.current :+= newProject
+					println(s"$projectName added as a new project")
+					if (StdIn.ask(s"Do you want to deploy $projectName now?"))
+						deploy(newProject, skipSeparateBuild = true, skipFileRemoval = true)
+				}
 			}
 			else
 				println("Parameters 'project' and 'input' are required")
 		},
+		Command("edit", "e", help = "Modifies the deployment paths of a single project")(
+			ArgumentSchema("project", "name", help = "Name of the project to edit")) { args =>
+			findProject(args("project").getString).foreach { project =>
+				// Checks whether the main input path needs to be changed
+				val (input, validInputBindings) = {
+					val currentInputName = project.input match {
+						case Some(p) => p.toString
+						case None => "not defined"
+					}
+					if (StdIn.ask(s"Do you want to change the root input directory? Currently $currentInputName"))
+						StdIn.printAndReadLine("Please specify the new input directory (leave empty if there is no common root directory)")
+							.notEmpty.map { Paths.get(_) } -> Vector()
+					else
+						project.input -> project.relativeBindings
+				}
+				// Makes sure the input directory exists
+				if (input.exists { _.notExists })
+					println(s"The specified input directory (${input.get.toAbsolutePath}) doesn't exist. Terminates.")
+				else {
+					// Also, checks whether the output needs to be changed
+					val output = {
+						if (StdIn.ask(s"Do you want to change the root output directory? Currently ${project.output}"))
+							StdIn.readNonEmptyLine("Please specify the new output directory",
+									"Leaving this empty cancels project edit. \nPlease specify the directory if you wish to continue.")
+								.map { Paths.get(_) -> Vector() }
+						else
+							Some(project.output -> validInputBindings)
+					}
+					output.foreach { case (output, existingBindings) =>
+						// Checks whether the user wishes to edit/remove some of the existing bindings
+						val remainingBindings = {
+							if (existingBindings.isEmpty ||
+								!StdIn.ask(s"Do you want to remove or replace any of the ${
+									existingBindings.size} file mappings?"))
+								existingBindings
+							else
+								existingBindings.filter { binding =>
+									StdIn.ask(s"Do you wish to keep ${binding.source} => ${binding.target}?")
+								}
+						}
+						// Collects new file bindings
+						val newBindings = collectBindings(input, output)
+						// Saves the changes
+						val modifiedProject = project.modify {
+							_.copy(input = input, output = output, relativeBindings = remainingBindings ++ newBindings)
+						}
+						projects.pointer.update { _.filterNot { _ == project } :+ modifiedProject }
+						println("Changes saved!")
+					}
+				}
+			}
+		},
 		Command("deploy", "dep", "Deploys a project")(
 			ArgumentSchema("project", "name", help = "Name of the project to deploy (default = last project)"),
 			ArgumentSchema.flag("onlyFull", "F",
-				help = "Whether no separate build directory should be created, resulting in only the \"full\" directory being created")) { args =>
-			findProject(args("project").getString).foreach { deploy(_, args("onlyFull").getBoolean) }
+				help = "Whether no separate build directory should be created, resulting in only the \"full\" directory being created"),
+			ArgumentSchema.flag("noRemoval", "NR", help = "Whether the file deletion process should be skipped")) { args =>
+			findProject(args("project").getString)
+				.foreach { deploy(_, args("onlyFull").getBoolean, args("noRemoval").getBoolean) }
 		},
 		Command("merge", "m", "Merges recent builds into a single build")(
 			ArgumentSchema("project", "name", help = "Targeted project. Default = Last deployed project."),
@@ -134,11 +144,74 @@ object OptidepyApp extends App
 			}
 		}
 	)
-	private val console = Console.static(commands, "Next command", "exit")
+	private val console = Console.static(commands, "\nNext command", "exit")
 	console.registerToStopOnceJVMCloses()
 	
 	println("\nWelcome to Optidepy")
 	println("Get more information about commands with 'help'. Close this console with 'exit'")
 	console.run()
 	println("Bye!")
+	
+	
+	// OTHER FUNCTIONS  ------------------------
+	
+	private def findProject(projectName: String) = {
+		// Finds the project
+		val result = projectName.notEmpty match {
+			case Some(projectName) => projects.current.find { _.name ~== projectName }
+			case None => lastDeployment
+		}
+		// Displays a warning if no project was found
+		if (result.isEmpty) {
+			if (projects.current.isEmpty)
+				println("Please add a new project first using the 'add' command")
+			else {
+				if (projectName.isEmpty)
+					println("The name of the targeted project must be specified as a command argument")
+				else
+					println(s"$projectName didn't match any existing project")
+				println("Registered projects:")
+				projects.current.foreach { p => println(s"- ${p.name}") }
+			}
+		}
+		result
+	}
+	
+	private def deploy(project: DeployedProject, skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false) =
+	{
+		println(s"Deploying ${project.name}...")
+		Deploy(project, skipSeparateBuild)(counters(project), log) match {
+			case Success(project) =>
+				lastDeployment = Some(project)
+				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
+				println(s"${project.name} successfully deployed")
+			case Failure(error) => log(error, s"Failed to deploy ${project.name}")
+		}
+	}
+	
+	private def collectBindings(input: Option[Path], output: Path) = {
+		println(s"Please specify directories or files${
+			input.map { i => s" under $i" }.getOrElse("")
+		} that should be copied during deployment.\nEmpty line ends input.")
+		StdIn.readLineIteratorWithPrompt("Next file").takeWhile { _.nonEmpty }.flatMap { inputLine =>
+			val sourcePath: Path = inputLine
+			val inputSourcePath = input match {
+				case Some(i) => i / sourcePath
+				case None => sourcePath
+			}
+			if (inputSourcePath.exists ||
+				StdIn.ask(s"${sourcePath.fileName} doesn't exist. Add it anyway?")) {
+				val default = output / sourcePath
+				val out = StdIn.readNonEmptyLine(s"Where do you want to store ${
+					sourcePath.fileName
+				} under $output?\nDefault = $sourcePath") match {
+					case Some(out) => out: Path
+					case None => default
+				}
+				Some(Binding(sourcePath, out))
+			}
+			else
+				None
+		}.toVector
+	}
 }

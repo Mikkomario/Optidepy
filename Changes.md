@@ -7,9 +7,14 @@ List of Changes
 ### Bugfixes
 - Merging now preserves folder structure
 ### New Features
-- Added `F` flag to `deploy` command for disabling build-specific directory-creation
+- Added new `edit` command
+- Added file-removal / -cleaning process
+- Added `F` flag to the `deploy` command for disabling build-specific directory-creation
+- Added `NR` flag to the `deploy` command for disabling file-removal
 ### Other Changes
 - Tests for file size and/or content changes before considering files changed
+- Add project now tests whether a project with the same name exists already
+- Added prints to the deployment process
 
 ## v1.0.1
 ### New Features
