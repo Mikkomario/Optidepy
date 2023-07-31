@@ -29,9 +29,9 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
-	def apply(project: DeployedProject, skipSeparateBuildDirectory: Boolean)
+	def apply(project: DeployedProject, skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean)
 	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
-		apply(project.project, project.lastDeployment, skipSeparateBuildDirectory).map {
+		apply(project.project, project.lastDeployment, skipSeparateBuildDirectory, skipFileRemoval).map {
 			case Some(d) => project + d
 			case None => project
 		}
@@ -102,7 +102,7 @@ object Deploy
 					// Copies the altered files to a specific build directory (optional feature)
 					// Updates the full copy -directory, also
 					val buildDirectory = {
-						if (skipSeparateBuildDirectory)
+						if (skipSeparateBuildDirectory || !project.usesBuildDirectories)
 							None
 						else
 							Some(project.directoryForDeployment(deployment))
@@ -117,7 +117,7 @@ object Deploy
 					}.flatMap { _ =>
 						println("All files successfully copied")
 						// Handles removed files as well (unless disabled)
-						if (skipFileRemoval || lastDeployment.isEmpty)
+						if (skipFileRemoval || lastDeployment.isEmpty || !project.fileDeletionEnabled)
 							Success(Some(deployment))
 						else
 							checkForRemovedFiles(project, buildDirectory, deployment.index).map { _ => Some(deployment) }
@@ -129,6 +129,7 @@ object Deploy
 	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int)
 	                                (implicit log: Logger) =
 	{
+		lazy val backupDir = buildDirectory.map { _/"deleted-files" }
 		// Deletes all files from the "full" directory that no longer appear under the project source
 		project.sourceCorrectedBindings.flatMap { binding =>
 			val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
@@ -138,9 +139,16 @@ object Deploy
 				val relativePath = targetPath.relativeTo(absoluteBinding.target).either
 				val sourcePath = binding.source/relativePath
 				
-				// Case: File was deleted from the source => Deletes the file from "full" and records the event
-				if (sourcePath.notExists)
-					Some(targetPath.delete().map { _ => relativePath })
+				// Case: File was deleted from the source => Deletes/moves the file from "full" and records the event
+				if (sourcePath.notExists) {
+					// If a backup directory is specified, moves the file instead of deleting it
+					Some(backupDir match {
+						case Some(dir) =>
+							(dir/relativePath).createDirectories()
+								.flatMap { targetPath.moveAs(_).map { _ => relativePath } }
+						case None => targetPath.delete().map { _ => relativePath }
+					})
+				}
 				// Case: File still present => No action needed
 				else
 					None

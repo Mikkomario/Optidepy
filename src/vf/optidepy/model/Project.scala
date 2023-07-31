@@ -19,7 +19,8 @@ object Project extends FromModelFactory[Project]
 		}
 		inputOutput.flatMap { case (input, output) =>
 			model("bindings").tryVectorWith { v => Binding(v.getModel) }.map { bindings =>
-				apply(model("name").getString, input, output, bindings)
+				apply(model("name").getString, input, output, bindings,
+					model("useBuildDir").booleanOr(true), model("deletionEnabled").booleanOr(true))
 			}
 		}
 	}
@@ -33,8 +34,14 @@ object Project extends FromModelFactory[Project]
  * @param input The root input directory (if applicable)
  * @param output The root output directory
  * @param relativeBindings Bindings that determine, which files are moved to where (relative to the main binding)
+ * @param usesBuildDirectories Whether this project uses separate build directories by default (default = true).
+ *                             If false, only the "full" directory is updated and no separate build directories will
+ *                             be created.
+ * @param fileDeletionEnabled Whether automatic file deletion is allowed within this project (default = true).
+ *                            If false, all old files must be deleted manually.
  */
-case class Project(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding])
+case class Project(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding],
+                   usesBuildDirectories: Boolean = true, fileDeletionEnabled: Boolean = true)
 	extends ModelConvertible
 {
 	// COMPUTED -----------------------
@@ -57,7 +64,8 @@ case class Project(name: String, input: Option[Path], output: Path, relativeBind
 	
 	override def toModel: Model =
 		Model.from("name" -> name, "input" -> input.map { _.toJson }, "output" -> output.toJson,
-			"bindings" -> relativeBindings)
+			"bindings" -> relativeBindings, "useBuildDir" -> usesBuildDirectories,
+			"deletionEnabled" -> fileDeletionEnabled)
 	
 	
 	// OTHER    ---------------------

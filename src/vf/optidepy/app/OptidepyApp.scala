@@ -51,7 +51,12 @@ object OptidepyApp extends App
 						input.map { i => s" under $i" }.getOrElse("")
 					} that should be copied during deployment.\nEmpty line ends input.")
 					val bindings = collectBindings(input, output)
-					val newProject = DeployedProject(Project(projectName, input, output, bindings))
+					val usesBuildDirectories = StdIn.ask(
+						"Do you want to collect changed files to separate build directories?", default = true)
+					val fileRemovalEnabled = StdIn.ask(
+						"Should automatic deletion of non-source files be enabled?", default = true)
+					val newProject = DeployedProject(Project(projectName, input, output, bindings,
+						usesBuildDirectories, fileRemovalEnabled))
 					projects.current :+= newProject
 					println(s"$projectName added as a new project")
 					if (StdIn.ask(s"Do you want to deploy $projectName now?"))
@@ -103,9 +108,18 @@ object OptidepyApp extends App
 						}
 						// Collects new file bindings
 						val newBindings = collectBindings(input, output)
+						// Modifies the flags, if necessary
+						// WET WET
+						val usesBuildDirectories = StdIn.ask(
+							"Do you want to collect changed files to separate build directories?",
+							default = project.usesBuildDirectories)
+						val fileRemovalEnabled = StdIn.ask(
+							"Should automatic deletion of non-source files be enabled?",
+							default = project.fileDeletionEnabled)
 						// Saves the changes
 						val modifiedProject = project.modify {
-							_.copy(input = input, output = output, relativeBindings = remainingBindings ++ newBindings)
+							_.copy(input = input, output = output, relativeBindings = remainingBindings ++ newBindings,
+								usesBuildDirectories = usesBuildDirectories, fileDeletionEnabled = fileRemovalEnabled)
 						}
 						projects.pointer.update { _.filterNot { _ == project } :+ modifiedProject }
 						println("Changes saved!")
@@ -180,7 +194,7 @@ object OptidepyApp extends App
 	private def deploy(project: DeployedProject, skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false) =
 	{
 		println(s"Deploying ${project.name}...")
-		Deploy(project, skipSeparateBuild)(counters(project), log) match {
+		Deploy(project, skipSeparateBuild, skipFileRemoval)(counters(project), log) match {
 			case Success(project) =>
 				lastDeployment = Some(project)
 				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
