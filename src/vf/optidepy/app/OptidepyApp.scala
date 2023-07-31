@@ -5,6 +5,7 @@ import utopia.flow.collection.immutable.caching.cache.Cache
 import utopia.flow.operator.EqualsExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.file.container.ObjectsFileContainer
+import utopia.flow.time.Now
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.console.{ArgumentSchema, Command, Console}
@@ -34,6 +35,28 @@ object OptidepyApp extends App
 	private var lastDeployment: Option[DeployedProject] = None
 	
 	private val commands = Vector(
+		Command("describe", "desc", help = "Describes a registered project")(
+			ArgumentSchema("project", "name", help = "Name of the targeted project")) { args =>
+			findProject(args("project").getString).foreach { project =>
+				println(s"\n${project.name}")
+				val inputStr = project.input match {
+					case Some(i) => i.toString
+					case None => "Not defined"
+				}
+				println(s"\t- Root input: $inputStr")
+				println(s"\t- Root output: ${project.output}")
+				println(s"\t- Bindings:")
+				project.relativeBindings.foreach { binding =>
+					println(s"\t\t- ${binding.source} => ${binding.target}")
+				}
+				if (!project.usesBuildDirectories)
+					println("\t- Only deploys to the \"full\" directory")
+				if (!project.fileDeletionEnabled)
+					println(s"\t- File deletion disabled")
+				project.lastDeployment.foreach { dep => println(s"\t- Last deployment (${dep.index}) was made ${
+					(Now - dep.timestamp).description} ago") }
+			}
+		},
 		Command("add", "a", help = "Registers a new project")(
 			ArgumentSchema("project", "name", help = "Name of the new project"),
 			ArgumentSchema("input", "in", help = "Path to the root input directory"),

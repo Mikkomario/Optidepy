@@ -131,43 +131,45 @@ object Deploy
 	{
 		lazy val backupDir = buildDirectory.map { _/"deleted-files" }
 		// Deletes all files from the "full" directory that no longer appear under the project source
-		project.sourceCorrectedBindings.flatMap { binding =>
-			val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
-			println(s"Deleting old files from ${absoluteBinding.target}...")
-			absoluteBinding.target.toTree.bottomToTopNodesIterator.flatMap { node =>
-				val targetPath = node.nav
-				val relativePath = targetPath.relativeTo(absoluteBinding.target).either
-				val sourcePath = binding.source/relativePath
-				
-				// Case: File was deleted from the source => Deletes/moves the file from "full" and records the event
-				if (sourcePath.notExists) {
-					// If a backup directory is specified, moves the file instead of deleting it
-					Some(backupDir match {
-						case Some(dir) =>
-							(dir/relativePath).createDirectories()
-								.flatMap { targetPath.moveAs(_).map { _ => relativePath } }
-						case None => targetPath.delete().map { _ => relativePath }
-					})
+		project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }.groupBy { _.target }
+			.flatMap { case (outputDir, bindings) =>
+				println(s"Deleting old files from $outputDir ...")
+				outputDir.toTree.bottomToTopNodesIterator.flatMap { node =>
+					val targetPath = node.nav
+					val relativePath = targetPath.relativeTo(outputDir).either
+					val sourcePaths = bindings.map { _.source/relativePath }.toSet
+					
+					// Case: File was deleted from the source => Deletes/moves the file from "full" and records the event
+					if (sourcePaths.forall { _.notExists }) {
+						// If a backup directory is specified, moves the file instead of deleting it
+						Some(backupDir match {
+							case Some(dir) =>
+								(dir / relativePath).createDirectories()
+									.flatMap { targetPath.moveAs(_).map { _ => relativePath } }
+							case None => targetPath.delete().map { _ => relativePath }
+						})
+					}
+					// Case: File still present => No action needed
+					else
+						None
 				}
-				// Case: File still present => No action needed
-				else
-					None
 			}
-		}.toTryCatch.logToTryWithMessage("Failed to delete some of the old files").flatMap { deleted =>
-			// Records the deleted files to the build directory (build mode only)
-			if (deleted.nonEmpty)
-				buildDirectory match {
-					// Case: Files were deleted and build directory was specified => Writes a note
-					case Some(buildDirectory) =>
-						(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
-							writer.println(s"The following ${deleted.size} files were deleted in this build:")
-							deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
-						}.map { Some(_) }
-					case None => Success(None)
-				}
-			else
-				Success(None)
-		}
+			.toTryCatch.logToTryWithMessage("Failed to delete some of the old files")
+			.flatMap { deleted =>
+				// Records the deleted files to the build directory (build mode only)
+				if (deleted.nonEmpty)
+					buildDirectory match {
+						// Case: Files were deleted and build directory was specified => Writes a note
+						case Some(buildDirectory) =>
+							(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
+								writer.println(s"The following ${deleted.size} files were deleted in this build:")
+								deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
+							}.map { Some(_) }
+						case None => Success(None)
+					}
+				else
+					Success(None)
+			}
 	}
 	
 	// Tests whether two paths should be considered different files.
