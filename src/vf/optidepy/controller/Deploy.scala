@@ -2,6 +2,7 @@ package vf.optidepy.controller
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
+import utopia.flow.collection.mutable.builder.MultiMapBuilder
 import utopia.flow.operator.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
@@ -19,8 +20,15 @@ import scala.util.{Failure, Success, Try}
  */
 object Deploy
 {
+	// ATTRIBUTES   -------------------------
+	
 	private implicit val iteratorEquals: EqualsFunction[Iterator[Any]] = _ sameElements _
 	private implicit val codec: Codec = Codec.UTF8
+	
+	private val skipComparisonThresholdBytes = 1000000
+	
+	
+	// OTHER    -----------------------------
 	
 	/**
 	 * @param project A project
@@ -131,14 +139,25 @@ object Deploy
 	{
 		lazy val backupDir = buildDirectory.map { _/"deleted-files" }
 		// Deletes all files from the "full" directory that no longer appear under the project source
-		project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }.groupBy { _.target }
-			.flatMap { case (outputDir, bindings) =>
-				println(s"Deleting old files from $outputDir ...")
-				outputDir.toTree.bottomToTopNodesIterator.flatMap { node =>
-					val targetPath = node.nav
-					val relativePath = targetPath.relativeTo(outputDir).either
-					val sourcePaths = bindings.map { _.source/relativePath }.toSet
-					
+		// FIXME: Deletes wrong files in case of multi-origin projects with nested directories / nested targets
+		val bindingsByTarget = project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }
+			.groupBy { _.target }
+		// TODO: Look for nested targets and handle them in groups - there will be multiple relative paths for those
+		bindingsByTarget.flatMap { case (outputDir, bindings) =>
+			println(s"Deleting old files from $outputDir ...")
+			outputDir.toTree.bottomToTopNodesIterator.flatMap { node =>
+				val targetPath = node.nav
+				val relativePath = targetPath.relativeTo(outputDir).either
+				// Deletes empty directories
+				if (targetPath.isDirectory) {
+					if (node.isEmpty)
+						Some(targetPath.delete().map { _ => relativePath })
+					else
+						None
+				}
+				// Regular files are deleted only if they don't appear in any source anymore
+				else {
+					val sourcePaths = bindings.map { _.source / relativePath }.toSet
 					// Case: File was deleted from the source => Deletes/moves the file from "full" and records the event
 					if (sourcePaths.forall { _.notExists }) {
 						// If a backup directory is specified, moves the file instead of deleting it
@@ -154,22 +173,23 @@ object Deploy
 						None
 				}
 			}
-			.toTryCatch.logToTryWithMessage("Failed to delete some of the old files")
-			.flatMap { deleted =>
-				// Records the deleted files to the build directory (build mode only)
-				if (deleted.nonEmpty)
-					buildDirectory match {
-						// Case: Files were deleted and build directory was specified => Writes a note
-						case Some(buildDirectory) =>
-							(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
-								writer.println(s"The following ${deleted.size} files were deleted in this build:")
-								deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
-							}.map { Some(_) }
-						case None => Success(None)
-					}
-				else
-					Success(None)
-			}
+		}
+		.toTryCatch.logToTryWithMessage("Failed to delete some of the old files")
+		.flatMap { deleted =>
+			// Records the deleted files to the build directory (build mode only)
+			if (deleted.nonEmpty)
+				buildDirectory match {
+					// Case: Files were deleted and build directory was specified => Writes a note
+					case Some(buildDirectory) =>
+						(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
+							writer.println(s"The following ${deleted.size} files were deleted in this build:")
+							deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
+						}.map { Some(_) }
+					case None => Success(None)
+				}
+			else
+				Success(None)
+		}
 	}
 	
 	// Tests whether two paths should be considered different files.
@@ -179,18 +199,21 @@ object Deploy
 		// Case: No target file present => Considers changed
 		if (!target.exists)
 			true
-		// Case: Files have different sizes => Changed
-		else if (source.size.toOption.forall { size => !target.size.toOption.contains(size) })
-			true
-		// Case: Same size => Checks whether the content is equal, also
-		else
-			source.tryReadWith { sourceStream =>
-				target.readWith { targetStream =>
-					// Compares the first < 100 000 bytes of both files
-					Pair(sourceStream, targetStream)
-						.map { stream => Iterator.continually { stream.read() }.take(100000).takeWhile { _ >= 0 } }
-						.isAsymmetric
-				}
-			}.getOrElse(true) // Considers changed on a read failure
+		else {
+			val sourceSize = source.size.toOption
+			// Case: Files have different sizes (or too large files for byte-comparison) => Changed
+			if (sourceSize.forall { size => size >= skipComparisonThresholdBytes || !target.size.toOption.contains(size) })
+				true
+			// Case: Same size => Checks whether the content is equal, also (skipped for very large files)
+			else
+				source.tryReadWith { sourceStream =>
+					target.readWith { targetStream =>
+						// Compares the first < 100 000 bytes of both files
+						Pair(sourceStream, targetStream)
+							.map { stream => Iterator.continually { stream.read() }.take(100000).takeWhile { _ >= 0 } }
+							.isAsymmetric
+					}
+				}.getOrElse(true) // Considers changed on a read failure
+		}
 	}
 }
