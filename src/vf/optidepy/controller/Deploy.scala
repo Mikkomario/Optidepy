@@ -146,6 +146,7 @@ object Deploy
 	
 	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int) =
 	{
+		println(s"Checking for removed files from ${project.fullOutputDirectory}...")
 		val backupDir = buildDirectory.map { dir => Lazy { dir/"deleted-files" } }
 		// Groups the bindings into different categories:
 		//      1) File-specific bindings
@@ -154,7 +155,7 @@ object Deploy
 		val bindings = project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }
 		val (directoryBindings, fileSpecificBindings) = bindings.divideBy { _.target.isRegularFile }.toTuple
 		val (otherBindings, mappedBindings) = directoryBindings.map { b => b -> b.target }
-			.divideBy { _._2 == project.fullOutputDirectory }
+			.divideBy { _._2 ~== project.fullOutputDirectory }
 			// Sets the relative path of immediately mapping bindings
 			.mapSecond { _.map { _._1 -> Paths.get("") } }
 			.toTuple
@@ -169,6 +170,7 @@ object Deploy
 		
 		// Writes a note concerning the deleted files, if any were found
 		if (deletedFiles.nonEmpty) {
+			println(s"Deleted ${deletedFiles.size} files")
 			val noteWriteResult = buildDirectory match {
 				// Case: Files were deleted and build directory was specified => Writes a note
 				case Some(buildDirectory) =>
@@ -180,8 +182,10 @@ object Deploy
 			}
 			TryCatch.Success((), failuresBuilder.result() ++ deleteResult.failure ++ noteWriteResult.failure)
 		}
-		else
+		else {
+			println("No files were deleted")
 			deleteResult.toTryCatch.withAdditionalFailures(failuresBuilder.result())
+		}
 	}
 	
 	// RECURSIVE
@@ -213,6 +217,9 @@ object Deploy
 						}
 						.toVector
 					if (filesToDelete.nonEmpty) {
+						println(s"Deletes ${filesToDelete.size} files under $targetDirectory")
+						println(s"Matching source directories: ${sourceDirectories.mkString(", ")}")
+						println(s"Files to keep: ${keepFiles.mkString(", ")}")
 						// Records the deleted files
 						deletedPathsBuilder ++= filesToDelete.map { f => relativeTargetDirectory.value/f.fileName }
 						// Performs the deletion or move-to-backup operation
@@ -231,7 +238,7 @@ object Deploy
 				subDirectories.tryForeach { subDirectory =>
 					val dirName = subDirectory.fileName
 					// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
-					val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 == subDirectory }
+					val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
 						// Filters out the "other" bindings that can't appear under this sub-directory
 						.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
 						// Assigns correct relative path to the new mappings
