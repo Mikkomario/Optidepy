@@ -6,6 +6,8 @@ List of Changes
 - 12.6.2023 - Development started
 ### Bugfixes
 - Merging now preserves folder structure
+- Individual files get deployed
+- File removal process now checks file existence from under multiple source bindings
 ### New Features
 - Added new `edit` command
 - Added file-removal / -cleaning process

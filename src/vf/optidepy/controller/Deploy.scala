@@ -2,14 +2,16 @@ package vf.optidepy.controller
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
-import utopia.flow.collection.mutable.builder.MultiMapBuilder
 import utopia.flow.operator.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
+import utopia.flow.util.TryCatch
 import utopia.flow.util.logging.Logger
-import vf.optidepy.model.{DeployedProject, Deployment, Project}
+import utopia.flow.view.immutable.caching.Lazy
+import vf.optidepy.model.{Binding, DeployedProject, Deployment, Project}
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
+import scala.collection.immutable.VectorBuilder
 import scala.io.Codec
 import scala.util.{Failure, Success, Try}
 
@@ -25,7 +27,7 @@ object Deploy
 	private implicit val iteratorEquals: EqualsFunction[Iterator[Any]] = _ sameElements _
 	private implicit val codec: Codec = Codec.UTF8
 	
-	private val skipComparisonThresholdBytes = 1000000
+	private val skipComparisonThresholdBytes = 50000
 	
 	
 	// OTHER    -----------------------------
@@ -62,11 +64,18 @@ object Deploy
 		project.sourceCorrectedBindings
 			.tryFlatMap { binding =>
 				lazy val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
+				val isFileSpecificBinding = binding.source.isRegularFile
 				val alteredFiles = lastDeployment match {
 					// Case: Time threshold specified => Checks which files have been altered
 					case Some(d) =>
 						println(s"Looking for new and modified files under ${binding.source}...")
-						binding.source.allChildrenIterator
+						val filesIter = {
+							if (isFileSpecificBinding)
+								Iterator.single(Success(binding.source))
+							else
+								binding.source.allChildrenIterator
+						}
+						filesIter
 							.filter {
 								case Success(path) =>
 									// Only moves regular files
@@ -128,68 +137,115 @@ object Deploy
 						if (skipFileRemoval || lastDeployment.isEmpty || !project.fileDeletionEnabled)
 							Success(Some(deployment))
 						else
-							checkForRemovedFiles(project, buildDirectory, deployment.index).map { _ => Some(deployment) }
+							checkForRemovedFiles(project, buildDirectory, deployment.index)
+								.logToTry.map { _ => Some(deployment) }
 					}
 				}
 			}
 	}
 	
-	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int)
-	                                (implicit log: Logger) =
+	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int) =
 	{
-		lazy val backupDir = buildDirectory.map { _/"deleted-files" }
-		// Deletes all files from the "full" directory that no longer appear under the project source
-		// FIXME: Deletes wrong files in case of multi-origin projects with nested directories / nested targets
-		val bindingsByTarget = project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }
-			.groupBy { _.target }
-		// TODO: Look for nested targets and handle them in groups - there will be multiple relative paths for those
-		bindingsByTarget.flatMap { case (outputDir, bindings) =>
-			println(s"Deleting old files from $outputDir ...")
-			outputDir.toTree.bottomToTopNodesIterator.flatMap { node =>
-				val targetPath = node.nav
-				val relativePath = targetPath.relativeTo(outputDir).either
-				// Deletes empty directories
-				if (targetPath.isDirectory) {
-					if (node.isEmpty)
-						Some(targetPath.delete().map { _ => relativePath })
-					else
-						None
-				}
-				// Regular files are deleted only if they don't appear in any source anymore
-				else {
-					val sourcePaths = bindings.map { _.source / relativePath }.toSet
-					// Case: File was deleted from the source => Deletes/moves the file from "full" and records the event
-					if (sourcePaths.forall { _.notExists }) {
-						// If a backup directory is specified, moves the file instead of deleting it
-						Some(backupDir match {
-							case Some(dir) =>
-								(dir / relativePath).createDirectories()
-									.flatMap { targetPath.moveAs(_).map { _ => relativePath } }
-							case None => targetPath.delete().map { _ => relativePath }
-						})
+		val backupDir = buildDirectory.map { dir => Lazy { dir/"deleted-files" } }
+		// Groups the bindings into different categories:
+		//      1) File-specific bindings
+		//      2) Bindings that map directly to the full output directory
+		//      3) Other bindings
+		val bindings = project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }
+		val (directoryBindings, fileSpecificBindings) = bindings.divideBy { _.target.isRegularFile }.toTuple
+		val (otherBindings, mappedBindings) = directoryBindings.map { b => b -> b.target }
+			.divideBy { _._2 == project.fullOutputDirectory }
+			// Sets the relative path of immediately mapping bindings
+			.mapSecond { _.map { _._1 -> Paths.get("") } }
+			.toTuple
+		
+		val deletedFilesBuilder = new VectorBuilder[Path]()
+		val failuresBuilder = new VectorBuilder[Throwable]()
+		// Performs the file-deletion process
+		val deleteResult = handleFileDeletion(project.fullOutputDirectory, Lazy { Paths.get("") },
+			mappedBindings, otherBindings, fileSpecificBindings.map { _.target }.toSet, backupDir,
+			deletedFilesBuilder, failuresBuilder)
+		val deletedFiles = deletedFilesBuilder.result()
+		
+		// Writes a note concerning the deleted files, if any were found
+		if (deletedFiles.nonEmpty) {
+			val noteWriteResult = buildDirectory match {
+				// Case: Files were deleted and build directory was specified => Writes a note
+				case Some(buildDirectory) =>
+					(buildDirectory / s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
+						writer.println(s"The following ${deletedFiles.size} files were deleted in this build:")
+						deletedFiles.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
 					}
-					// Case: File still present => No action needed
-					else
-						None
+				case None => Success(())
+			}
+			TryCatch.Success((), failuresBuilder.result() ++ deleteResult.failure ++ noteWriteResult.failure)
+		}
+		else
+			deleteResult.toTryCatch.withAdditionalFailures(failuresBuilder.result())
+	}
+	
+	// RECURSIVE
+	// - Assumes all bindings are set to correct source and full deployment environments
+	// - Mapped bindings are coupled with the relative path that matches this directory
+	// - Other bindings are coupled with their target deployment directories
+	//   that may appear somewhere under this directory
+	// - Keep files are individual deployment files that should be preserved and not deleted
+	//   (based on file-specific bindings)
+	// - Backup directory matches this directory
+	private def handleFileDeletion(targetDirectory: Path, relativeTargetDirectory: Lazy[Path],
+	                                mappedBindings: Iterable[(Binding, Path)],
+	                                otherBindings: Iterable[(Binding, Path)], keepFiles: Set[Path],
+	                                backupDir: Option[Lazy[Path]], deletedPathsBuilder: VectorBuilder[Path],
+	                                failuresBuilder: VectorBuilder[Throwable]): Try[Unit] =
+	{
+		// Divides the directly accessible files into directories and regular files
+		targetDirectory.iterateChildren { _.divideBy { _.isRegularFile }.map { _.toVector } }
+			.flatMap { case Pair(subDirectories, files) =>
+				// Checks whether the regular files appear under some of the mapped bindings
+				if (files.nonEmpty) {
+					lazy val sourceDirectories = mappedBindings
+						.map { case (binding, relative) => binding.source/relative }
+					val filesToDelete = files.iterator
+						.filter { file =>
+							// Won't include entries listed under "keepFiles"
+							!keepFiles.contains(file) &&
+								sourceDirectories.forall { dir => (dir/file.fileName).notExists }
+						}
+						.toVector
+					if (filesToDelete.nonEmpty) {
+						// Records the deleted files
+						deletedPathsBuilder ++= filesToDelete.map { f => relativeTargetDirectory.value/f.fileName }
+						// Performs the deletion or move-to-backup operation
+						val failures = backupDir match {
+							// Case: Backup files instead of deleting them
+							case Some(lazyBackUpDir) =>
+								filesToDelete.flatMap { _.moveTo(lazyBackUpDir.value).failure }
+							// Case: Delete files
+							case None => filesToDelete.flatMap { _.delete().failure }
+						}
+						// Records encountered failures
+						failuresBuilder ++= failures
+					}
+				}
+				// Recursively moves down to the sub-directories
+				subDirectories.tryForeach { subDirectory =>
+					val dirName = subDirectory.fileName
+					// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
+					val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 == subDirectory }
+						// Filters out the "other" bindings that can't appear under this sub-directory
+						.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
+						// Assigns correct relative path to the new mappings
+						.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
+						.toTuple
+					// Updates the relative paths of existing mapped bindings
+					val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
+						newMappedBindings
+					
+					handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
+						nextMappedBindings, remainingOtherBindings,
+						keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder)
 				}
 			}
-		}
-		.toTryCatch.logToTryWithMessage("Failed to delete some of the old files")
-		.flatMap { deleted =>
-			// Records the deleted files to the build directory (build mode only)
-			if (deleted.nonEmpty)
-				buildDirectory match {
-					// Case: Files were deleted and build directory was specified => Writes a note
-					case Some(buildDirectory) =>
-						(buildDirectory/s"deleted-files-$deploymentIndex.txt").writeUsing { writer =>
-							writer.println(s"The following ${deleted.size} files were deleted in this build:")
-							deleted.map { _.toString }.sorted.foreach { p => writer.println(s"\t- $p") }
-						}.map { Some(_) }
-					case None => Success(None)
-				}
-			else
-				Success(None)
-		}
 	}
 	
 	// Tests whether two paths should be considered different files.
@@ -210,7 +266,7 @@ object Deploy
 					target.readWith { targetStream =>
 						// Compares the first < 100 000 bytes of both files
 						Pair(sourceStream, targetStream)
-							.map { stream => Iterator.continually { stream.read() }.take(100000).takeWhile { _ >= 0 } }
+							.map { stream => Iterator.continually { stream.read() }.takeWhile { _ >= 0 } }
 							.isAsymmetric
 					}
 				}.getOrElse(true) // Considers changed on a read failure
