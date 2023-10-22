@@ -98,9 +98,14 @@ object OptidepyApp extends App
 						case Some(p) => p.toString
 						case None => "not defined"
 					}
-					if (StdIn.ask(s"Do you want to change the root input directory? Currently $currentInputName"))
-						StdIn.printAndReadLine("Please specify the new input directory (leave empty if there is no common root directory)")
-							.notEmpty.map { Paths.get(_) } -> Vector()
+					if (StdIn.ask(s"Do you want to change the root input directory? Currently $currentInputName")) {
+						val newRoot = StdIn.printAndReadLine(
+								"Please specify the new input directory (leave empty if there is no common root directory)")
+							.notEmpty.map { Paths.get(_) }
+						// Transfers the input paths to the new root, if possible
+						val newProject = project.withInput(newRoot)
+						newRoot -> newProject.relativeBindings
+					}
 					else
 						project.input -> project.relativeBindings
 				}

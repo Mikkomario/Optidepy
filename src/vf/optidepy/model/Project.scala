@@ -76,4 +76,29 @@ case class Project(name: String, input: Option[Path], output: Path, relativeBind
 	 */
 	def directoryForDeployment(deployment: Deployment) =
 		output/s"build-${ deployment.index }-${deployment.timestamp.toLocalDate.toString}"
+	
+	/**
+	 * Creates a copy of this project with altered input path.
+	 * Bindings are preserved, but relativized to the new path, if possible.
+	 * Input bindings that are not relative to the new input path are discarded.
+	 * @param newInput New input root
+	 * @return Copy of this project with altered input root
+	 */
+	def withInput(newInput: Option[Path]) = {
+		// Transforms the input paths to their absolute form for the conversion
+		val absoluteBindings = input match {
+			case Some(oldRoot) => relativeBindings.map { _.mapSource { p => (oldRoot / p).absolute } }
+			case None => relativeBindings
+		}
+		// Converts to paths relative to the new root
+		// Paths which are not relative to the new root are discarded
+		val newBindings = newInput match {
+			case Some(newInput) =>
+				absoluteBindings.flatMap { b =>
+					b.source.relativeTo(newInput).toOption.map { newSource => b.copy(source = newSource) }
+				}
+			case None => absoluteBindings
+		}
+		copy(input = newInput, relativeBindings = newBindings)
+	}
 }

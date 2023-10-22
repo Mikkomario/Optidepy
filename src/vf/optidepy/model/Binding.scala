@@ -54,4 +54,13 @@ case class Binding(source: Path, target: Path) extends ModelConvertible
 	// IMPLEMENTED  ----------------------
 	
 	override def toModel: Model = Model.from("source" -> source.toJson, "target" -> target.toJson)
+	
+	
+	// OTHER    --------------------------
+	
+	/**
+	 * @param f A mapping function to apply to source paths
+	 * @return Copy of this binding with a mapped source path
+	 */
+	def mapSource(f: Path => Path) = copy(source = f(source))
 }
