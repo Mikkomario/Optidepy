@@ -2,6 +2,7 @@ package vf.optidepy.controller
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
+import utopia.flow.collection.immutable.caching.LazyTree
 import utopia.flow.operator.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
@@ -63,48 +64,10 @@ object Deploy
 	{
 		project.sourceCorrectedBindings
 			.tryFlatMap { binding =>
-				lazy val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
-				val isFileSpecificBinding = binding.source.isRegularFile
-				val alteredFiles = lastDeployment match {
-					// Case: Time threshold specified => Checks which files have been altered
-					case Some(d) =>
-						println(s"Looking for new and modified files under ${binding.source}...")
-						val filesIter = {
-							if (isFileSpecificBinding)
-								Iterator.single(Success(binding.source))
-							else
-								binding.source.allChildrenIterator
-						}
-						filesIter
-							.filter {
-								case Success(path) =>
-									// Only moves regular files
-									if (path.isDirectory)
-										false
-									else
-										path.lastModified match {
-											// Case: Last modified available => Checks whether it has updated
-											case Success(t) => t > d.timestamp
-											// Case: Last-modified couldn't be read => Considers it changed
-											case Failure(error) =>
-												log(error, s"Couldn't read the last modified -time of $path")
-												true
-										}
-								case Failure(_) => true
-							}
-							// Also makes sure either the file size or file contents are different
-							.filter {
-								case Success(path) =>
-									val relativePath = path.relativeTo(binding.source).either
-									val fullTargetPath = absoluteBinding.target/relativePath
-									hasUpdated(path, fullTargetPath)
-								case Failure(_) => true
-							}
-							.toTry
-					// Case: No time threshold specified => Targets all files
-					case None => binding.source.children
-				}
-				alteredFiles
+				// Converts the binding to its absolute format (i.e. targeting the right output directory)
+				val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
+				findAlteredFiles(absoluteBinding, lastDeployment)
+					// Transforms the modified files into file-specific binding instances
 					.map { _.map { binding / _.relativeTo(binding.source).either }.toVector }
 			}
 			.flatMap { altered =>
@@ -142,6 +105,60 @@ object Deploy
 					}
 				}
 			}
+	}
+	
+	// Finds all files that were modified since the last deployment from the specified binding
+	private def findAlteredFiles(absoluteBinding: Binding, lastDeployment: Option[Deployment])(implicit log: Logger) =
+	{
+		lastDeployment match {
+			// Case: Time threshold specified => Checks which files have been altered
+			case Some(deployment) =>
+				val modifiedFiles = {
+					// Case: Source is a regular file => Checks whether it has been modified
+					if (absoluteBinding.source.isRegularFile) {
+						if (hasChanged(absoluteBinding, absoluteBinding.source, deployment))
+							Vector(absoluteBinding.source)
+						else
+							Vector()
+					}
+					// Case: Source is a directory => Processes it and collects the files to deploy
+					else {
+						val deploymentFilesBuilder = new VectorBuilder[Path]()
+						// TODO: Use a separate logger in .toTree that fails the process if an error is encountered
+						findAlteredFilesFromDirectory(absoluteBinding, deployment, absoluteBinding.source.toTree,
+							deploymentFilesBuilder)
+						deploymentFilesBuilder.result()
+					}
+				}
+				Success(modifiedFiles)
+			// Case: No time threshold specified => Targets all files
+			case None => absoluteBinding.source.children
+		}
+	}
+	
+	private def findAlteredFilesFromDirectory(binding: Binding, lastDeployment: Deployment,
+	                                          directoryNode: LazyTree[Path],
+	                                          deploymentFilesBuilder: VectorBuilder[Path])
+	                                         (implicit log: Logger): Unit =
+	{
+		// Check whether the directory exists in the target destination
+		val relativePath = directoryNode.nav.relativeTo(binding.source).either
+		val targetDirectory = binding.target/relativePath
+		// Case: Target directory exists => Compare individual files and/or move down in the tree
+		if (targetDirectory.exists) {
+			val (subDirectories, files) = directoryNode.children.divideBy { _.nav.isRegularFile }.toTuple
+			
+			// Adds modified files from this directory to the deployment
+			deploymentFilesBuilder ++= files.iterator.map { _.nav }.filter { hasChanged(binding, _, lastDeployment) }
+			
+			// Handles the sub-directories using recursion
+			subDirectories.foreach { subDirectory =>
+				findAlteredFilesFromDirectory(binding, lastDeployment, subDirectory, deploymentFilesBuilder)
+			}
+		}
+		// Case: Target directory doesn't exist => Adds all files under this directory to be deployed
+		else
+			deploymentFilesBuilder ++= directoryNode.nodesBelowIterator.map { _.nav }.filter { _.isRegularFile }
 	}
 	
 	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int) =
@@ -255,10 +272,30 @@ object Deploy
 			}
 	}
 	
+	private def hasChanged(binding: Binding, file: Path, lastDeployment: Deployment)(implicit log: Logger) = {
+		val lastModifiedChanged = file.lastModified match {
+			// Case: Last modified available => Checks whether it has updated
+			case Success(t) => t > lastDeployment.timestamp
+			// Case: Last-modified couldn't be read => Considers it changed
+			case Failure(error) =>
+				log(error, s"Couldn't read the last modified -time of $file")
+				true
+		}
+		// Case: The last-modified-time was changed =>
+		// Also makes sure either the file size or file contents are different
+		if (lastModifiedChanged) {
+			val relativePath = file.relativeTo(binding.source).either
+			val fullTargetPath = binding.target / relativePath
+			fileContentHasUpdated(file, fullTargetPath)
+		}
+		else
+			false
+	}
+	
 	// Tests whether two paths should be considered different files.
 	// Intended for regular files only.
 	// Last modified should be tested first.
-	private def hasUpdated(source: Path, target: Path) = {
+	private def fileContentHasUpdated(source: Path, target: Path) = {
 		// Case: No target file present => Considers changed
 		if (!target.exists)
 			true

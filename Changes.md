@@ -8,6 +8,7 @@ List of Changes
 - Merging now preserves folder structure
 - Individual files get deployed
 - File removal process now checks file existence from under multiple source bindings
+- The deployment algorithm now takes into account renamed directories
 ### New Features
 - Added new `edit` command
 - Added file-removal / -cleaning process
