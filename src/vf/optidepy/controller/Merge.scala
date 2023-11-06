@@ -25,12 +25,13 @@ object Merge
 	 *         Contains None if no merging was done.
 	 *         Contains Some(merged directory) when merging was done
 	 */
-	def apply(project: DeployedProject, since: Option[Instant] = None) =
+	def apply(project: DeployedProject, branch: String = DeployedProject.defaultBranchName,
+	          since: Option[Instant] = None) =
 	{
 		// Finds the targeted mergeable deployments
-		val targets = project.deployments.reverseIterator
+		val targets = project.deployments.getOrElse(branch, Vector()).reverseIterator
 			.takeWhile { dep => since.forall { dep.timestamp >= _ } }
-			.map { dep => dep -> project.directoryForDeployment(dep) }
+			.map { dep => dep -> project.directoryForDeployment(branch, dep) }
 			// The deployment directories must still exist
 			.takeWhile { _._2.exists }.toVector
 		// Case: No targets to merge
@@ -39,11 +40,11 @@ object Merge
 		else
 			(targets.only match {
 				// Case: Only one target => Simply renames the directory
-				case Some((dep, dir)) => dir.rename(s"merge-${ dep.index }-$Today")
+				case Some((dep, dir)) => dir.rename(s"$branch-merge-${ dep.index }-$Today")
 				// Case: Multiple targets => Merges
 				case None =>
 					// Creates the target directory
-					(project.output/s"merge-${ targets.last._1.index }-to-${ targets.head._1.index }-$Today")
+					(project.output/s"$branch-merge-${ targets.last._1.index }-to-${ targets.head._1.index }-$Today")
 						.asExistingDirectory
 						.flatMap { targetDirectory =>
 							// Moves the latest copy of each file to the merge directory

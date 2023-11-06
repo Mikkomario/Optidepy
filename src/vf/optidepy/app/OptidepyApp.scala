@@ -2,6 +2,7 @@ package vf.optidepy.app
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.caching.cache.Cache
+import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.operator.EqualsExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.file.container.ObjectsFileContainer
@@ -27,16 +28,21 @@ object OptidepyApp extends App
 {
 	private lazy val projects = new ObjectsFileContainer(dataDirectory/"projects.json", DeployedProject)
 	private val counters = Cache { p: DeployedProject =>
-		new IndexCounter(p.deployments.map { _.index }.maxOption match {
+		new IndexCounter(p.lastDeploymentIndex match {
 			case Some(max) => max + 1
 			case None => 1
 		})
 	}
-	private var lastDeployment: Option[DeployedProject] = None
+	private var lastDeploymentAndBranch: Option[(DeployedProject, String)] = None
+	private def lastDeployment = lastDeploymentAndBranch.map { _._1 }
 	
+	private val projectArg = ArgumentSchema("project", "name",
+		help = "Name of the project to deploy (default = last project)")
+	private val branchArg = ArgumentSchema("branch", "b",
+		help = s"Targeted branch to deploy. Default value is the last deployed branch or ${
+			DeployedProject.defaultBranchName}")
 	private val commands = Vector(
-		Command("describe", "desc", help = "Describes a registered project")(
-			ArgumentSchema("project", "name", help = "Name of the targeted project")) { args =>
+		Command("describe", "desc", help = "Describes a registered project")(projectArg) { args =>
 			findProject(args("project").getString).foreach { project =>
 				println(s"\n${project.name}")
 				val inputStr = project.input match {
@@ -53,12 +59,17 @@ object OptidepyApp extends App
 					println("\t- Only deploys to the \"full\" directory")
 				if (!project.fileDeletionEnabled)
 					println(s"\t- File deletion disabled")
-				project.lastDeployment.foreach { dep => println(s"\t- Last deployment (${dep.index}) was made ${
-					(Now - dep.timestamp).description} ago") }
+				
+				project.deployments.foreach { case (branch, deployments) =>
+					deployments.lastOption.foreach { lastDeployment =>
+						println(s"\t- Last deployment of $branch (${lastDeployment.index}) was made ${
+							(Now - lastDeployment.timestamp).description } ago")
+					}
+				}
 			}
 		},
 		Command("add", "a", help = "Registers a new project")(
-			ArgumentSchema("project", "name", help = "Name of the new project"),
+			projectArg,
 			ArgumentSchema("input", "in", help = "Path to the root input directory"),
 			ArgumentSchema("output", "out", help = "Path to the root output directory")
 		) { args =>
@@ -83,14 +94,14 @@ object OptidepyApp extends App
 					projects.current :+= newProject
 					println(s"$projectName added as a new project")
 					if (StdIn.ask(s"Do you want to deploy $projectName now?"))
-						deploy(newProject, skipSeparateBuild = true, skipFileRemoval = true)
+						deploy(newProject, args("branch").string,
+							skipSeparateBuild = true, skipFileRemoval = true)
 				}
 			}
 			else
 				println("Parameters 'project' and 'input' are required")
 		},
-		Command("edit", "e", help = "Modifies the deployment paths of a single project")(
-			ArgumentSchema("project", "name", help = "Name of the project to edit")) { args =>
+		Command("edit", "e", help = "Modifies the deployment paths of a single project")(projectArg) { args =>
 			findProject(args("project").getString).foreach { project =>
 				// Checks whether the main input path needs to be changed
 				val (input, validInputBindings) = {
@@ -156,15 +167,17 @@ object OptidepyApp extends App
 			}
 		},
 		Command("deploy", "dep", "Deploys a project")(
-			ArgumentSchema("project", "name", help = "Name of the project to deploy (default = last project)"),
+			projectArg, branchArg,
 			ArgumentSchema.flag("onlyFull", "F",
 				help = "Whether no separate build directory should be created, resulting in only the \"full\" directory being created"),
 			ArgumentSchema.flag("noRemoval", "NR", help = "Whether the file deletion process should be skipped")) { args =>
 			findProject(args("project").getString)
-				.foreach { deploy(_, args("onlyFull").getBoolean, args("noRemoval").getBoolean) }
+				.foreach { deploy(_, args("branch").string,
+					args("onlyFull").getBoolean, args("noRemoval").getBoolean) }
 		},
 		Command("merge", "m", "Merges recent builds into a single build")(
-			ArgumentSchema("project", "name", help = "Targeted project. Default = Last deployed project."),
+			projectArg, branchArg,
+			ArgumentSchema("branch", "b", DeployedProject.defaultBranchName, help = "Targeted branch to deploy"),
 			ArgumentSchema("since", "t",
 				help = "Earliest targeted deployment date or time. Default = merge all previous builds.")) { args =>
 			findProject(args("project").getString).foreach { project =>
@@ -173,7 +186,7 @@ object OptidepyApp extends App
 					case Some(since) => println(s"Merges builds since ${ since.toLocalDateTime }...")
 					case None => println("Merges all recent builds...")
 				}
-				Merge(project, since) match {
+				Merge(project, args("branch").stringOr(DeployedProject.defaultBranchName), since) match {
 					case Success(result) =>
 						result match {
 							case Some(directory) =>
@@ -219,12 +232,19 @@ object OptidepyApp extends App
 		result
 	}
 	
-	private def deploy(project: DeployedProject, skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false) =
+	private def deploy(project: DeployedProject, branch: Option[String],
+	                   skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false) =
 	{
 		println(s"Deploying ${project.name}...")
-		Deploy(project, skipSeparateBuild, skipFileRemoval)(counters(project), log) match {
+		// If branch name is not specified, uses the last deployed branch,
+		// but only if targeting the same project
+		val usedBranch = branch.getOrElse {
+			lastDeploymentAndBranch.filter { _._1.name == project.name }.map { _._2 }
+				.getOrElse(DeployedProject.defaultBranchName)
+		}
+		Deploy(project, usedBranch, skipSeparateBuild, skipFileRemoval)(counters(project), log) match {
 			case Success(project) =>
-				lastDeployment = Some(project)
+				lastDeploymentAndBranch = Some(project -> usedBranch)
 				projects.pointer.update { old => old.replaceOrAppend(project) { _.name == project.name } }
 				println(s"${project.name} successfully deployed")
 			case Failure(error) => log(error, s"Failed to deploy ${project.name}")

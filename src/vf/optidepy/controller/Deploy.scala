@@ -35,21 +35,26 @@ object Deploy
 	
 	/**
 	 * @param project A project
+	 * @param branch Name of the branch to deploy
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
-	def apply(project: DeployedProject, skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean)
+	def apply(project: DeployedProject, branch: String,
+	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean)
 	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
-		apply(project.project, project.lastDeployment, skipSeparateBuildDirectory, skipFileRemoval).map {
-			case Some(d) => project + d
-			case None => project
-		}
+		apply(project.project, branch, project.lastDeploymentOf(branch), skipSeparateBuildDirectory,
+			skipFileRemoval)
+			.map {
+				case Some(d) => project + (branch -> d)
+				case None => project
+			}
 	
 	/**
 	 * Deploys a new project version
 	 * @param project Project to deploy
+	 * @param branch Name of the branch to deploy
 	 * @param lastDeployment Last deployment instance (default = None = not deployed before)
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 *                                   Default = false = create a separate build directory.
@@ -58,14 +63,15 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: Project, lastDeployment: Option[Deployment] = None, skipSeparateBuildDirectory: Boolean = false,
-	          skipFileRemoval: Boolean = false)
+	def apply(project: Project, branch: String, lastDeployment: Option[Deployment] = None,
+	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
+		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
 		project.sourceCorrectedBindings
 			.tryFlatMap { binding =>
 				// Converts the binding to its absolute format (i.e. targeting the right output directory)
-				val absoluteBinding = binding.underTarget(project.fullOutputDirectory)
+				val absoluteBinding = binding.underTarget(fullOutputDirectory)
 				findAlteredFiles(absoluteBinding, lastDeployment)
 					// Transforms the modified files into file-specific binding instances
 					.map { _.map { binding / _.relativeTo(binding.source).either }.toVector }
@@ -85,9 +91,9 @@ object Deploy
 						if (skipSeparateBuildDirectory || !project.usesBuildDirectories)
 							None
 						else
-							Some(project.directoryForDeployment(deployment))
+							Some(project.directoryForDeployment(branch, deployment))
 					}
-					val outputDirectories = buildDirectory.toVector :+ project.fullOutputDirectory
+					val outputDirectories = buildDirectory.toVector :+ fullOutputDirectory
 					println(s"Copying ${altered.size} files to ${outputDirectories.mkString(" and ")}...")
 					altered.tryMap { binding =>
 						outputDirectories.tryMap { output =>
@@ -100,7 +106,7 @@ object Deploy
 						if (skipFileRemoval || lastDeployment.isEmpty || !project.fileDeletionEnabled)
 							Success(Some(deployment))
 						else
-							checkForRemovedFiles(project, buildDirectory, deployment.index)
+							checkForRemovedFiles(project, branch, buildDirectory, deployment.index)
 								.logToTry.map { _ => Some(deployment) }
 					}
 				}
@@ -158,21 +164,23 @@ object Deploy
 		}
 		// Case: Target directory doesn't exist => Adds all files under this directory to be deployed
 		else
-			deploymentFilesBuilder ++= directoryNode.nodesBelowIterator.map { _.nav }.filter { _.isRegularFile }
+			deploymentFilesBuilder += directoryNode.nav
 	}
 	
-	private def checkForRemovedFiles(project: Project, buildDirectory: => Option[Path], deploymentIndex: => Int) =
+	private def checkForRemovedFiles(project: Project, branch: String,
+	                                 buildDirectory: => Option[Path], deploymentIndex: => Int) =
 	{
-		println(s"Checking for removed files from ${project.fullOutputDirectory}...")
+		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
+		println(s"Checking for removed files from $fullOutputDirectory...")
 		val backupDir = buildDirectory.map { dir => Lazy { dir/"deleted-files" } }
 		// Groups the bindings into different categories:
 		//      1) File-specific bindings
 		//      2) Bindings that map directly to the full output directory
 		//      3) Other bindings
-		val bindings = project.sourceCorrectedBindings.map { _.underTarget(project.fullOutputDirectory) }
+		val bindings = project.sourceCorrectedBindings.map { _.underTarget(fullOutputDirectory) }
 		val (directoryBindings, fileSpecificBindings) = bindings.divideBy { _.target.isRegularFile }.toTuple
 		val (otherBindings, mappedBindings) = directoryBindings.map { b => b -> b.target }
-			.divideBy { _._2 ~== project.fullOutputDirectory }
+			.divideBy { _._2 ~== fullOutputDirectory }
 			// Sets the relative path of immediately mapping bindings
 			.mapSecond { _.map { _._1 -> Paths.get("") } }
 			.toTuple
@@ -180,7 +188,7 @@ object Deploy
 		val deletedFilesBuilder = new VectorBuilder[Path]()
 		val failuresBuilder = new VectorBuilder[Throwable]()
 		// Performs the file-deletion process
-		val deleteResult = handleFileDeletion(project.fullOutputDirectory, Lazy { Paths.get("") },
+		val deleteResult = handleFileDeletion(fullOutputDirectory, Lazy { Paths.get("") },
 			mappedBindings, otherBindings, fileSpecificBindings.map { _.target }.toSet, backupDir,
 			deletedFilesBuilder, failuresBuilder)
 		val deletedFiles = deletedFilesBuilder.result()
@@ -265,9 +273,20 @@ object Deploy
 					val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
 						newMappedBindings
 					
+					// Deletes the targeted files within this directory
 					handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
 						nextMappedBindings, remainingOtherBindings,
 						keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder)
+						// If successful, checks whether this directory is now empty
+						// If so, deletes it
+						.flatMap { _ =>
+							if (subDirectory.isEmpty) {
+								println(s"Deleting the empty sub-directory: $subDirectory")
+								subDirectory.delete()
+							}
+							else
+								Success(false)
+						}
 				}
 			}
 	}

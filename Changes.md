@@ -1,7 +1,7 @@
 # Optidepy
 List of Changes
 
-## v1.0.2 (in development)
+## v1.1 (in development)
 ### Status
 - 12.6.2023 - Development started
 ### Bugfixes
@@ -10,6 +10,7 @@ List of Changes
 - File removal process now checks file existence from under multiple source bindings
 - The deployment algorithm now takes into account renamed directories
 ### New Features
+- Added support for separate deployment branches
 - Added new `edit` command
 - Added file-removal / -cleaning process
 - Added `F` flag to the `deploy` command for disabling build-specific directory-creation

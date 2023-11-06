@@ -47,11 +47,6 @@ case class Project(name: String, input: Option[Path], output: Path, relativeBind
 	// COMPUTED -----------------------
 	
 	/**
-	 * @return The directory that will contain the full project output
-	 */
-	def fullOutputDirectory = output/"full"
-	
-	/**
 	 * @return Directory bindings where input is absolute and output is relative
 	 */
 	def sourceCorrectedBindings = input match {
@@ -71,11 +66,18 @@ case class Project(name: String, input: Option[Path], output: Path, relativeBind
 	// OTHER    ---------------------
 	
 	/**
+	 * @param branch Name of the targeted branch
+	 * @return The directory that will contain the full project output for that branch
+	 */
+	def fullOutputDirectoryFor(branch: String) = output / branch
+	
+	/**
+	 * @param branch Name of the deployed branch
 	 * @param deployment Targeted deployment
 	 * @return A directory where that deployment should be stored
 	 */
-	def directoryForDeployment(deployment: Deployment) =
-		output/s"build-${ deployment.index }-${deployment.timestamp.toLocalDate.toString}"
+	def directoryForDeployment(branch: String, deployment: Deployment) =
+		output/s"$branch-build-${ deployment.index }-${deployment.timestamp.toLocalDate.toString}"
 	
 	/**
 	 * Creates a copy of this project with altered input path.

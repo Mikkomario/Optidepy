@@ -1,20 +1,52 @@
 package vf.optidepy.model
 
+import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
-import utopia.flow.generic.model.immutable.{Constant, Model}
+import utopia.flow.generic.model.immutable.{Constant, Model, Value}
+import utopia.flow.generic.model.mutable.DataType.{ModelType, VectorType}
 import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
 import utopia.flow.util.Mutate
+import utopia.flow.util.StringExtensions._
 import utopia.flow.view.template.Extender
 
 import scala.util.Try
 
 object DeployedProject extends FromModelFactory[DeployedProject]
 {
+	// ATTRIBUTES   --------------------
+	
+	/**
+	 * The name of the default branch (by default)
+	 */
+	val defaultBranchName = "main"
+	
+	
+	// IMPLEMENTED  --------------------
+	
 	override def apply(model: ModelLike[Property]): Try[DeployedProject] =
+		// Parses the standard project data first
 		Project(model).map { project =>
-			apply(project, model("deployments").getVector.flatMap { v => Deployment(v.getModel).toOption })
+			// Next, parses deployment data
+			val deployments = model("deployments").castTo(ModelType, VectorType) match {
+				// Case: Model input type (expected) => Parses deployments per branch
+				case Left(modelValue) =>
+					modelValue.model match {
+						case Some(depModel) =>
+							depModel.propertyMap.view.mapValues { c => deploymentsFromValue(c.value) }.toMap
+						case None => Map[String, Vector[Deployment]]()
+					}
+				// Case: Vector input type (backwards-compatibility) => Parses deployments for the default branch
+				case Right(vectorValue) => Map(defaultBranchName -> deploymentsFromValue(vectorValue))
+			}
+			apply(project, deployments)
 		}
+	
+	
+	// OTHERS   --------------------------
+	
+	private def deploymentsFromValue(vectorValue: Value) =
+		vectorValue.getVector.flatMap { v => Deployment(v.getModel).toOption }
 }
 
 /**
@@ -22,15 +54,17 @@ object DeployedProject extends FromModelFactory[DeployedProject]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
-case class DeployedProject(project: Project, deployments: Vector[Deployment] = Vector())
+case class DeployedProject(project: Project, deployments: Map[String, Vector[Deployment]] = Map())
 	extends Extender[Project] with ModelConvertible
 {
-	// COMPUTED ---------------------------
+	// COMPUTED --------------------------
 	
 	/**
-	 * @return The latest deployment of this project
+	 * Index associated with the latest deployment.
+	 * None if not deployed yet.
 	 */
-	def lastDeployment = deployments.lastOption
+	lazy val lastDeploymentIndex =
+		deployments.valuesIterator.flatten.map { _.index }.maxOption
 	
 	
 	// IMPLEMENTED  ----------------------
@@ -41,10 +75,19 @@ case class DeployedProject(project: Project, deployments: Vector[Deployment] = V
 	// OTHER    --------------------------
 	
 	/**
-	 * @param deployment A new deployment of this project
+	 * @param branch Name of the targeted branch
+	 * @return The latest deployment of this project
+	 */
+	def lastDeploymentOf(branch: String) =
+		deployments.getOrElse(branch, Vector.empty).lastOption
+	
+	/**
+	 * @param deployment A new deployment of this project as a tuple
+	 *                   where the first value is the deployed branch name
 	 * @return A copy of this project with that deployment included
 	 */
-	def +(deployment: Deployment) = copy(deployments = deployments :+ deployment)
+	def +(deployment: (String, Deployment)) =
+		copy(deployments = deployments.appendOrMerge(deployment._1, Vector(deployment._2)) { _ ++ _ })
 	
 	/**
 	 * @param f A mapping function to apply to the wrapped project
@@ -55,5 +98,7 @@ case class DeployedProject(project: Project, deployments: Vector[Deployment] = V
 	
 	// IMPLEMENTED  ---------------------
 	
-	override def toModel: Model = project.toModel + Constant("deployments", deployments)
+	override def toModel: Model = project.toModel +
+		Constant("deployments", Model.withConstants(deployments.map { case (branch, deployments) =>
+			Constant(branch.nonEmptyOrElse(DeployedProject.defaultBranchName), deployments) }))
 }
