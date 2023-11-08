@@ -12,6 +12,7 @@ import utopia.flow.view.immutable.caching.Lazy
 import vf.optidepy.model.{Binding, DeployedProject, Deployment, Project}
 
 import java.nio.file.{Path, Paths}
+import java.time.Instant
 import scala.collection.immutable.VectorBuilder
 import scala.io.Codec
 import scala.util.{Failure, Success, Try}
@@ -36,26 +37,38 @@ object Deploy
 	/**
 	 * @param project A project
 	 * @param branch Name of the branch to deploy
+	 * @param since The time after which all changes should be included in the deployment,
+	 *              regardless of whether there was a deployment in between or not.
+	 *              Default = None = just include changes since the last project deployment
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
-	def apply(project: DeployedProject, branch: String,
+	def apply(project: DeployedProject, branch: String, since: Option[Instant],
 	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean)
 	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
-		apply(project.project, branch, project.lastDeploymentOf(branch), skipSeparateBuildDirectory,
+	{
+		val lastProjectDeployTime = project.lastDeploymentOf(branch).map { _.timestamp }
+		// If the "since" parameter is specified, may use an earlier "last deployment time"
+		val appliedLastDeploymentTime = since match {
+			case Some(since) => lastProjectDeployTime.map { _ min since }
+			case None => lastProjectDeployTime
+		}
+		apply(project.project, branch, appliedLastDeploymentTime, skipSeparateBuildDirectory,
 			skipFileRemoval)
 			.map {
 				case Some(d) => project + (branch -> d)
 				case None => project
 			}
+	}
 	
 	/**
 	 * Deploys a new project version
 	 * @param project Project to deploy
 	 * @param branch Name of the branch to deploy
-	 * @param lastDeployment Last deployment instance (default = None = not deployed before)
+	 * @param lastDeploymentTime Time when this project / branch was deployed the last time
+	 *                           (default = None = not deployed before)
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 *                                   Default = false = create a separate build directory.
 	 * @param skipFileRemoval Whether the file-removal process should be skipped (default = false)
@@ -63,7 +76,7 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: Project, branch: String, lastDeployment: Option[Deployment] = None,
+	def apply(project: Project, branch: String, lastDeploymentTime: Option[Instant] = None,
 	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
@@ -72,7 +85,7 @@ object Deploy
 			.tryFlatMap { binding =>
 				// Converts the binding to its absolute format (i.e. targeting the right output directory)
 				val absoluteBinding = binding.underTarget(fullOutputDirectory)
-				findAlteredFiles(absoluteBinding, lastDeployment)
+				findAlteredFiles(absoluteBinding, lastDeploymentTime)
 					// Transforms the modified files into file-specific binding instances
 					.map { _.map { binding / _.relativeTo(binding.source).either }.toVector }
 			}
@@ -103,7 +116,7 @@ object Deploy
 					}.flatMap { _ =>
 						println("All files successfully copied")
 						// Handles removed files as well (unless disabled)
-						if (skipFileRemoval || lastDeployment.isEmpty || !project.fileDeletionEnabled)
+						if (skipFileRemoval || lastDeploymentTime.isEmpty || !project.fileDeletionEnabled)
 							Success(Some(deployment))
 						else
 							checkForRemovedFiles(project, branch, buildDirectory, deployment.index)
@@ -114,15 +127,18 @@ object Deploy
 	}
 	
 	// Finds all files that were modified since the last deployment from the specified binding
-	private def findAlteredFiles(absoluteBinding: Binding, lastDeployment: Option[Deployment])(implicit log: Logger) =
+	private def findAlteredFiles(absoluteBinding: Binding, lastDeploymentTime: Option[Instant])
+	                            (implicit log: Logger) =
 	{
-		lastDeployment match {
+		lastDeploymentTime match {
 			// Case: Time threshold specified => Checks which files have been altered
-			case Some(deployment) =>
+			case Some(deploymentTime) =>
+				println(s"Looking for files that have been modified since ${
+					deploymentTime.toLocalDateTime} from ${absoluteBinding.source}...")
 				val modifiedFiles = {
 					// Case: Source is a regular file => Checks whether it has been modified
 					if (absoluteBinding.source.isRegularFile) {
-						if (hasChanged(absoluteBinding, absoluteBinding.source, deployment))
+						if (hasChanged(absoluteBinding, absoluteBinding.source, deploymentTime))
 							Vector(absoluteBinding.source)
 						else
 							Vector()
@@ -131,7 +147,7 @@ object Deploy
 					else {
 						val deploymentFilesBuilder = new VectorBuilder[Path]()
 						// TODO: Use a separate logger in .toTree that fails the process if an error is encountered
-						findAlteredFilesFromDirectory(absoluteBinding, deployment, absoluteBinding.source.toTree,
+						findAlteredFilesFromDirectory(absoluteBinding, deploymentTime, absoluteBinding.source.toTree,
 							deploymentFilesBuilder)
 						deploymentFilesBuilder.result()
 					}
@@ -142,7 +158,7 @@ object Deploy
 		}
 	}
 	
-	private def findAlteredFilesFromDirectory(binding: Binding, lastDeployment: Deployment,
+	private def findAlteredFilesFromDirectory(binding: Binding, lastDeploymentTime: Instant,
 	                                          directoryNode: LazyTree[Path],
 	                                          deploymentFilesBuilder: VectorBuilder[Path])
 	                                         (implicit log: Logger): Unit =
@@ -155,11 +171,12 @@ object Deploy
 			val (subDirectories, files) = directoryNode.children.divideBy { _.nav.isRegularFile }.toTuple
 			
 			// Adds modified files from this directory to the deployment
-			deploymentFilesBuilder ++= files.iterator.map { _.nav }.filter { hasChanged(binding, _, lastDeployment) }
+			deploymentFilesBuilder ++= files.iterator.map { _.nav }
+				.filter { hasChanged(binding, _, lastDeploymentTime) }
 			
 			// Handles the sub-directories using recursion
 			subDirectories.foreach { subDirectory =>
-				findAlteredFilesFromDirectory(binding, lastDeployment, subDirectory, deploymentFilesBuilder)
+				findAlteredFilesFromDirectory(binding, lastDeploymentTime, subDirectory, deploymentFilesBuilder)
 			}
 		}
 		// Case: Target directory doesn't exist => Adds all files under this directory to be deployed
@@ -243,8 +260,6 @@ object Deploy
 						.toVector
 					if (filesToDelete.nonEmpty) {
 						println(s"Deletes ${filesToDelete.size} files under $targetDirectory")
-						println(s"Matching source directories: ${sourceDirectories.mkString(", ")}")
-						println(s"Files to keep: ${keepFiles.mkString(", ")}")
 						// Records the deleted files
 						deletedPathsBuilder ++= filesToDelete.map { f => relativeTargetDirectory.value/f.fileName }
 						// Performs the deletion or move-to-backup operation
@@ -291,10 +306,10 @@ object Deploy
 			}
 	}
 	
-	private def hasChanged(binding: Binding, file: Path, lastDeployment: Deployment)(implicit log: Logger) = {
+	private def hasChanged(binding: Binding, file: Path, lastDeploymentTime: Instant)(implicit log: Logger) = {
 		val lastModifiedChanged = file.lastModified match {
 			// Case: Last modified available => Checks whether it has updated
-			case Success(t) => t > lastDeployment.timestamp
+			case Success(t) => t > lastDeploymentTime
 			// Case: Last-modified couldn't be read => Considers it changed
 			case Failure(error) =>
 				log(error, s"Couldn't read the last modified -time of $file")

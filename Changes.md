@@ -4,6 +4,8 @@ List of Changes
 ## v1.1 (in development)
 ### Status
 - 12.6.2023 - Development started
+### Breaking changes
+- Build and "full" target directories are now named based on the used branch
 ### Bugfixes
 - Merging now preserves folder structure
 - Individual files get deployed
@@ -15,6 +17,7 @@ List of Changes
 - Added file-removal / -cleaning process
 - Added `F` flag to the `deploy` command for disabling build-specific directory-creation
 - Added `NR` flag to the `deploy` command for disabling file-removal
+- Added support for custom "last deploy time" -specification
 ### Other Changes
 - Tests for file size and/or content changes before considering files changed
 - Add project now tests whether a project with the same name exists already
