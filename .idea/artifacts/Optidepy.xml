@@ -10,7 +10,10 @@
         <element id="module-output" name="BunnyMunch" />
         <element id="module-output" name="Flow" />
       </element>
-      <element id="library" level="application" name="scala-sdk-2.13.7" />
+      <element id="file-copy" path="$PROJECT_DIR$/Changes.md" />
+      <element id="file-copy" path="$PROJECT_DIR$/LICENSE" />
+      <element id="file-copy" path="$PROJECT_DIR$/README.md" />
+      <element id="library" level="application" name="scala-sdk-2.13.12" />
     </root>
   </artifact>
 </component>

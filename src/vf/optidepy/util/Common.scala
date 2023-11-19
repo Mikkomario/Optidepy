@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext
 object Common
 {
 	implicit val log: Logger = SysErrLogger
-	implicit val exc: ExecutionContext = new ThreadPool("Optidepy").executionContext
+	implicit val exc: ExecutionContext = new ThreadPool("Optidepy")
 	implicit val jsonParser: JsonParser = JsonBunny
 	
 	val dataDirectory: Path = "data"

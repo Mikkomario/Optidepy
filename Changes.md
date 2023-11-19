@@ -1,7 +1,13 @@
 # Optidepy
 List of Changes
 
-## v1.1 (in development)
+## v1.1 - 18.11.2023
+The most important updates in this release are:
+1. Support for branches
+2. Automatic file-removal
+3. Better project management & project settings
+
+Besides these, there are a number of updates that make the deployment process more optimized and more safe.
 ### Status
 - 12.6.2023 - Development started
 ### Breaking changes

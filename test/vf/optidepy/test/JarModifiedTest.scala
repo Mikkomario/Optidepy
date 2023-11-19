@@ -1,7 +1,7 @@
 package vf.optidepy.test
 
 import utopia.flow.collection.immutable.Pair
-import utopia.flow.operator.EqualsFunction
+import utopia.flow.operator.equality.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 
 import java.nio.file.Path
