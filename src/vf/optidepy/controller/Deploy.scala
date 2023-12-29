@@ -46,14 +46,20 @@ object Deploy
 	 * @return Success or failure, containing up-to-date project state.
 	 */
 	def apply(project: DeployedProject, branch: String, since: Option[Instant],
-	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean)
+	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean, fullRebuild: Boolean)
 	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
 	{
 		val lastProjectDeployTime = project.lastDeploymentOf(branch).map { _.timestamp }
 		// If the "since" parameter is specified, may use an earlier "last deployment time"
-		val appliedLastDeploymentTime = since match {
-			case Some(since) => lastProjectDeployTime.map { _ min since }
-			case None => lastProjectDeployTime
+		// If rebuild flag is set to true, will consider the project to not have been deployed previously
+		val appliedLastDeploymentTime = {
+			if (fullRebuild)
+				None
+			else
+				since match {
+					case Some(since) => lastProjectDeployTime.map { _ min since }
+					case None => lastProjectDeployTime
+				}
 		}
 		apply(project.project, branch, appliedLastDeploymentTime, skipSeparateBuildDirectory,
 			skipFileRemoval)

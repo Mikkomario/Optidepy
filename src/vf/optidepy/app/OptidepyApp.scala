@@ -177,66 +177,74 @@ object OptidepyApp extends App
 				"The duration of time to always include in this build"),
 			ArgumentSchema.flag("onlyFull", "F",
 				help = "Whether no separate build directory should be created, resulting in only the \"full\" directory being created"),
-			ArgumentSchema.flag("noRemoval", "NR", help = "Whether the file deletion process should be skipped")) { args =>
+			ArgumentSchema.flag("noRemoval", "NR", help = "Whether the file deletion process should be skipped"),
+			ArgumentSchema.flag("rebuild", "R",
+				help = "Whether the project should be rebuilt (i.e. whether all files should be considered to have changed)")) { args =>
 			findProject(args("project").getString)
 				.foreach { project =>
-					// Parses the 'since' parameter input
-					val since = args("since").string.flatMap[Duration] { input =>
-						// Expects either number + unit or a specific input like "last week"
-						// "Left" items are non-number, "Right" items are numbers
-						val parts = Regex.number.divide(input).take(2)
-						// Takes the number part (first part), if present and attempts to parse it
-						parts.headOption.flatMap { _.toOption.flatMap { _.int } } match {
-							// Case: 'since' is specified as number + input
-							case Some(number) =>
-								// Parses the unit part
-								val unit = parts.lift(1) match {
-									case Some(part) => part.either
-									case None => ""
-								}
-								// Case: Unit not specified => Warns the user
-								if (unit.isEmpty) {
-									println("When specifying the 'since' parameter, you must also specify the unit (s, m, h, w)")
-									None
-								}
-								else
-									unit.head.toLower match {
-										// Case: Hours
-										case 'h' => Some(number.hours)
-										// Case: Seconds
-										case 's' => Some(number.seconds)
-										// Case: Minutes
-										case 'm' => Some(number.minutes)
-										// Case: Weeks
-										case 'w' => Some(number.weeks)
-										// Case: Unsupported unit
-										case _ =>
-											println(s"The specified unit '$unit' is not recognized as a valid time unit.\nPlease use one of the following: s, m, h, w")
+					// Parses the 'since' parameter input (only if not full rebuild)
+					val isFullRebuild = args("rebuild").getBoolean
+					val since = {
+						if (isFullRebuild)
+							None
+						else
+							args("since").string.flatMap[Duration] { input =>
+								// Expects either number + unit or a specific input like "last week"
+								// "Left" items are non-number, "Right" items are numbers
+								val parts = Regex.number.divide(input).take(2)
+								// Takes the number part (first part), if present and attempts to parse it
+								parts.headOption.flatMap { _.toOption.flatMap { _.int } } match {
+									// Case: 'since' is specified as number + input
+									case Some(number) =>
+										// Parses the unit part
+										val unit = parts.lift(1) match {
+											case Some(part) => part.either
+											case None => ""
+										}
+										// Case: Unit not specified => Warns the user
+										if (unit.isEmpty) {
+											println("When specifying the 'since' parameter, you must also specify the unit (s, m, h, w)")
 											None
-									}
-							// Case: No number is specified => Expects specific input options
-							case None =>
-								input.toLowerCase match {
-									case "today" => Some(Now - Today.toInstantInDefaultZone)
-									case "yesterday" => Some(Now - Today.yesterday.toInstantInDefaultZone)
-									case "this week" =>
-										Some(Now - Today.previous(weekDays.first, includeSelf = true)
-											.toInstantInDefaultZone)
-									case "last week" =>
-										Some(Now - Today.previous(weekDays.first).toInstantInDefaultZone)
-									case "this month" =>
-										Some(Now - Today.yearMonth.firstDay.toInstantInDefaultZone)
-									case "last month" =>
-										Some(Now - Today.yearMonth.previous.firstDay.toInstantInDefaultZone)
-									case other =>
-										println(s"The specified 'since' parameter input '$other' is not supported")
-										None
+										}
+										else
+											unit.head.toLower match {
+												// Case: Hours
+												case 'h' => Some(number.hours)
+												// Case: Seconds
+												case 's' => Some(number.seconds)
+												// Case: Minutes
+												case 'm' => Some(number.minutes)
+												// Case: Weeks
+												case 'w' => Some(number.weeks)
+												// Case: Unsupported unit
+												case _ =>
+													println(s"The specified unit '$unit' is not recognized as a valid time unit.\nPlease use one of the following: s, m, h, w")
+													None
+											}
+									// Case: No number is specified => Expects specific input options
+									case None =>
+										input.toLowerCase match {
+											case "today" => Some(Now - Today.toInstantInDefaultZone)
+											case "yesterday" => Some(Now - Today.yesterday.toInstantInDefaultZone)
+											case "this week" =>
+												Some(Now - Today.previous(weekDays.first, includeSelf = true)
+													.toInstantInDefaultZone)
+											case "last week" =>
+												Some(Now - Today.previous(weekDays.first).toInstantInDefaultZone)
+											case "this month" =>
+												Some(Now - Today.yearMonth.firstDay.toInstantInDefaultZone)
+											case "last month" =>
+												Some(Now - Today.yearMonth.previous.firstDay.toInstantInDefaultZone)
+											case other =>
+												println(s"The specified 'since' parameter input '$other' is not supported")
+												None
+										}
 								}
-						}
+							}
 					}
 					
 					deploy(project, args("branch").string, since,
-						args("onlyFull").getBoolean, args("noRemoval").getBoolean)
+						args("onlyFull").getBoolean, args("noRemoval").getBoolean, isFullRebuild)
 				}
 		},
 		Command("merge", "m", "Merges recent builds into a single build")(
@@ -297,7 +305,8 @@ object OptidepyApp extends App
 	}
 	
 	private def deploy(project: DeployedProject, branch: Option[String], since: Option[Duration] = None,
-	                   skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false) =
+	                   skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false,
+	                   fullRebuild: Boolean = false) =
 	{
 		println(s"Deploying ${project.name}...")
 		// If branch name is not specified, uses the last deployed branch,
@@ -309,7 +318,7 @@ object OptidepyApp extends App
 		// Covers the case where the "since" duration is infinite
 		val appliedSince = since.flatMap { _.finite.map { Now - _ } }
 		Deploy(project, usedBranch, appliedSince, skipSeparateBuild,
-			skipFileRemoval)(counters(project), log) match
+			skipFileRemoval, fullRebuild)(counters(project), log) match
 		{
 			case Success(project) =>
 				lastDeploymentAndBranch = Some(project -> usedBranch)
@@ -330,7 +339,7 @@ object OptidepyApp extends App
 				case None => sourcePath
 			}
 			if (inputSourcePath.exists ||
-				StdIn.ask(s"${sourcePath.fileName} doesn't exist. Add it anyway?")) {
+				StdIn.ask(s"${inputSourcePath.absolute} doesn't exist. Add it anyway?")) {
 				val default = output / sourcePath
 				val out = StdIn.readNonEmptyLine(s"Where do you want to store ${
 					sourcePath.fileName

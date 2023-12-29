@@ -1,6 +1,10 @@
 # Optidepy
 List of Changes
 
+## v1.1.1 (in development)
+### New features
+- Added `-R` flag that forces a full rebuild
+
 ## v1.1 - 18.11.2023
 The most important updates in this release are:
 1. Support for branches
