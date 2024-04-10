@@ -1,4 +1,4 @@
-package vf.optidepy.controller
+package vf.optidepy.controller.deployment
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
@@ -9,7 +9,8 @@ import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.TryCatch
 import utopia.flow.util.logging.Logger
 import utopia.flow.view.immutable.caching.Lazy
-import vf.optidepy.model.{Binding, DeployedProject, Deployment, Project}
+import vf.optidepy.controller.IndexCounter
+import vf.optidepy.model.deployment.{Binding, DeployedProject, Deployment, Project}
 
 import java.nio.file.{Path, Paths}
 import java.time.Instant

@@ -1,4 +1,4 @@
-package vf.optidepy.model
+package vf.optidepy.model.deployment
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.generic.casting.ValueConversions._

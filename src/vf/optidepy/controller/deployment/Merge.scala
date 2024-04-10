@@ -1,10 +1,10 @@
-package vf.optidepy.controller
+package vf.optidepy.controller.deployment
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.time.Today
-import vf.optidepy.model.DeployedProject
+import vf.optidepy.model.deployment.DeployedProject
 
 import java.nio.file.Path
 import java.time.Instant

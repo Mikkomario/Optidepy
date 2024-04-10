@@ -13,8 +13,9 @@ import utopia.flow.time.WeekDays.MondayToSunday
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
-import vf.optidepy.controller.{Deploy, IndexCounter, Merge}
-import vf.optidepy.model.{Binding, DeployedProject, Project}
+import vf.optidepy.controller.deployment.{Deploy, Merge}
+import vf.optidepy.controller.IndexCounter
+import vf.optidepy.model.deployment.{Binding, DeployedProject, Project}
 import vf.optidepy.util.Common._
 
 import java.nio.file.{Path, Paths}

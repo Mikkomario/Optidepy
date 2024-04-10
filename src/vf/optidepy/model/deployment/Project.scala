@@ -1,11 +1,11 @@
-package vf.optidepy.model
+package vf.optidepy.model.deployment
 
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.Model
 import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
-import utopia.flow.time.TimeExtensions._
 import utopia.flow.parse.file.FileExtensions._
+import utopia.flow.time.TimeExtensions._
 
 import java.nio.file.{Path, Paths}
 import scala.util.{Success, Try}
