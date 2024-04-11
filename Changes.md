@@ -1,6 +1,9 @@
 # Optidepy
 List of Changes
 
+## v1.2 (in development)
+Maverick-integration
+
 ## v1.1.1 (in development)
 ### New features
 - Added `-R` flag that forces a full rebuild

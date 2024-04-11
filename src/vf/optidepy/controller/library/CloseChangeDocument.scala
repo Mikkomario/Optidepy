@@ -4,7 +4,7 @@ import utopia.flow.parse.string.Regex
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.Today
 import utopia.flow.util.Version
-import vf.optidepy.model.library.Module
+import vf.optidepy.model.library.VersionedModule
 
 import java.time.format.DateTimeFormatter
 import scala.io.Codec
@@ -34,7 +34,7 @@ object CloseChangeDocument
 	 * @param module Targeted module
 	 * @return Path to the edited change list document. Failure if change list editing failed.
 	 */
-	def apply(module: Module, summaryLines: Seq[String] = Vector())(implicit codec: Codec) =
+	def apply(module: VersionedModule, summaryLines: Seq[String] = Vector())(implicit codec: Codec) =
 		module.changeListPath.edit { editor =>
 			// Finds the development version line and overwrites it
 			editor.flatMapNextWhere(developmentVersionLineRegex.apply) { original =>

@@ -15,7 +15,7 @@ import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
 import vf.optidepy.controller.deployment.{Deploy, Merge}
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, DeployedProject, Project}
+import vf.optidepy.model.deployment.{Binding, DeployedProject, ProjectDeploymentConfig}
 import vf.optidepy.util.Common._
 
 import java.nio.file.{Path, Paths}
@@ -95,7 +95,7 @@ object OptidepyApp extends App
 						"Do you want to collect changed files to separate build directories?", default = true)
 					val fileRemovalEnabled = StdIn.ask(
 						"Should automatic deletion of non-source files be enabled?", default = true)
-					val newProject = DeployedProject(Project(projectName, input, output, bindings,
+					val newProject = DeployedProject(ProjectDeploymentConfig(projectName, input, output, bindings,
 						usesBuildDirectories, fileRemovalEnabled))
 					projects.current :+= newProject
 					println(s"$projectName added as a new project")

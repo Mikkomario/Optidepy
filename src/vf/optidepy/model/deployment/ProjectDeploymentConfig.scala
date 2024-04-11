@@ -10,9 +10,9 @@ import utopia.flow.time.TimeExtensions._
 import java.nio.file.{Path, Paths}
 import scala.util.{Success, Try}
 
-object Project extends FromModelFactory[Project]
+object ProjectDeploymentConfig extends FromModelFactory[ProjectDeploymentConfig]
 {
-	override def apply(model: ModelLike[Property]): Try[Project] = {
+	override def apply(model: ModelLike[Property]): Try[ProjectDeploymentConfig] = {
 		val inputOutput = model("output").string match {
 			case Some(out) => Success(model("input").string.map { Paths.get(_) } -> Paths.get(out))
 			case None => Binding(model("root").getModel).map { b => Some(b.source) -> b.target }
@@ -40,8 +40,8 @@ object Project extends FromModelFactory[Project]
  * @param fileDeletionEnabled Whether automatic file deletion is allowed within this project (default = true).
  *                            If false, all old files must be deleted manually.
  */
-case class Project(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding],
-                   usesBuildDirectories: Boolean = true, fileDeletionEnabled: Boolean = true)
+case class ProjectDeploymentConfig(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding],
+                                   usesBuildDirectories: Boolean = true, fileDeletionEnabled: Boolean = true)
 	extends ModelConvertible
 {
 	// COMPUTED -----------------------

@@ -5,7 +5,7 @@ import utopia.flow.collection.immutable.Pair
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.logging.Logger
-import vf.optidepy.model.library.Module
+import vf.optidepy.model.library.VersionedModule
 
 import java.nio.file.Path
 
@@ -57,7 +57,7 @@ object FindModules
 				}.minByOption { _.fileName.length } match {
 					// Case: Matching directory found
 					case Some(artifactDirectory) =>
-						Left(Module(moduleName, changeListPath, artifactDirectory))
+						Left(VersionedModule(moduleName, changeListPath, artifactDirectory))
 					// Case: No matching directory found
 					case None => Right(moduleName)
 				}

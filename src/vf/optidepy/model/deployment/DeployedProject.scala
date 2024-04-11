@@ -26,7 +26,7 @@ object DeployedProject extends FromModelFactory[DeployedProject]
 	
 	override def apply(model: ModelLike[Property]): Try[DeployedProject] =
 		// Parses the standard project data first
-		Project(model).map { project =>
+		ProjectDeploymentConfig(model).map { project =>
 			// Next, parses deployment data
 			val deployments = model("deployments").castTo(ModelType, VectorType) match {
 				// Case: Model input type (expected) => Parses deployments per branch
@@ -54,8 +54,8 @@ object DeployedProject extends FromModelFactory[DeployedProject]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
-case class DeployedProject(project: Project, deployments: Map[String, Vector[Deployment]] = Map())
-	extends Extender[Project] with ModelConvertible
+case class DeployedProject(project: ProjectDeploymentConfig, deployments: Map[String, Vector[Deployment]] = Map())
+	extends Extender[ProjectDeploymentConfig] with ModelConvertible
 {
 	// COMPUTED --------------------------
 	
@@ -69,7 +69,7 @@ case class DeployedProject(project: Project, deployments: Map[String, Vector[Dep
 	
 	// IMPLEMENTED  ----------------------
 	
-	override def wrapped: Project = project
+	override def wrapped: ProjectDeploymentConfig = project
 	
 	
 	// OTHER    --------------------------
@@ -93,7 +93,7 @@ case class DeployedProject(project: Project, deployments: Map[String, Vector[Dep
 	 * @param f A mapping function to apply to the wrapped project
 	 * @return A modified copy of this project
 	 */
-	def modify(f: Mutate[Project]) = copy(project = f(project))
+	def modify(f: Mutate[ProjectDeploymentConfig]) = copy(project = f(project))
 	
 	
 	// IMPLEMENTED  ---------------------

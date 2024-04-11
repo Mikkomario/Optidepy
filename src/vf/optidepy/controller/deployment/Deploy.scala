@@ -10,7 +10,7 @@ import utopia.flow.util.TryCatch
 import utopia.flow.util.logging.Logger
 import utopia.flow.view.immutable.caching.Lazy
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, DeployedProject, Deployment, Project}
+import vf.optidepy.model.deployment.{Binding, DeployedProject, Deployment, ProjectDeploymentConfig}
 
 import java.nio.file.{Path, Paths}
 import java.time.Instant
@@ -83,7 +83,7 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: Project, branch: String, lastDeploymentTime: Option[Instant] = None,
+	def apply(project: ProjectDeploymentConfig, branch: String, lastDeploymentTime: Option[Instant] = None,
 	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger) =
 	{
@@ -191,7 +191,7 @@ object Deploy
 			deploymentFilesBuilder += directoryNode.nav
 	}
 	
-	private def checkForRemovedFiles(project: Project, branch: String,
+	private def checkForRemovedFiles(project: ProjectDeploymentConfig, branch: String,
 	                                 buildDirectory: => Option[Path], deploymentIndex: => Int) =
 	{
 		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)

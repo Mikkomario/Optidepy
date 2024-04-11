@@ -6,7 +6,7 @@ import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.Today
 import utopia.flow.util.StringExtensions._
 import utopia.flow.util.Version
-import vf.optidepy.model.library.{Module, ModuleExport, ModuleUpdate}
+import vf.optidepy.model.library.{VersionedModule, ModuleVersionExport, ModuleUpdate}
 
 /**
  * Checks for model-specific updates
@@ -23,7 +23,7 @@ object CheckForUpdates
 	 * @return Either Left: Latest module export or Right: Pending module update.
 	 *         Failure if no version data was found or if no proper jar files were found.
 	 */
-	def apply(module: Module) = {
+	def apply(module: VersionedModule) = {
 		// Reads the change list document and finds the latest version (line / range)
 		IterateLines.fromPath(module.changeListPath) { linesIter =>
 			linesIter.nextWhere { versionLineRegex(_) }
@@ -49,7 +49,7 @@ object CheckForUpdates
 					s"${module.changeListPath.fileName} of ${module.name} doesn't list any module versions") }
 		}.flatten.flatMap { latest =>
 			// Creates a module export based on found version. In case of an update, wraps the export in an update.
-			ModuleExport.findFor(module, latest.leftOrMap { _._1 }).map { export =>
+			ModuleVersionExport.findFor(module, latest.leftOrMap { _._1 }).map { export =>
 				latest.mapBoth { _ => export } { case (_, changes) => ModuleUpdate(export, changes) }
 			}
 		}

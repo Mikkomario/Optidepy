@@ -4,7 +4,7 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import vf.optidepy.model.enumeration.UpdateType
 import vf.optidepy.model.enumeration.UpdateType.{Breaking, Overhaul}
-import vf.optidepy.model.library.{ModuleExport, ModuleUpdate}
+import vf.optidepy.model.library.{ModuleVersionExport, ModuleUpdate}
 
 import java.nio.file.Path
 import scala.io.Codec
@@ -34,7 +34,7 @@ object CollectUpdate
 	 * @param notChanged Exports of modules which didn't have any updates
 	 * @return Success or failure
 	 */
-	def apply(updatesDirectory: Path, updates: Seq[ModuleUpdate], notChanged: Seq[ModuleExport] = Vector(),
+	def apply(updatesDirectory: Path, updates: Seq[ModuleUpdate], notChanged: Seq[ModuleVersionExport] = Vector(),
 	          summaryAdditions: Map[ModuleUpdate, Seq[String]] = Map())
 	         (implicit codec: Codec) =
 	{
@@ -59,7 +59,7 @@ object CollectUpdate
 	
 	// Call only if there are updates
 	private def writeModules(updatesDirectory: Path, updates: Seq[ModuleUpdate],
-	                         notChanged: Seq[ModuleExport] = Vector(),
+	                         notChanged: Seq[ModuleVersionExport] = Vector(),
 	                         summaryAdditions: Map[ModuleUpdate, Seq[String]] = Map())
 	                        (implicit codec: Codec) =
 	{
@@ -86,7 +86,7 @@ object CollectUpdate
 		}
 	}
 	
-	private def writeChanges(path: Path, updates: Iterable[ModuleUpdate], notChanged: Iterable[ModuleExport],
+	private def writeChanges(path: Path, updates: Iterable[ModuleUpdate], notChanged: Iterable[ModuleVersionExport],
 	                         summaryAdditions: Map[ModuleUpdate, Seq[String]])
 	                        (implicit codec: Codec) =
 		path.writeUsing { writer =>
@@ -118,12 +118,12 @@ object CollectUpdate
 			}
 		}
 	
-	private def collectArtifacts(path: Path, modules: Iterable[ModuleExport]) =
+	private def collectArtifacts(path: Path, modules: Iterable[ModuleVersionExport]) =
 	{
 		// Makes sure the targeted directory exists
 		path.asExistingDirectory.flatMap { path =>
 			// Attempts to copy each module
-			modules.tryForeach { export => export.jarPath.tryForeach { _.copyTo(path).map { _ => () } } }
+			modules.tryForeach { export => export.jarPath.copyTo(path).map { _ => () } }
 		}
 	}
 	
