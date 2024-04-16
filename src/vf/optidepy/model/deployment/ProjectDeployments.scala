@@ -12,7 +12,7 @@ import utopia.flow.view.template.Extender
 
 import scala.util.Try
 
-object DeployedProject extends FromModelFactory[DeployedProject]
+object ProjectDeployments extends FromModelFactory[ProjectDeployments]
 {
 	// ATTRIBUTES   --------------------
 	
@@ -24,7 +24,7 @@ object DeployedProject extends FromModelFactory[DeployedProject]
 	
 	// IMPLEMENTED  --------------------
 	
-	override def apply(model: ModelLike[Property]): Try[DeployedProject] =
+	override def apply(model: ModelLike[Property]): Try[ProjectDeployments] =
 		// Parses the standard project data first
 		ProjectDeploymentConfig(model).map { project =>
 			// Next, parses deployment data
@@ -54,7 +54,7 @@ object DeployedProject extends FromModelFactory[DeployedProject]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
-case class DeployedProject(project: ProjectDeploymentConfig, deployments: Map[String, Vector[Deployment]] = Map())
+case class ProjectDeployments(project: ProjectDeploymentConfig, deployments: Map[String, Vector[Deployment]] = Map())
 	extends Extender[ProjectDeploymentConfig] with ModelConvertible
 {
 	// COMPUTED --------------------------
@@ -100,5 +100,5 @@ case class DeployedProject(project: ProjectDeploymentConfig, deployments: Map[St
 	
 	override def toModel: Model = project.toModel +
 		Constant("deployments", Model.withConstants(deployments.map { case (branch, deployments) =>
-			Constant(branch.nonEmptyOrElse(DeployedProject.defaultBranchName), deployments) }))
+			Constant(branch.nonEmptyOrElse(ProjectDeployments.defaultBranchName), deployments) }))
 }

@@ -4,7 +4,7 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.time.Today
-import vf.optidepy.model.deployment.DeployedProject
+import vf.optidepy.model.deployment.ProjectDeployments
 
 import java.nio.file.Path
 import java.time.Instant
@@ -25,7 +25,7 @@ object Merge
 	 *         Contains None if no merging was done.
 	 *         Contains Some(merged directory) when merging was done
 	 */
-	def apply(project: DeployedProject, branch: String = DeployedProject.defaultBranchName,
+	def apply(project: ProjectDeployments, branch: String = ProjectDeployments.defaultBranchName,
 	          since: Option[Instant] = None) =
 	{
 		// Finds the targeted mergeable deployments

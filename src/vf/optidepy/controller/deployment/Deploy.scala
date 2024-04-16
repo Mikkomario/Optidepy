@@ -10,7 +10,7 @@ import utopia.flow.util.TryCatch
 import utopia.flow.util.logging.Logger
 import utopia.flow.view.immutable.caching.Lazy
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, DeployedProject, Deployment, ProjectDeploymentConfig}
+import vf.optidepy.model.deployment.{Binding, ProjectDeployments, Deployment, ProjectDeploymentConfig}
 
 import java.nio.file.{Path, Paths}
 import java.time.Instant
@@ -46,9 +46,9 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
-	def apply(project: DeployedProject, branch: String, since: Option[Instant],
+	def apply(project: ProjectDeployments, branch: String, since: Option[Instant],
 	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean, fullRebuild: Boolean)
-	         (implicit counter: IndexCounter, log: Logger): Try[DeployedProject] =
+	         (implicit counter: IndexCounter, log: Logger): Try[ProjectDeployments] =
 	{
 		val lastProjectDeployTime = project.lastDeploymentOf(branch).map { _.timestamp }
 		// If the "since" parameter is specified, may use an earlier "last deployment time"

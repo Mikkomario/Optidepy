@@ -2,6 +2,7 @@ package vf.optidepy.model.library
 
 import utopia.flow.util.Version
 
+@deprecated("This model will likely get removed", "v1.2")
 object ModuleVersionExport
 {
 	/**
@@ -20,6 +21,7 @@ object ModuleVersionExport
  * @since Maverick v0.1, 3.10.2021; Added to Optidepy 4.9.2024 at v1.2
  * @param module Module being updated
  */
+@deprecated("This model will likely get removed", "v1.2")
 case class ModuleVersionExport(module: VersionedModule, jarPath: ArtifactJarPath)
 {
 	/**

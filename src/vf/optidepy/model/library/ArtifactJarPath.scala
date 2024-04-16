@@ -58,7 +58,6 @@ object ArtifactJarPath
  * @author Mikko Hilpinen
  * @since Maverick v0.1, 4.10.2021; Added to Optidepy 9.4.2024 v1.2
  */
-// TODO: Likely move this to a deployment package instead
 class ArtifactJarPath(original: Path, val version: Version, originalIsVersioned: Boolean) extends EqualsBy
 {
 	// ATTRIBUTES   -------------------------------

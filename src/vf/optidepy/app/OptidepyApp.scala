@@ -15,7 +15,7 @@ import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
 import vf.optidepy.controller.deployment.{Deploy, Merge}
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, DeployedProject, ProjectDeploymentConfig}
+import vf.optidepy.model.deployment.{Binding, ProjectDeployments, ProjectDeploymentConfig}
 import vf.optidepy.util.Common._
 
 import java.nio.file.{Path, Paths}
@@ -32,21 +32,21 @@ object OptidepyApp extends App
 {
 	private implicit val weekDays: WeekDays = MondayToSunday
 	
-	private lazy val projects = new ObjectsFileContainer(dataDirectory/"projects.json", DeployedProject)
-	private val counters = Cache { p: DeployedProject =>
+	private lazy val projects = new ObjectsFileContainer(dataDirectory/"projects.json", ProjectDeployments)
+	private val counters = Cache { p: ProjectDeployments =>
 		new IndexCounter(p.lastDeploymentIndex match {
 			case Some(max) => max + 1
 			case None => 1
 		})
 	}
-	private var lastDeploymentAndBranch: Option[(DeployedProject, String)] = None
+	private var lastDeploymentAndBranch: Option[(ProjectDeployments, String)] = None
 	private def lastDeployment = lastDeploymentAndBranch.map { _._1 }
 	
 	private val projectArg = ArgumentSchema("project", "name",
 		help = "Name of the project to deploy (default = last project)")
 	private val branchArg = ArgumentSchema("branch", "b",
 		help = s"Targeted branch to deploy. Default value is the last deployed branch or ${
-			DeployedProject.defaultBranchName}")
+			ProjectDeployments.defaultBranchName}")
 	private val commands = Vector(
 		Command("describe", "desc", help = "Describes a registered project")(projectArg) { args =>
 			findProject(args("project").getString).foreach { project =>
@@ -95,7 +95,7 @@ object OptidepyApp extends App
 						"Do you want to collect changed files to separate build directories?", default = true)
 					val fileRemovalEnabled = StdIn.ask(
 						"Should automatic deletion of non-source files be enabled?", default = true)
-					val newProject = DeployedProject(ProjectDeploymentConfig(projectName, input, output, bindings,
+					val newProject = ProjectDeployments(ProjectDeploymentConfig(projectName, input, output, bindings,
 						usesBuildDirectories, fileRemovalEnabled))
 					projects.current :+= newProject
 					println(s"$projectName added as a new project")
@@ -250,7 +250,7 @@ object OptidepyApp extends App
 		},
 		Command("merge", "m", "Merges recent builds into a single build")(
 			projectArg, branchArg,
-			ArgumentSchema("branch", "b", DeployedProject.defaultBranchName, help = "Targeted branch to deploy"),
+			ArgumentSchema("branch", "b", ProjectDeployments.defaultBranchName, help = "Targeted branch to deploy"),
 			ArgumentSchema("since", "t",
 				help = "Earliest targeted deployment date or time. Default = merge all previous builds.")) { args =>
 			findProject(args("project").getString).foreach { project =>
@@ -259,7 +259,7 @@ object OptidepyApp extends App
 					case Some(since) => println(s"Merges builds since ${ since.toLocalDateTime }...")
 					case None => println("Merges all recent builds...")
 				}
-				Merge(project, args("branch").stringOr(DeployedProject.defaultBranchName), since) match {
+				Merge(project, args("branch").stringOr(ProjectDeployments.defaultBranchName), since) match {
 					case Success(result) =>
 						result match {
 							case Some(directory) =>
@@ -305,7 +305,7 @@ object OptidepyApp extends App
 		result
 	}
 	
-	private def deploy(project: DeployedProject, branch: Option[String], since: Option[Duration] = None,
+	private def deploy(project: ProjectDeployments, branch: Option[String], since: Option[Duration] = None,
 	                   skipSeparateBuild: Boolean = false, skipFileRemoval: Boolean = false,
 	                   fullRebuild: Boolean = false) =
 	{
@@ -314,7 +314,7 @@ object OptidepyApp extends App
 		// but only if targeting the same project
 		val usedBranch = branch.getOrElse {
 			lastDeploymentAndBranch.filter { _._1.name == project.name }.map { _._2 }
-				.getOrElse(DeployedProject.defaultBranchName)
+				.getOrElse(ProjectDeployments.defaultBranchName)
 		}
 		// Covers the case where the "since" duration is infinite
 		val appliedSince = since.flatMap { _.finite.map { Now - _ } }

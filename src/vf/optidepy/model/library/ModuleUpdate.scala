@@ -11,6 +11,7 @@ import vf.optidepy.model.enumeration.UpdateType
  * @param newState Module version after update
  * @param changeDocLines Lines describing changes introduced in this update
  */
+@deprecated("This model will likely get removed", "v1.2")
 case class ModuleUpdate(newState: ModuleVersionExport, changeDocLines: Vector[String])
 	extends Extender[ModuleVersionExport]
 {

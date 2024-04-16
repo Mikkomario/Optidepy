@@ -13,4 +13,5 @@ import java.nio.file.Path
  * @author Mikko Hilpinen
  * @since 10.04.2024, v1.2
  */
-case class ModuleDependency(moduleId: String, relativeJarDirectory: Path, relativeLibraryFilePath: Option[Path] = None)
+case class ModuleDependency(moduleId: String, relativeJarDirectory: Path,
+                            relativeLibraryFilePath: Option[Path] = None)
