@@ -1,13 +1,44 @@
 package vf.optidepy.model.library
 
+import utopia.flow.collection.mutable.iterator.{OptionsIterator, PollingIterator}
 import utopia.flow.operator.MaybeEmpty
 
 object DocSection
 {
+	// ATTRIBUTES   -----------------------
+	
 	/**
 	 * Empty documentation
 	 */
 	val empty = apply("")
+	
+	
+	// OTHER    ---------------------------
+	
+	/**
+	 * Reads a document section from markdown document contents
+	 * @param header Header for this section
+	 * @param linesIter Iterator that returns the remaining lines.
+	 *                  Placed to the first line after the 'header' line.
+	 * @param currentDepth Current header depth.
+	 *                     E.g. If header started with "##", depth would be 2.
+	 *                     Default = 1.
+	 * @return Parsed documentation
+	 */
+	def fromMarkDown(header: String, linesIter: PollingIterator[String], currentDepth: Int = 1): DocSection = {
+		val lines = linesIter.collectUntil { _.startsWith("#") }
+		val subSections = OptionsIterator.continually(linesIter.pollOption)
+			.map { l => l -> lineDepth(l) }
+			.takeWhile { _._2 > currentDepth }
+			.map { case (line, depth) =>
+				linesIter.skipPolled()
+				fromMarkDown(line.drop(depth).trim, linesIter, depth)
+			}
+			.toVector
+		apply(header, lines, subSections)
+	}
+	
+	private def lineDepth(line: String) = line.iterator.takeWhile { _ == '#' }.size
 }
 
 /**

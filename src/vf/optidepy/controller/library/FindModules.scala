@@ -14,6 +14,7 @@ import java.nio.file.Path
  * @author Mikko Hilpinen
  * @since 3.10.2021, v0.1
  */
+@deprecated("Moved to ProjectActions", "v1.2")
 object FindModules
 {
 	private val changeListDocumentNameRegex = Regex.any + (Regex("c") || Regex("C")).withinParenthesis +
