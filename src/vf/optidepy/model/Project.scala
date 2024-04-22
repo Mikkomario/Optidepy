@@ -1,10 +1,46 @@
 package vf.optidepy.model
 
+import utopia.flow.collection.CollectionExtensions._
+import utopia.flow.generic.casting.ValueConversions._
+import utopia.flow.generic.factory.FromModelFactoryWithSchema
+import utopia.flow.generic.model.immutable.{Model, ModelDeclaration}
+import utopia.flow.generic.model.mutable.DataType.StringType
+import utopia.flow.generic.model.template.ModelConvertible
+import utopia.flow.operator.Identity
+import utopia.flow.parse.file.FileExtensions._
 import vf.optidepy.model.dependency.ModuleDependency
 import vf.optidepy.model.deployment.ProjectDeployments
 import vf.optidepy.model.library.VersionedModuleWithReleases
+import vf.optidepy.util.Common._
 
 import java.nio.file.Path
+
+object Project extends FromModelFactoryWithSchema[Project]
+{
+	// ATTRIBUTES   ----------------------------
+	
+	override lazy val schema = ModelDeclaration("name" -> StringType, "root" -> StringType)
+	
+	
+	// IMPLEMENTED  ----------------------------
+	
+	override protected def fromValidatedModel(model: Model): Project = {
+		val modules = model("modules").vector match {
+			case Some(modules) =>
+				modules.tryMap { v => VersionedModuleWithReleases(v.getModel) }.getOrElseLog { Vector.empty }
+			case None => Vector.empty
+		}
+		val deployment = model("deployment").model.flatMap { ProjectDeployments(_).logToOption }
+		val dependencies = model("dependencies").vector match {
+			case Some(dependencies) =>
+				dependencies.tryMap { v => ModuleDependency(v.getModel) }.getOrElseLog { Vector.empty }
+			case None => Vector.empty
+		}
+		
+		apply(model("name").getString, model("root").getString, modules, deployment, dependencies,
+			model("artifactsDir").string.map { s => s: Path })
+	}
+}
 
 /**
  * Represents a project that may be deployed.
@@ -28,4 +64,10 @@ case class Project(name: String, rootPath: Path, modules: Vector[VersionedModule
                    deploymentConfig: Option[ProjectDeployments] = None,
                    moduleDependencies: Vector[ModuleDependency] = Vector.empty,
                    relativeArtifactsDirPath: Option[Path] = None)
-
+	extends ModelConvertible
+{
+	override def toModel: Model = Model.from(
+		"name" -> name, "root" -> rootPath.toJson,
+		"modules" -> modules, "deployment" -> deploymentConfig, "dependencies" -> moduleDependencies,
+		"artifactsDir" -> relativeArtifactsDirPath.map { _.toJson })
+}

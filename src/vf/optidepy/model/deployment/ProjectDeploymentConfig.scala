@@ -40,6 +40,7 @@ object ProjectDeploymentConfig extends FromModelFactory[ProjectDeploymentConfig]
  * @param fileDeletionEnabled Whether automatic file deletion is allowed within this project (default = true).
  *                            If false, all old files must be deleted manually.
  */
+// TODO: Remove the project name -property
 case class ProjectDeploymentConfig(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding],
                                    usesBuildDirectories: Boolean = true, fileDeletionEnabled: Boolean = true)
 	extends ModelConvertible

@@ -1,9 +1,16 @@
 package vf.optidepy.model.library
 
+import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.mutable.iterator.{OptionsIterator, PollingIterator}
+import utopia.flow.generic.casting.ValueConversions._
+import utopia.flow.generic.factory.FromModelFactory
+import utopia.flow.generic.model.immutable.Model
+import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
 import utopia.flow.operator.MaybeEmpty
 
-object DocSection
+import scala.util.Try
+
+object DocSection extends FromModelFactory[DocSection]
 {
 	// ATTRIBUTES   -----------------------
 	
@@ -11,6 +18,14 @@ object DocSection
 	 * Empty documentation
 	 */
 	val empty = apply("")
+	
+	
+	// IMPLEMENTED  -----------------------
+	
+	override def apply(model: ModelLike[Property]): Try[DocSection] =
+		model("subSections").getVector.tryMap { v => apply(v.getModel) }.map { subSections =>
+			apply(model("header").getString, model("lines").getVector.map { _.getString }, subSections)
+		}
 	
 	
 	// OTHER    ---------------------------
@@ -52,8 +67,10 @@ object DocSection
  */
 case class DocSection(header: String, lines: Vector[String] = Vector.empty,
                       subSections: Vector[DocSection] = Vector.empty)
-	extends MaybeEmpty[DocSection]
+	extends MaybeEmpty[DocSection] with ModelConvertible
 {
 	override def self: DocSection = this
 	override def isEmpty: Boolean = header.isEmpty && lines.isEmpty && subSections.isEmpty
+	
+	override def toModel: Model = Model.from("header" -> header, "lines" -> lines, "subSections" -> subSections)
 }

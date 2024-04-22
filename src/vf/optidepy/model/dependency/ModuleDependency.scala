@@ -1,6 +1,24 @@
 package vf.optidepy.model.dependency
 
+import utopia.flow.generic.model.template.ModelConvertible
+import utopia.flow.generic.casting.ValueConversions._
+import utopia.flow.generic.factory.FromModelFactoryWithSchema
+import utopia.flow.generic.model.immutable.{Model, ModelDeclaration}
+import utopia.flow.generic.model.mutable.DataType.StringType
+import utopia.flow.operator.Identity
+import utopia.flow.parse.file.FileExtensions._
+
 import java.nio.file.Path
+
+object ModuleDependency extends FromModelFactoryWithSchema[ModuleDependency]
+{
+	override lazy val schema: ModelDeclaration =
+		ModelDeclaration("moduleId" -> StringType, "jarDirectory" -> StringType)
+	
+	override protected def fromValidatedModel(model: Model): ModuleDependency =
+		apply(model("moduleId").getString, model("jarDirectory").getString,
+			model("libraryFile").string.map { s => s: Path })
+}
 
 /**
  * Represents an application's dependency on a single versioned library module
@@ -15,3 +33,10 @@ import java.nio.file.Path
  */
 case class ModuleDependency(moduleId: String, relativeJarDirectory: Path,
                             relativeLibraryFilePath: Option[Path] = None)
+	extends ModelConvertible
+{
+	override def toModel: Model = Model.from(
+		"moduleId" -> moduleId,
+		"jarDirectory" -> relativeJarDirectory.toJson,
+		"libraryFile" -> relativeLibraryFilePath.map { _.toJson })
+}

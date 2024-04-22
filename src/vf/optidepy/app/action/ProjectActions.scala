@@ -10,6 +10,7 @@ import vf.optidepy.model.deployment.{Binding, ProjectDeploymentConfig}
 import vf.optidepy.model.library.VersionedModule
 
 import java.nio.file.Path
+import java.util.UUID
 import scala.io.StdIn
 
 /**
@@ -64,37 +65,45 @@ object ProjectActions
 			s"Following versioned modules didn't contain an artifact directory and will be ignored: \n\t- ${
 				partialModules.mkString("\n\t- ") }\nIs it okay to continue nonetheless?", default = true))
 		{
-			// TODO: Wrap resulting config into an option. Make sure its not empty.
-			if (StdIn.ask("Do you also want to specify deployment settings for this project?", default = true)) {
-				val input = StdIn.readNonEmptyLine(
-					s"Please specify the path common for all deployment inputs. \nSpeficy a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
-				{
-					case Some(input) => rootDirectory/input
-					case None => rootDirectory
-				}
-				val defaultOutput: Path = s"out/$projectName"
-				val output = StdIn
-					.readNonEmptyLine(s"Please specify the path where output build directories will be placed. \nDefault = ${
-						defaultOutput.absolute }") match
-				{
-					case Some(input) => input: Path
-					case None => defaultOutput
-				}
-				println(s"Please specify directories or files under $input that should be copied during deployment.\nEmpty line ends input.")
-				val bindings = collectBindings(input, output)
-				val usesBuildDirectories = StdIn.ask(
-					"Do you want to collect changed files to separate build directories?", default = true)
-				val fileRemovalEnabled = StdIn.ask(
-					"Should automatic deletion of non-source files be enabled?", default = true)
-				val newProject = ProjectDeploymentConfig(projectName, Some(input), output, bindings,
-					usesBuildDirectories, fileRemovalEnabled)
+			val deploymentConfig = {
+				if (StdIn.ask("Do you also want to specify deployment settings for this project?", default = true))
+					Some(setupDeploymentConfig(rootDirectory, projectName)).filter { _.relativeBindings.nonEmpty }
+				else
+					None
 			}
 			
-			// TODO: Check if both settings are empty
-			// TODO: Add library dependencies
+			if (modules.isEmpty && deploymentConfig.isEmpty)
+				println("No versioned modules found and no deployments were specified. \nProject creation canceled.")
+			else {
+				// TODO: Add library dependencies
+			}
 		}
 		else
 			println("Project creation canceled")
+	}
+	
+	private def setupDeploymentConfig(rootDirectory: Path, projectName: String) = {
+		val input = StdIn.readNonEmptyLine(
+			s"Please specify the path common for all deployment inputs. \nSpeficy a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
+		{
+			case Some(input) => rootDirectory/input
+			case None => rootDirectory
+		}
+		val defaultOutput: Path = s"out/$projectName"
+		val output = StdIn
+			.readNonEmptyLine(s"Please specify the path where output build directories will be placed. \nDefault = ${
+				defaultOutput.absolute }") match
+		{
+			case Some(input) => input: Path
+			case None => defaultOutput
+		}
+		println(s"Please specify directories or files under $input that should be copied during deployment.\nEmpty line ends input.")
+		val bindings = collectBindings(input, output)
+		val usesBuildDirectories = StdIn.ask(
+			"Do you want to collect changed files to separate build directories?", default = true)
+		val fileRemovalEnabled = StdIn.ask(
+			"Should automatic deletion of non-source files be enabled?", default = true)
+		ProjectDeploymentConfig(projectName, Some(input), output, bindings, usesBuildDirectories, fileRemovalEnabled)
 	}
 	
 	/**
@@ -134,7 +143,7 @@ object ProjectActions
 				}.minByOption { _.fileName.length } match {
 					// Case: Matching directory found
 					case Some(artifactDirectory) =>
-						Right(VersionedModule(moduleName, changeListPath, artifactDirectory))
+						Right(VersionedModule(UUID.randomUUID().toString, moduleName, changeListPath, artifactDirectory))
 					// Case: No matching directory found
 					case None => Left(moduleName)
 				}
