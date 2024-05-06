@@ -3,6 +3,8 @@ List of Changes
 
 ## v1.2 (in development)
 Maverick-integration
+### Other changes
+- The deployment algorithm now utilizes parallelism, which should make the process faster
 
 ## v1.1.1 (in development)
 ### New features

@@ -1,5 +1,6 @@
 package vf.optidepy.controller.deployment
 
+import utopia.flow.async.context.ActionQueue
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
 import utopia.flow.collection.immutable.caching.LazyTree
@@ -10,11 +11,12 @@ import utopia.flow.util.TryCatch
 import utopia.flow.util.logging.Logger
 import utopia.flow.view.immutable.caching.Lazy
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, ProjectDeployments, Deployment, ProjectDeploymentConfig}
+import vf.optidepy.model.deployment.{Binding, Deployment, ProjectDeploymentConfig, ProjectDeployments}
 
 import java.nio.file.{Path, Paths}
 import java.time.Instant
 import scala.collection.immutable.VectorBuilder
+import scala.concurrent.ExecutionContext
 import scala.io.Codec
 import scala.util.{Failure, Success, Try}
 
@@ -31,6 +33,7 @@ object Deploy
 	private implicit val codec: Codec = Codec.UTF8
 	
 	private val skipComparisonThresholdBytes = 50000
+	private val maxParallelThreads = 20
 	
 	
 	// OTHER    -----------------------------
@@ -48,7 +51,7 @@ object Deploy
 	 */
 	def apply(project: ProjectDeployments, branch: String, since: Option[Instant],
 	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean, fullRebuild: Boolean)
-	         (implicit counter: IndexCounter, log: Logger): Try[ProjectDeployments] =
+	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext): Try[ProjectDeployments] =
 	{
 		val lastProjectDeployTime = project.lastDeploymentOf(branch).map { _.timestamp }
 		// If the "since" parameter is specified, may use an earlier "last deployment time"
@@ -85,7 +88,7 @@ object Deploy
 	 */
 	def apply(project: ProjectDeploymentConfig, branch: String, lastDeploymentTime: Option[Instant] = None,
 	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false)
-	         (implicit counter: IndexCounter, log: Logger) =
+	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext) =
 	{
 		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
 		project.sourceCorrectedBindings
@@ -135,7 +138,7 @@ object Deploy
 	
 	// Finds all files that were modified since the last deployment from the specified binding
 	private def findAlteredFiles(absoluteBinding: Binding, lastDeploymentTime: Option[Instant])
-	                            (implicit log: Logger) =
+	                            (implicit log: Logger, exc: ExecutionContext) =
 	{
 		lastDeploymentTime match {
 			// Case: Time threshold specified => Checks which files have been altered
@@ -153,9 +156,10 @@ object Deploy
 					// Case: Source is a directory => Processes it and collects the files to deploy
 					else {
 						val deploymentFilesBuilder = new VectorBuilder[Path]()
+						val actionQueue = new ActionQueue(maxParallelThreads)
 						// TODO: Use a separate logger in .toTree that fails the process if an error is encountered
 						findAlteredFilesFromDirectory(absoluteBinding, deploymentTime, absoluteBinding.source.toTree,
-							deploymentFilesBuilder)
+							deploymentFilesBuilder, actionQueue)
 						deploymentFilesBuilder.result()
 					}
 				}
@@ -166,9 +170,9 @@ object Deploy
 	}
 	
 	private def findAlteredFilesFromDirectory(binding: Binding, lastDeploymentTime: Instant,
-	                                          directoryNode: LazyTree[Path],
-	                                          deploymentFilesBuilder: VectorBuilder[Path])
-	                                         (implicit log: Logger): Unit =
+	                                           directoryNode: LazyTree[Path],
+	                                           deploymentFilesBuilder: VectorBuilder[Path], actionQueue: ActionQueue)
+	                                          (implicit log: Logger, exc: ExecutionContext): Unit =
 	{
 		// Check whether the directory exists in the target destination
 		val relativePath = directoryNode.nav.relativeTo(binding.source).either
@@ -181,9 +185,14 @@ object Deploy
 			deploymentFilesBuilder ++= files.iterator.map { _.nav }
 				.filter { hasChanged(binding, _, lastDeploymentTime) }
 			
-			// Handles the sub-directories using recursion
+			// Handles the sub-directories using recursion and multi-threading
 			subDirectories.foreach { subDirectory =>
-				findAlteredFilesFromDirectory(binding, lastDeploymentTime, subDirectory, deploymentFilesBuilder)
+				val action = actionQueue.push {
+					findAlteredFilesFromDirectory(binding, lastDeploymentTime, subDirectory, deploymentFilesBuilder,
+						actionQueue)
+				}
+				action.waitUntilStarted()
+				action.future.onComplete { _.failure.foreach { log(_) } }
 			}
 		}
 		// Case: Target directory doesn't exist => Adds all files under this directory to be deployed
@@ -192,7 +201,8 @@ object Deploy
 	}
 	
 	private def checkForRemovedFiles(project: ProjectDeploymentConfig, branch: String,
-	                                 buildDirectory: => Option[Path], deploymentIndex: => Int) =
+	                                 buildDirectory: => Option[Path], deploymentIndex: => Int)
+	                                (implicit exc: ExecutionContext) =
 	{
 		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
 		println(s"Checking for removed files from $fullOutputDirectory...")
@@ -211,10 +221,11 @@ object Deploy
 		
 		val deletedFilesBuilder = new VectorBuilder[Path]()
 		val failuresBuilder = new VectorBuilder[Throwable]()
+		val actionQueue = new ActionQueue(maxParallelThreads)
 		// Performs the file-deletion process
 		val deleteResult = handleFileDeletion(fullOutputDirectory, Lazy { Paths.get("") },
 			mappedBindings, otherBindings, fileSpecificBindings.map { _.target }.toSet, backupDir,
-			deletedFilesBuilder, failuresBuilder)
+			deletedFilesBuilder, failuresBuilder, actionQueue)
 		val deletedFiles = deletedFilesBuilder.result()
 		
 		// Writes a note concerning the deleted files, if any were found
@@ -249,7 +260,7 @@ object Deploy
 	                                mappedBindings: Iterable[(Binding, Path)],
 	                                otherBindings: Iterable[(Binding, Path)], keepFiles: Set[Path],
 	                                backupDir: Option[Lazy[Path]], deletedPathsBuilder: VectorBuilder[Path],
-	                                failuresBuilder: VectorBuilder[Throwable]): Try[Unit] =
+	                                failuresBuilder: VectorBuilder[Throwable], actionQueue: ActionQueue): Try[Unit] =
 	{
 		// Divides the directly accessible files into directories and regular files
 		targetDirectory.iterateChildren { _.divideBy { _.isRegularFile }.map { _.toVector } }
@@ -282,34 +293,41 @@ object Deploy
 					}
 				}
 				// Recursively moves down to the sub-directories
-				subDirectories.tryForeach { subDirectory =>
-					val dirName = subDirectory.fileName
-					// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
-					val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
-						// Filters out the "other" bindings that can't appear under this sub-directory
-						.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
-						// Assigns correct relative path to the new mappings
-						.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
-						.toTuple
-					// Updates the relative paths of existing mapped bindings
-					val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
-						newMappedBindings
-					
-					// Deletes the targeted files within this directory
-					handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
-						nextMappedBindings, remainingOtherBindings,
-						keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder)
-						// If successful, checks whether this directory is now empty
-						// If so, deletes it
-						.flatMap { _ =>
-							if (subDirectory.isEmpty) {
-								println(s"Deleting the empty sub-directory: $subDirectory")
-								subDirectory.delete()
+				// Uses multi-threading in order to improve processing speed
+				// FIXME: Should handle failures using a logger and not terminate the process. Now continues the process randomly for a while anyway.
+				subDirectories.map { subDirectory =>
+					val action = actionQueue.push {
+						val dirName = subDirectory.fileName
+						// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
+						val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
+							// Filters out the "other" bindings that can't appear under this sub-directory
+							.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
+							// Assigns correct relative path to the new mappings
+							.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
+							.toTuple
+						// Updates the relative paths of existing mapped bindings
+						val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
+							newMappedBindings
+						
+						// Deletes the targeted files within this directory
+						handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
+							nextMappedBindings, remainingOtherBindings,
+							keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder,
+							actionQueue)
+							// If successful, checks whether this directory is now empty
+							// If so, deletes it
+							.flatMap { _ =>
+								if (subDirectory.isEmpty) {
+									println(s"Deleting the empty sub-directory: $subDirectory")
+									subDirectory.delete()
+								}
+								else
+									Success(false)
 							}
-							else
-								Success(false)
-						}
-				}
+					}
+					action.waitUntilStarted()
+					action
+				}.map { _.waitFor().flatten }.toTry.map { _ => () }
 			}
 	}
 	

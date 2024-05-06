@@ -319,7 +319,7 @@ object OptidepyApp extends App
 		// Covers the case where the "since" duration is infinite
 		val appliedSince = since.flatMap { _.finite.map { Now - _ } }
 		Deploy(project, usedBranch, appliedSince, skipSeparateBuild,
-			skipFileRemoval, fullRebuild)(counters(project), log) match
+			skipFileRemoval, fullRebuild)(counters(project), log, exc) match
 		{
 			case Success(project) =>
 				lastDeploymentAndBranch = Some(project -> usedBranch)
