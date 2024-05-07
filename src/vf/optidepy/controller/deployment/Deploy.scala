@@ -5,12 +5,14 @@ import utopia.flow.async.context.ActionQueue
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
 import utopia.flow.collection.immutable.caching.LazyTree
+import utopia.flow.event.listener.ProgressListener
 import utopia.flow.operator.equality.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
-import utopia.flow.util.TryCatch
+import utopia.flow.util.{ProgressTracker, TryCatch}
 import utopia.flow.util.logging.Logger
 import utopia.flow.view.immutable.caching.Lazy
+import utopia.flow.view.mutable.async.Volatile
 import vf.optidepy.controller.IndexCounter
 import vf.optidepy.model.deployment.{Binding, Deployment, ProjectDeploymentConfig, ProjectDeployments}
 
@@ -118,15 +120,25 @@ object Deploy
 							Some(project.directoryForDeployment(branch, deployment))
 					}
 					val outputDirectories = buildDirectory.toVector :+ fullOutputDirectory
-					println(s"Copying ${altered.size} files to ${outputDirectories.mkString(" and ")}...")
+					val targetFileCount = altered.size
+					println(s"Copying $targetFileCount files to ${outputDirectories.mkString(" and ")}...")
 					val actionQueue = new ActionQueue(maxParallelThreads)
+					val progressTracker = ProgressTracker.wrap(Volatile(0)) { _.toDouble / targetFileCount }
+					progressTracker.addListener(ProgressListener.usingThreshold[Int](0.1) { e =>
+						println(s"${ e.value }/$targetFileCount files copied (${ (e.currentProgress * 100).toInt }%) - ${
+							e.projectedRemainingDuration.description } remaining")
+					})
 					altered
 						.tryMap { binding =>
 							outputDirectories.tryMap { output =>
 								val absolute = binding.underTarget(output)
 								absolute.target.createParentDirectories().map { p =>
 									// Uses multi-threading in file copy
-									val action = actionQueue.push { absolute.source.copyAs(p) }
+									val action = actionQueue.push {
+										val res = absolute.source.copyAs(p)
+										progressTracker.value += 1
+										res
+									}
 									action.waitUntilStarted()
 									action
 								}
