@@ -1,5 +1,6 @@
 package vf.optidepy.controller.deployment
 
+import utopia.flow.async.AsyncExtensions._
 import utopia.flow.async.context.ActionQueue
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
@@ -118,20 +119,29 @@ object Deploy
 					}
 					val outputDirectories = buildDirectory.toVector :+ fullOutputDirectory
 					println(s"Copying ${altered.size} files to ${outputDirectories.mkString(" and ")}...")
-					altered.tryMap { binding =>
-						outputDirectories.tryMap { output =>
-							val absolute = binding.underTarget(output)
-							absolute.target.createParentDirectories().flatMap { p => absolute.source.copyAs(p) }
+					val actionQueue = new ActionQueue(maxParallelThreads)
+					altered
+						.tryMap { binding =>
+							outputDirectories.tryMap { output =>
+								val absolute = binding.underTarget(output)
+								absolute.target.createParentDirectories().map { p =>
+									// Uses multi-threading in file copy
+									val action = actionQueue.push { absolute.source.copyAs(p) }
+									action.waitUntilStarted()
+									action
+								}
+							}
 						}
-					}.flatMap { _ =>
-						println("All files successfully copied")
-						// Handles removed files as well (unless disabled)
-						if (skipFileRemoval || lastDeploymentTime.isEmpty || !project.fileDeletionEnabled)
-							Success(Some(deployment))
-						else
-							checkForRemovedFiles(project, branch, buildDirectory, deployment.index)
-								.logToTry.map { _ => Some(deployment) }
-					}
+						.flatMap { actions => actions.flatten.map { _.future.waitForResult() }.toTry }
+						.flatMap { _ =>
+							println("All files successfully copied")
+							// Handles removed files as well (unless disabled)
+							if (skipFileRemoval || lastDeploymentTime.isEmpty || !project.fileDeletionEnabled)
+								Success(Some(deployment))
+							else
+								checkForRemovedFiles(project, branch, buildDirectory, deployment.index)
+									.logToTry.map { _ => Some(deployment) }
+						}
 				}
 			}
 	}
