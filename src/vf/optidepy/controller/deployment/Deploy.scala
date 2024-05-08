@@ -144,6 +144,7 @@ object Deploy
 								}
 							}
 						}
+						// TODO: Add better logging system here
 						.flatMap { actions => actions.flatten.map { _.future.waitForResult() }.toTry }
 						.flatMap { _ =>
 							println("All files successfully copied")
