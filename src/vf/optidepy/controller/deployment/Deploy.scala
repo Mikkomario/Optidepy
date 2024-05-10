@@ -1,6 +1,7 @@
 package vf.optidepy.controller.deployment
 
 import utopia.flow.async.AsyncExtensions._
+import utopia.flow.async.TryFuture
 import utopia.flow.async.context.ActionQueue
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
@@ -19,7 +20,7 @@ import vf.optidepy.model.deployment.{Binding, Deployment, ProjectDeploymentConfi
 import java.nio.file.{Path, Paths}
 import java.time.Instant
 import scala.collection.immutable.VectorBuilder
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Codec
 import scala.util.{Failure, Success, Try}
 
@@ -183,6 +184,7 @@ object Deploy
 						// TODO: Use a separate logger in .toTree that fails the process if an error is encountered
 						findAlteredFilesFromDirectory(absoluteBinding, deploymentTime, absoluteBinding.source.toTree,
 							deploymentFilesBuilder, actionQueue)
+							.waitFor()
 						deploymentFilesBuilder.result()
 					}
 				}
@@ -195,7 +197,7 @@ object Deploy
 	private def findAlteredFilesFromDirectory(binding: Binding, lastDeploymentTime: Instant,
 	                                           directoryNode: LazyTree[Path],
 	                                           deploymentFilesBuilder: VectorBuilder[Path], actionQueue: ActionQueue)
-	                                          (implicit log: Logger, exc: ExecutionContext): Unit =
+	                                          (implicit log: Logger, exc: ExecutionContext): Future[Unit] =
 	{
 		// Check whether the directory exists in the target destination
 		val relativePath = directoryNode.nav.relativeTo(binding.source).either
@@ -209,18 +211,26 @@ object Deploy
 				.filter { hasChanged(binding, _, lastDeploymentTime) }
 			
 			// Handles the sub-directories using recursion and multi-threading
-			subDirectories.foreach { subDirectory =>
-				val action = actionQueue.push {
-					findAlteredFilesFromDirectory(binding, lastDeploymentTime, subDirectory, deploymentFilesBuilder,
-						actionQueue)
+			if (subDirectories.nonEmpty)
+				Future {
+					subDirectories.map { subDirectory =>
+						val action = actionQueue.push {
+							findAlteredFilesFromDirectory(binding, lastDeploymentTime, subDirectory,
+								deploymentFilesBuilder, actionQueue).waitFor()
+						}
+						action.waitUntilStarted()
+						action
+					}.map { _.future.waitForResult() }.failuresIterator
+						.foreach { log(_, s"Failed to find altered files from under ${ directoryNode.nav }") }
 				}
-				action.waitUntilStarted()
-				action.future.onComplete { _.failure.foreach { log(_) } }
-			}
+			else
+				Future.unit
 		}
 		// Case: Target directory doesn't exist => Adds all files under this directory to be deployed
-		else
+		else {
 			deploymentFilesBuilder += directoryNode.nav
+			Future.unit
+		}
 	}
 	
 	private def checkForRemovedFiles(project: ProjectDeploymentConfig, branch: String,
@@ -249,6 +259,7 @@ object Deploy
 		val deleteResult = handleFileDeletion(fullOutputDirectory, Lazy { Paths.get("") },
 			mappedBindings, otherBindings, fileSpecificBindings.map { _.target }.toSet, backupDir,
 			deletedFilesBuilder, failuresBuilder, actionQueue)
+			.waitForResult()
 		val deletedFiles = deletedFilesBuilder.result()
 		
 		// Writes a note concerning the deleted files, if any were found
@@ -283,11 +294,12 @@ object Deploy
 	                                mappedBindings: Iterable[(Binding, Path)],
 	                                otherBindings: Iterable[(Binding, Path)], keepFiles: Set[Path],
 	                                backupDir: Option[Lazy[Path]], deletedPathsBuilder: VectorBuilder[Path],
-	                                failuresBuilder: VectorBuilder[Throwable], actionQueue: ActionQueue): Try[Unit] =
+	                                failuresBuilder: VectorBuilder[Throwable], actionQueue: ActionQueue)
+	                              (implicit exc: ExecutionContext): Future[Try[Unit]] =
 	{
 		// Divides the directly accessible files into directories and regular files
 		targetDirectory.iterateChildren { _.divideBy { _.isRegularFile }.map { _.toVector } }
-			.flatMap { case Pair(subDirectories, files) =>
+			.map { case Pair(subDirectories, files) =>
 				// Checks whether the regular files appear under some of the mapped bindings
 				if (files.nonEmpty) {
 					lazy val sourceDirectories = mappedBindings
@@ -318,40 +330,47 @@ object Deploy
 				// Recursively moves down to the sub-directories
 				// Uses multi-threading in order to improve processing speed
 				// FIXME: Should handle failures using a logger and not terminate the process. Now continues the process randomly for a while anyway.
-				subDirectories.map { subDirectory =>
-					val action = actionQueue.push {
-						val dirName = subDirectory.fileName
-						// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
-						val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
-							// Filters out the "other" bindings that can't appear under this sub-directory
-							.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
-							// Assigns correct relative path to the new mappings
-							.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
-							.toTuple
-						// Updates the relative paths of existing mapped bindings
-						val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
-							newMappedBindings
-						
-						// Deletes the targeted files within this directory
-						handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
-							nextMappedBindings, remainingOtherBindings,
-							keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder,
-							actionQueue)
-							// If successful, checks whether this directory is now empty
-							// If so, deletes it
-							.flatMap { _ =>
-								if (subDirectory.isEmpty) {
-									println(s"Deleting the empty sub-directory: $subDirectory")
-									subDirectory.delete()
-								}
-								else
-									Success(false)
+				if (subDirectories.nonEmpty)
+					Future {
+						subDirectories.map { subDirectory =>
+							val action = actionQueue.push {
+								val dirName = subDirectory.fileName
+								// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
+								val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
+									// Filters out the "other" bindings that can't appear under this sub-directory
+									.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
+									// Assigns correct relative path to the new mappings
+									.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
+									.toTuple
+								// Updates the relative paths of existing mapped bindings
+								val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
+									newMappedBindings
+								
+								// Deletes the targeted files within this directory
+								handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
+									nextMappedBindings, remainingOtherBindings,
+									keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder,
+									actionQueue)
+									.waitForResult()
+									// If successful, checks whether this directory is now empty
+									// If so, deletes it
+									.flatMap { _ =>
+										if (subDirectory.isEmpty) {
+											println(s"Deleting the empty sub-directory: $subDirectory")
+											subDirectory.delete()
+										}
+										else
+											Success(false)
+									}
 							}
+							action.waitUntilStarted()
+							action
+						}.map { _.future.waitForResult() }.toTry.map { _ => () }
 					}
-					action.waitUntilStarted()
-					action
-				}.map { _.waitFor().flatten }.toTry.map { _ => () }
+				else
+					TryFuture.successCompletion
 			}
+			.flattenToFuture
 	}
 	
 	private def hasChanged(binding: Binding, file: Path, lastDeploymentTime: Instant)(implicit log: Logger) = {

@@ -13,9 +13,9 @@ import utopia.flow.time.WeekDays.MondayToSunday
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
-import vf.optidepy.controller.deployment.{Deploy, Merge}
+import vf.optidepy.controller.deployment.{Deploy, Merge, Standardize}
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, ProjectDeployments, ProjectDeploymentConfig}
+import vf.optidepy.model.deployment.{Binding, ProjectDeploymentConfig, ProjectDeployments}
 import vf.optidepy.util.Common._
 
 import java.nio.file.{Path, Paths}
@@ -269,6 +269,12 @@ object OptidepyApp extends App
 						}
 					case Failure(error) => log(error, "Merging failed")
 				}
+			}
+		},
+		Command("normalize", "norm", "Normalizes file names within a project")(projectArg) { args =>
+			findProject(args("project").getString).foreach { project =>
+				project.sourceCorrectedBindings.foreach { binding => Standardize.fileNamesUnder(binding.source) }
+				println("\nFile-name normalization completed")
 			}
 		}
 	)

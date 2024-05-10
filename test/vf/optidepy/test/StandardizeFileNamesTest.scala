@@ -6,6 +6,8 @@ import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.StringExtensions._
 
+import java.nio.file.Path
+
 /**
  * Tests the file name standardization algorithm
  *
@@ -25,6 +27,10 @@ object StandardizeFileNamesTest extends App
 	assert("test string".replaceAllExcept(acceptedCharRegex, "-") == "test-string",
 		"test string".replaceAllExcept(acceptedCharRegex, "-"))
 	
-	Standardize.fileNamesUnder("data/test-data")
+	// Takes back-ups first
+	val dir: Path = "data/test-data"
+	dir.copyAs("data/test-data-copy")
+	
+	Standardize.fileNamesUnder(dir)
 	println("Done!")
 }
