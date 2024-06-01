@@ -1,7 +1,6 @@
 package vf.optidepy.controller.deployment
 
 import utopia.flow.async.AsyncExtensions._
-import utopia.flow.async.TryFuture
 import utopia.flow.async.context.ActionQueue
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Pair
@@ -10,8 +9,8 @@ import utopia.flow.event.listener.ProgressListener
 import utopia.flow.operator.equality.EqualsFunction
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
-import utopia.flow.util.{ProgressTracker, TryCatch}
 import utopia.flow.util.logging.Logger
+import utopia.flow.util.{ProgressTracker, TryCatch}
 import utopia.flow.view.immutable.caching.Lazy
 import utopia.flow.view.mutable.async.Volatile
 import vf.optidepy.controller.IndexCounter
@@ -254,12 +253,10 @@ object Deploy
 		
 		val deletedFilesBuilder = new VectorBuilder[Path]()
 		val failuresBuilder = new VectorBuilder[Throwable]()
-		val actionQueue = new ActionQueue(maxParallelThreads)
 		// Performs the file-deletion process
 		val deleteResult = handleFileDeletion(fullOutputDirectory, Lazy { Paths.get("") },
 			mappedBindings, otherBindings, fileSpecificBindings.map { _.target }.toSet, backupDir,
-			deletedFilesBuilder, failuresBuilder, actionQueue)
-			.waitForResult()
+			deletedFilesBuilder, failuresBuilder)
 		val deletedFiles = deletedFilesBuilder.result()
 		
 		// Writes a note concerning the deleted files, if any were found
@@ -294,12 +291,12 @@ object Deploy
 	                                mappedBindings: Iterable[(Binding, Path)],
 	                                otherBindings: Iterable[(Binding, Path)], keepFiles: Set[Path],
 	                                backupDir: Option[Lazy[Path]], deletedPathsBuilder: VectorBuilder[Path],
-	                                failuresBuilder: VectorBuilder[Throwable], actionQueue: ActionQueue)
-	                              (implicit exc: ExecutionContext): Future[Try[Unit]] =
+	                                failuresBuilder: VectorBuilder[Throwable])
+	                              (implicit exc: ExecutionContext): Try[Unit] =
 	{
 		// Divides the directly accessible files into directories and regular files
 		targetDirectory.iterateChildren { _.divideBy { _.isRegularFile }.map { _.toVector } }
-			.map { case Pair(subDirectories, files) =>
+			.flatMap { case Pair(subDirectories, files) =>
 				// Checks whether the regular files appear under some of the mapped bindings
 				if (files.nonEmpty) {
 					lazy val sourceDirectories = mappedBindings
@@ -331,46 +328,37 @@ object Deploy
 				// Uses multi-threading in order to improve processing speed
 				// FIXME: Should handle failures using a logger and not terminate the process. Now continues the process randomly for a while anyway.
 				if (subDirectories.nonEmpty)
-					Future {
-						subDirectories.map { subDirectory =>
-							val action = actionQueue.push {
-								val dirName = subDirectory.fileName
-								// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
-								val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
-									// Filters out the "other" bindings that can't appear under this sub-directory
-									.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
-									// Assigns correct relative path to the new mappings
-									.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
-									.toTuple
-								// Updates the relative paths of existing mapped bindings
-								val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
-									newMappedBindings
-								
-								// Deletes the targeted files within this directory
-								handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
-									nextMappedBindings, remainingOtherBindings,
-									keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder,
-									actionQueue)
-									.waitForResult()
-									// If successful, checks whether this directory is now empty
-									// If so, deletes it
-									.flatMap { _ =>
-										if (subDirectory.isEmpty) {
-											println(s"Deleting the empty sub-directory: $subDirectory")
-											subDirectory.delete()
-										}
-										else
-											Success(false)
-									}
+					subDirectories.tryMap { subDirectory =>
+						val dirName = subDirectory.fileName
+						// Collects those "other" bindings that match this sub-directory and adds them to mapped bindings
+						val (remainingOtherBindings, newMappedBindings) = otherBindings.divideBy { _._2 ~== subDirectory }
+							// Filters out the "other" bindings that can't appear under this sub-directory
+							.mapFirst { _.filter { _._2.isChildOf(subDirectory) } }
+							// Assigns correct relative path to the new mappings
+							.mapSecond { _.map { case (b, _) => b -> Paths.get("") } }
+							.toTuple
+						// Updates the relative paths of existing mapped bindings
+						val nextMappedBindings = mappedBindings.map { case (b, relative) => b -> (relative/dirName) } ++
+							newMappedBindings
+						
+						// Deletes the targeted files within this directory
+						handleFileDeletion(targetDirectory/dirName, relativeTargetDirectory.map { _/dirName },
+							nextMappedBindings, remainingOtherBindings,
+							keepFiles, backupDir.map { _.map { _/dirName } }, deletedPathsBuilder, failuresBuilder)
+							// If successful, checks whether this directory is now empty
+							// If so, deletes it
+							.flatMap { _ =>
+								if (subDirectory.isEmpty) {
+									println(s"Deleting the empty sub-directory: $subDirectory")
+									subDirectory.delete()
+								}
+								else
+									Success(false)
 							}
-							action.waitUntilStarted()
-							action
-						}.map { _.future.waitForResult() }.toTry.map { _ => () }
-					}
+					}.map { _ => () }
 				else
-					TryFuture.successCompletion
+					Success(())
 			}
-			.flattenToFuture
 	}
 	
 	private def hasChanged(binding: Binding, file: Path, lastDeploymentTime: Instant)(implicit log: Logger) = {

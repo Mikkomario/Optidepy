@@ -75,7 +75,7 @@ object ProjectActions
 			if (modules.isEmpty && deploymentConfig.isEmpty)
 				println("No versioned modules found and no deployments were specified. \nProject creation canceled.")
 			else {
-				// TODO: Add library dependencies
+				// TODO: Add library dependencies (needs access to projects)
 			}
 		}
 		else

@@ -3,6 +3,9 @@ List of Changes
 
 ## v1.2 (in development)
 Maverick-integration
+### New features
+- Added `normalize` command which normalizes file names in project input
+  - This may help avoid some file system errors related to illegal file names
 ### Other changes
 - The deployment algorithm now utilizes parallelism, which should make the process faster
 
