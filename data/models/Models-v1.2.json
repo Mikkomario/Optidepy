@@ -1,0 +1,156 @@
+{
+  "project": "Optidepy",
+  "version": "v1.2",
+  "package": "vf.optidepy",
+  "database": "optidepy",
+  "classes": {
+    "project": [
+      {
+        "name": "Project",
+        "doc": "Represents a project that may be deployed or updated",
+        "props": [
+          {
+            "name": "name",
+            "type": "NonEmptyString(16-255)",
+            "index": true,
+            "doc": "Name of this project",
+            "with": "withName",
+            "in": "withNames"
+          },
+          {
+            "name": "rootPath",
+            "type": "path",
+            "doc": "Path to the directory that contains this project"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this project was introduced",
+            "index": false
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time whe this project was removed / archived"
+          }
+        ]
+      },
+      {
+        "name": "Branch",
+        "name_plural": "Branches",
+        "doc": "Represents a versioned branch of a project",
+        "props": [
+          {
+            "ref": "project",
+            "doc": "Id of the project this branch / version is part of"
+          },
+          {
+            "name": "name",
+            "type": "NonEmptyString(8-128)",
+            "doc": "Name of this branch"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this branch was introduced",
+            "index": false
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this branch was removed"
+          },
+          {
+            "name": "isDefault",
+            "name_plural": "areDefaults",
+            "type": "Boolean",
+            "doc": "Whether this is the default branch of the associated project"
+          }
+        ]
+      }
+    ]
+  },
+  "deployment": [
+    {
+      "name": "ProjectDeploymentConfig",
+      "doc": "Represents settings used for deploying a project",
+      "access": "config",
+      "props": [
+        {
+          "ref": "project",
+          "doc": "Id of the project which this configuration describes"
+        },
+        {
+          "name": "outputDirectory",
+          "type": "Path",
+          "doc": "Directory to which all the deployed files / sub-directories will be placed"
+        },
+        {
+          "name": "relativeInputDirectory",
+          "type": "Option[Path]",
+          "doc": "Path relative to this project's root directory which contains all deployed files"
+        },
+        {
+          "type": "creation",
+          "doc": "Time when this configuration was added",
+          "index": false
+        },
+        {
+          "type": "deprecation",
+          "doc": "Time when this configuration was replaced with another"
+        },
+        {
+          "name": "usesBuildDirectories",
+          "name_plural": "useBuildDirectories",
+          "type": "Boolean",
+          "doc": "Whether this project places deployed files in separate build directories",
+          "default": true
+        },
+        {
+          "name": "fileDeletionEnabled",
+          "name_plural": "fileDeletionsAreEnabled",
+          "type": "Boolean",
+          "doc": "Whether output files not present in the input directories should be automatically removed",
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "Binding",
+      "doc": "Represents a binding between an input directory/file and an output directory/file",
+      "access": "binding",
+      "props": [
+        {
+          "ref": "project_deployment_config",
+          "name": "configId",
+          "doc": "Id of the configuration this binding belongs to"
+        },
+        {
+          "name": "source",
+          "type": "Path",
+          "doc": "Path to the file or directory that is being deployed. May be relative."
+        },
+        {
+          "name": "target",
+          "type": "Path",
+          "doc": "Path to the directory or file where the 'source' is copied"
+        }
+      ]
+    },
+    {
+      "name": "Deployment",
+      "doc": "Represents an event where a project is deployed",
+      "props": [
+        {
+          "ref": "branch",
+          "doc": "Id of the branch that was deployed"
+        },
+        {
+          "type": "creation",
+          "doc": "Time when this deployment was made"
+        },
+        {
+          "name": "version",
+          "type": "Option[Version]",
+          "doc": "Deployed project version. None if versioning is not being used."
+        }
+      ]
+    }
+  ]
+}
