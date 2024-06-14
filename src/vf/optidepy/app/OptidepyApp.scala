@@ -118,7 +118,7 @@ object OptidepyApp extends App
 					if (StdIn.ask(s"Do you want to change the root input directory? Currently $currentInputName")) {
 						val newRoot = StdIn.printAndReadLine(
 								"Please specify the new input directory (leave empty if there is no common root directory)")
-							.notEmpty.map { Paths.get(_) }
+							.ifNotEmpty.map { Paths.get(_) }
 						// Transfers the input paths to the new root, if possible
 						val newProject = project.withInput(newRoot)
 						newRoot -> newProject.relativeBindings
@@ -291,7 +291,7 @@ object OptidepyApp extends App
 	
 	private def findProject(projectName: String) = {
 		// Finds the project
-		val result = projectName.notEmpty match {
+		val result = projectName.ifNotEmpty match {
 			case Some(projectName) => projects.current.find { _.name ~== projectName }
 			case None => lastDeployment
 		}

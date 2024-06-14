@@ -15,6 +15,7 @@ import scala.util.Success
  * @author Mikko Hilpinen
  * @since 4.10.2021, v0.1
  */
+@deprecated("To be removed / integrated with other features", "v1.2")
 object CollectUpdate
 {
 	// ATTRIBUTES   ------------------------------

@@ -32,40 +32,137 @@
             "doc": "Time whe this project was removed / archived"
           }
         ]
-      },
-      {
-        "name": "Branch",
-        "name_plural": "Branches",
-        "doc": "Represents a versioned branch of a project",
-        "props": [
-          {
-            "ref": "project",
-            "doc": "Id of the project this branch / version is part of"
-          },
-          {
-            "name": "name",
-            "type": "NonEmptyString(8-128)",
-            "doc": "Name of this branch"
-          },
-          {
-            "type": "creation",
-            "doc": "Time when this branch was introduced",
-            "index": false
-          },
-          {
-            "type": "deprecation",
-            "doc": "Time when this branch was removed"
-          },
-          {
-            "name": "isDefault",
-            "name_plural": "areDefaults",
-            "type": "Boolean",
-            "doc": "Whether this is the default branch of the associated project"
-          }
-        ]
       }
     ]
   },
+  "library": [
+    {
+      "name": "VersionedModule",
+      "doc": "Represents a library module which may be exported or added as a dependency to another project",
+      "props": [
+        {
+          "ref": "project",
+          "doc": "Id of the project this module is part of"
+        },
+        {
+          "name": "name",
+          "type": "NonEmptyString(12-255)",
+          "doc": "Name of this module"
+        },
+        {
+          "name": "relativeChangeListPath",
+          "type": "Path",
+          "doc": "A path relative to the project root directory, which points to this module's Changes.md file"
+        },
+        {
+          "name": "relativeArtifactDirectory",
+          "type": "Path",
+          "doc": "A path relative to the project root directory, which points to the directory where artifact jar files will be exported"
+        },
+        {
+          "type": "creation",
+          "doc": "Time when this module was introduced"
+        },
+        {
+          "type": "deprecation",
+          "doc": "Time when this module was archived or removed"
+        }
+      ]
+    },
+    {
+      "name": "DocSection",
+      "doc": "Represents section within a documentation (md) file",
+      "props": [
+        {
+          "ref": "doc_section",
+          "name": "parentSectionId",
+          "type": "Option[Int]",
+          "doc": "Id of the section which contains this section. None if this is the root level section."
+        },
+        {
+          "name": "header",
+          "type": "String(128-1024)",
+          "doc": "Header text for this section"
+        },
+        {
+          "name": "orderIndex",
+          "type": "Int",
+          "default": 0,
+          "doc": "A 0-based index which determines this section's location within the parent section"
+        }
+      ]
+    },
+    {
+      "name": "SubSectionLink",
+      "doc": "Represents a link between two doc sections, assigning one as the subsection of another",
+      "props": [
+        {
+          "ref": "doc_section",
+          "name": "parentId",
+          "doc": "Id of the parent section, which contains the child section"
+        },
+        {
+          "ref": "doc_section",
+          "name": "childId",
+          "doc": "Id of the section contained within the parent section"
+        },
+        {
+          "name": "orderIndex",
+          "doc": "A 0-based index determining the location of the subsection within the parent section"
+        }
+      ]
+    },
+    {
+      "name": "DocLine",
+      "doc": "Represents a single line of text within a documentation",
+      "props": [
+        {
+          "ref": "doc_section",
+          "name": "sectionId",
+          "doc": "Id of the section within which this line belongs"
+        },
+        {
+          "name": "text",
+          "type": "String(255-1024)",
+          "doc": "Text content of this line"
+        },
+        {
+          "name": "indentation",
+          "type": "Int(tiny)",
+          "default": 0,
+          "doc": "Number of tabs / indents at the beginning of this line"
+        },
+        {
+          "name": "orderIndex",
+          "type": "Int",
+          "default": 0,
+          "doc": "0-based index determining this line's position in its section"
+        }
+      ]
+    },
+    {
+      "name": "ModuleRelease",
+      "doc": "Represents a published version / build of a versioned module",
+      "props": [
+        {
+          "ref": "versioned_module",
+          "name": "moduleId",
+          "doc": "Id of the released module"
+        },
+        {
+          "name": "version",
+          "type": "Version",
+          "doc": "Released version"
+        },
+        {
+          "name": "docId",
+          "ref": "DocSection",
+          "type": "Option[Int]",
+          "doc": "Id of the documentation of this release. None if there is no documentation specific to this version."
+        }
+      ]
+    }
+  ],
   "deployment": [
     {
       "name": "ProjectDeploymentConfig",
@@ -130,6 +227,37 @@
           "name": "target",
           "type": "Path",
           "doc": "Path to the directory or file where the 'source' is copied"
+        }
+      ]
+    },
+    {
+      "name": "Branch",
+      "name_plural": "Branches",
+      "doc": "Represents a versioned branch of a project",
+      "props": [
+        {
+          "ref": "project",
+          "doc": "Id of the project this branch / version is part of"
+        },
+        {
+          "name": "name",
+          "type": "NonEmptyString(8-128)",
+          "doc": "Name of this branch"
+        },
+        {
+          "type": "creation",
+          "doc": "Time when this branch was introduced",
+          "index": false
+        },
+        {
+          "type": "deprecation",
+          "doc": "Time when this branch was removed"
+        },
+        {
+          "name": "isDefault",
+          "name_plural": "areDefaults",
+          "type": "Boolean",
+          "doc": "Whether this is the default branch of the associated project"
         }
       ]
     },
