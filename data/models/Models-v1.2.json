@@ -1,5 +1,6 @@
 {
   "project": "Optidepy",
+  "author": "Mikko Hilpinen",
   "version": "v1.2",
   "package": "vf.optidepy",
   "database": "optidepy",
@@ -7,7 +8,8 @@
     "project": [
       {
         "name": "Project",
-        "doc": "Represents a project that may be deployed or updated",
+        "doc": "Represents a project that may be deployed, released or updated",
+        "has_combos": true,
         "props": [
           {
             "name": "name",
@@ -19,7 +21,7 @@
           },
           {
             "name": "rootPath",
-            "type": "path",
+            "type": "Path",
             "doc": "Path to the directory that contains this project"
           },
           {
@@ -33,252 +35,468 @@
           }
         ]
       }
+    ],
+    "deployment": [
+      {
+        "name": "DeploymentConfig",
+        "doc": "Represents settings used for deploying a project",
+        "access": "config",
+        "combos": [
+          {
+            "name": "ProjectDeploymentConfig",
+            "child": "Project",
+            "parent_alias": "config",
+            "doc": "Combines project and deployment configuration information"
+          },
+          {
+            "name": "DetailedDeploymentConfig",
+            "children": "Binding",
+            "parent_alias": "config",
+            "child_alias": "binding",
+            "doc": "Includes individual deployment bindings with the general configuration"
+          }
+        ],
+        "props": [
+          {
+            "ref": "project",
+            "doc": "Id of the project which this configuration describes",
+            "with": "ofProject"
+          },
+          {
+            "name": "outputDirectory",
+            "name_plural": "outputDirectories",
+            "type": "Path",
+            "doc": "Directory to which all the deployed files / sub-directories will be placed"
+          },
+          {
+            "name": "relativeInputDirectory",
+            "name_plural": "relativeInputDirectories",
+            "type": "Option[Path(128-1024)]",
+            "doc": "Path relative to this project's root directory which contains all deployed files. \nNone if the same as the project root path."
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this configuration was added",
+            "index": false
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this configuration was replaced with another"
+          },
+          {
+            "name": "usesBuildDirectories",
+            "name_plural": "useBuildDirectories",
+            "type": "Boolean",
+            "doc": "Whether this project places deployed files in separate build directories",
+            "default": true
+          },
+          {
+            "name": "fileDeletionEnabled",
+            "name_plural": "fileDeletionsAreEnabled",
+            "type": "Boolean",
+            "doc": "Whether output files not present in the input directories should be automatically removed",
+            "default": true
+          }
+        ]
+      },
+      {
+        "name": "Binding",
+        "doc": "Represents a binding between an input directory/file and an output directory/file",
+        "access": "binding",
+        "props": [
+          {
+            "ref": "deployment_config",
+            "name": "configId",
+            "doc": "Id of the configuration this binding belongs to",
+            "with": "inConfig"
+          },
+          {
+            "name": "source",
+            "type": "Path(128-1024)",
+            "doc": "Path to the file or directory that is being deployed. Relative to the input root directory."
+          },
+          {
+            "name": "target",
+            "type": "Path(128-1024)",
+            "doc": "Path to the directory or file where the 'source' is copied. Relative to the root output directory."
+          }
+        ]
+      },
+      {
+        "name": "Branch",
+        "name_plural": "Branches",
+        "doc": "Represents a versioned branch of a project",
+        "combos": [
+          {
+            "name": "ProjectBranch",
+            "child": "Project",
+            "doc": "Combines project and branch information"
+          },
+          {
+            "name": "DeployedBranch",
+            "child": "Deployment",
+            "doc": "Includes information about a specific branch deployment"
+          }
+        ],
+        "combo_prop": ["projectId", "name"],
+        "props": [
+          {
+            "ref": "project",
+            "doc": "Id of the project this branch / version is part of",
+            "with": "ofProject"
+          },
+          {
+            "name": "name",
+            "type": "NonEmptyString(8-128)",
+            "doc": "Name of this branch",
+            "with": "withName"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this branch was introduced",
+            "index": false
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this branch was removed"
+          },
+          {
+            "name": "isDefault",
+            "name_plural": "areDefaults",
+            "type": "Boolean",
+            "doc": "Whether this is the default branch of the associated project",
+            "index": true
+          }
+        ]
+      },
+      {
+        "name": "Deployment",
+        "doc": "Represents an event where a project is deployed",
+        "props": [
+          {
+            "ref": "branch",
+            "doc": "Id of the branch that was deployed",
+            "with": "ofBranch",
+            "in": "ofBranches"
+          },
+          {
+            "name": "index",
+            "type": "Int",
+            "doc": "Ordered index of this deployment. Relative to other deployments targeting the same branch."
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this deployment was made"
+          },
+          {
+            "name": "version",
+            "type": "Option[Version]",
+            "doc": "Deployed project version. None if versioning is not being used.",
+            "index": true,
+            "with": "ofVersion"
+          }
+        ]
+      }
+    ],
+    "library": [
+      {
+        "name": "VersionedModule",
+        "access": "module",
+        "doc": "Represents a library module which may be exported or added as a dependency to another project",
+        "combos": [
+          {
+            "name": "VersionedProjectModule",
+            "child": "Project",
+            "parent_alias": "module",
+            "doc": "Combines project and module information"
+          },
+          {
+            "name": "ReleasedModule",
+            "child": "ModuleRelease",
+            "parent_alias": "module",
+            "child_alias": "release",
+            "doc": "Includes a single release's information in a module"
+          }
+        ],
+        "combo_prop": ["projectId", "name"],
+        "props": [
+          {
+            "ref": "project",
+            "doc": "Id of the project this module is part of",
+            "with": "inProject"
+          },
+          {
+            "name": "name",
+            "type": "NonEmptyString(12-255)",
+            "index": true,
+            "doc": "Name of this module",
+            "with": "withName"
+          },
+          {
+            "name": "relativeChangeListPath",
+            "type": "Path(64-1024)",
+            "doc": "A path relative to the project root directory, which points to this module's Changes.md file"
+          },
+          {
+            "name": "relativeArtifactDirectory",
+            "type": "Path(128-1024)",
+            "doc": "A path relative to the project root directory, which points to the directory where artifact jar files will be exported"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this module was introduced"
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this module was archived or removed"
+          }
+        ]
+      },
+      {
+        "name": "DocText",
+        "access": "doc.text",
+        "doc": "Contains a single piece of line of text which is present in some documentation",
+        "combo": {
+          "name": "PlacedDocLine",
+          "child": "DocLineLink",
+          "child_alias": "link",
+          "doc": "Represents a specific text line which appears in a specific documentation section"
+        },
+        "combo_prop": ["text", "indentation"],
+        "props": [
+          {
+            "name": "text",
+            "type": "String(64-1024)",
+            "doc": "Wrapped text contents",
+            "with": "withText"
+          },
+          {
+            "name": "indentation",
+            "type": "Int(Tiny)",
+            "default": 0,
+            "doc": "Level of indentation applicable to this line / text",
+            "with": "withIndentation"
+          },
+          {
+            "type": "creation",
+            "index": false,
+            "doc": "Time when this text was first introduced"
+          }
+        ]
+      },
+      {
+        "name": "DocSection",
+        "access": "doc.section",
+        "doc": "Represents section within a documentation file",
+        "combos": [
+          {
+            "name": "DocSectionWithHeader",
+            "child": "DocText",
+            "parent_alias": "section",
+            "child_alias": "header",
+            "doc": "Includes header text in a doc section"
+          },
+          {
+            "name": "SubSection",
+            "child": "SubSectionLink",
+            "parent_alias": "section",
+            "child_alias": "link",
+            "doc": "Represents a documentation section which appears as a subsection of another section."
+          }
+        ],
+        "props": [
+          {
+            "name": "headerId",
+            "ref": "doc_text",
+            "doc": "Id of the header (text) of this section.",
+            "with": "withHeader"
+          },
+          {
+            "type": "creation",
+            "index": false,
+            "doc": "Time when this section (version) was added"
+          }
+        ]
+      },
+      {
+        "name": "PlacedLink",
+        "trait": true,
+        "doc": "Common trait for links which place the referenced item to a specific location within the parent item",
+        "combo_prop": ["parentId", "orderIndex"],
+        "props": [
+          {
+            "name": "parentId",
+            "type": "Int",
+            "doc": "Id of the element within which the linked item is placed",
+            "with": "underParent"
+          },
+          {
+            "name": "childId",
+            "type": "Int",
+            "doc": "Id of the linked / placed element",
+            "with": "toChild",
+            "in": "toChildren"
+          },
+          {
+            "name": "orderIndex",
+            "name_plural": "orderIndices",
+            "type": "Int(Tiny)",
+            "default": 0,
+            "doc": "0-based index determining the location where the linked item is placed",
+            "with": "atIndex",
+            "in": "atIndices"
+          }
+        ]
+      },
+      {
+        "name": "DocLineLink",
+        "parent": "PlacedLink",
+        "access": "doc.link",
+        "doc": "Links a line of text to a document section it appears in",
+        "props": [
+          {
+            "name": "sectionId",
+            "parent": "parentId",
+            "ref": "doc_section",
+            "with": "inSection"
+          },
+          {
+            "name": "textId",
+            "parent": "childId",
+            "ref": "doc_text",
+            "with": "toLine",
+            "in": "toLines"
+          }
+        ]
+      },
+      {
+        "name": "SubSectionLink",
+        "parent": "PlacedLink",
+        "access": "doc.link",
+        "doc": "Represents a link between two doc sections, assigning one as the subsection of another",
+        "props": [
+          {
+            "parent": "parentId",
+            "ref": "doc_section",
+            "doc": "Id of the parent section, which contains the child section",
+            "with": "inSection"
+          },
+          {
+            "parent": "childId",
+            "ref": "doc_section",
+            "doc": "Id of the section contained within the parent section",
+            "with": "toSubSection",
+            "in": "toSubSections"
+          }
+        ]
+      },
+      {
+        "name": "ModuleRelease",
+        "access": "module.release",
+        "doc": "Represents a published version / build of a versioned module",
+        "combo_prop": ["moduleId", "version"],
+        "props": [
+          {
+            "ref": "versioned_module",
+            "name": "moduleId",
+            "doc": "Id of the released module",
+            "with": "ofModule"
+          },
+          {
+            "name": "version",
+            "type": "Version",
+            "doc": "Released version",
+            "with": "ofVersion"
+          },
+          {
+            "name": "jarName",
+            "type": "String(16-255)",
+            "doc": "Name of the generated jar file."
+          },
+          {
+            "name": "docId",
+            "ref": "DocSection",
+            "type": "Option[Int]",
+            "doc": "Id of the documentation of this release. None if there is no documentation specific to this version.",
+            "with": "withDocumentation"
+          }
+        ]
+      }
+    ],
+    "dependency": [
+      {
+        "name": "Dependency",
+        "doc": "Represents a dependency of a project / module from a specific library",
+        "combos": [
+          {
+            "name": "ProjectDependency",
+            "child": "Project",
+            "doc": "Combines project and dependency information"
+          },
+          {
+            "name": "UpdatedDependency",
+            "child": "DependencyUpdate",
+            "child_alias": "update",
+            "doc": "Represents a dependency that has been updated at some point"
+          }
+        ],
+        "props": [
+          {
+            "name": "dependentProjectId",
+            "ref": "project",
+            "doc": "Id of the project which this dependency concerns",
+            "with": "inProject"
+          },
+          {
+            "name": "usedModuleId",
+            "ref": "versioned_module",
+            "doc": "Id of the module the referenced project uses",
+            "with": "ofModule"
+          },
+          {
+            "name": "relativeLibDirectory",
+            "type": "Path(24-1024)",
+            "doc": "Path to the directory where library jars will be placed. \nRelative to the project's root path."
+          },
+          {
+            "name": "libraryFilePath",
+            "type": "Option[Path]",
+            "doc": "Path to the library file matching this dependency. Relative to the project's root path. \nNone if not applicable."
+          },
+          {
+            "type": "creation",
+            "index": false,
+            "doc": "Time when this dependency was registered"
+          },
+          {
+            "type": "deprecation",
+            "doc": "Time when this dependency was replaced or removed. None while active."
+          }
+        ]
+      },
+      {
+        "name": "DependencyUpdate",
+        "access": "update",
+        "doc": "Represents an event where a project's dependency is updated to a new version.",
+        "props": [
+          {
+            "name": "dependencyId",
+            "ref": "dependency",
+            "doc": "Id of the dependency this update concerns",
+            "with": "ofDependency"
+          },
+          {
+            "name": "releaseId",
+            "ref": "module_release",
+            "doc": "Id of the library release that was to the parent project",
+            "with": "toRelease"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this update was made"
+          }
+        ]
+      }
     ]
-  },
-  "library": [
-    {
-      "name": "VersionedModule",
-      "doc": "Represents a library module which may be exported or added as a dependency to another project",
-      "props": [
-        {
-          "ref": "project",
-          "doc": "Id of the project this module is part of"
-        },
-        {
-          "name": "name",
-          "type": "NonEmptyString(12-255)",
-          "doc": "Name of this module"
-        },
-        {
-          "name": "relativeChangeListPath",
-          "type": "Path",
-          "doc": "A path relative to the project root directory, which points to this module's Changes.md file"
-        },
-        {
-          "name": "relativeArtifactDirectory",
-          "type": "Path",
-          "doc": "A path relative to the project root directory, which points to the directory where artifact jar files will be exported"
-        },
-        {
-          "type": "creation",
-          "doc": "Time when this module was introduced"
-        },
-        {
-          "type": "deprecation",
-          "doc": "Time when this module was archived or removed"
-        }
-      ]
-    },
-    {
-      "name": "DocSection",
-      "doc": "Represents section within a documentation (md) file",
-      "props": [
-        {
-          "ref": "doc_section",
-          "name": "parentSectionId",
-          "type": "Option[Int]",
-          "doc": "Id of the section which contains this section. None if this is the root level section."
-        },
-        {
-          "name": "header",
-          "type": "String(128-1024)",
-          "doc": "Header text for this section"
-        },
-        {
-          "name": "orderIndex",
-          "type": "Int",
-          "default": 0,
-          "doc": "A 0-based index which determines this section's location within the parent section"
-        }
-      ]
-    },
-    {
-      "name": "SubSectionLink",
-      "doc": "Represents a link between two doc sections, assigning one as the subsection of another",
-      "props": [
-        {
-          "ref": "doc_section",
-          "name": "parentId",
-          "doc": "Id of the parent section, which contains the child section"
-        },
-        {
-          "ref": "doc_section",
-          "name": "childId",
-          "doc": "Id of the section contained within the parent section"
-        },
-        {
-          "name": "orderIndex",
-          "doc": "A 0-based index determining the location of the subsection within the parent section"
-        }
-      ]
-    },
-    {
-      "name": "DocLine",
-      "doc": "Represents a single line of text within a documentation",
-      "props": [
-        {
-          "ref": "doc_section",
-          "name": "sectionId",
-          "doc": "Id of the section within which this line belongs"
-        },
-        {
-          "name": "text",
-          "type": "String(255-1024)",
-          "doc": "Text content of this line"
-        },
-        {
-          "name": "indentation",
-          "type": "Int(tiny)",
-          "default": 0,
-          "doc": "Number of tabs / indents at the beginning of this line"
-        },
-        {
-          "name": "orderIndex",
-          "type": "Int",
-          "default": 0,
-          "doc": "0-based index determining this line's position in its section"
-        }
-      ]
-    },
-    {
-      "name": "ModuleRelease",
-      "doc": "Represents a published version / build of a versioned module",
-      "props": [
-        {
-          "ref": "versioned_module",
-          "name": "moduleId",
-          "doc": "Id of the released module"
-        },
-        {
-          "name": "version",
-          "type": "Version",
-          "doc": "Released version"
-        },
-        {
-          "name": "docId",
-          "ref": "DocSection",
-          "type": "Option[Int]",
-          "doc": "Id of the documentation of this release. None if there is no documentation specific to this version."
-        }
-      ]
-    }
-  ],
-  "deployment": [
-    {
-      "name": "ProjectDeploymentConfig",
-      "doc": "Represents settings used for deploying a project",
-      "access": "config",
-      "props": [
-        {
-          "ref": "project",
-          "doc": "Id of the project which this configuration describes"
-        },
-        {
-          "name": "outputDirectory",
-          "type": "Path",
-          "doc": "Directory to which all the deployed files / sub-directories will be placed"
-        },
-        {
-          "name": "relativeInputDirectory",
-          "type": "Option[Path]",
-          "doc": "Path relative to this project's root directory which contains all deployed files"
-        },
-        {
-          "type": "creation",
-          "doc": "Time when this configuration was added",
-          "index": false
-        },
-        {
-          "type": "deprecation",
-          "doc": "Time when this configuration was replaced with another"
-        },
-        {
-          "name": "usesBuildDirectories",
-          "name_plural": "useBuildDirectories",
-          "type": "Boolean",
-          "doc": "Whether this project places deployed files in separate build directories",
-          "default": true
-        },
-        {
-          "name": "fileDeletionEnabled",
-          "name_plural": "fileDeletionsAreEnabled",
-          "type": "Boolean",
-          "doc": "Whether output files not present in the input directories should be automatically removed",
-          "default": true
-        }
-      ]
-    },
-    {
-      "name": "Binding",
-      "doc": "Represents a binding between an input directory/file and an output directory/file",
-      "access": "binding",
-      "props": [
-        {
-          "ref": "project_deployment_config",
-          "name": "configId",
-          "doc": "Id of the configuration this binding belongs to"
-        },
-        {
-          "name": "source",
-          "type": "Path",
-          "doc": "Path to the file or directory that is being deployed. May be relative."
-        },
-        {
-          "name": "target",
-          "type": "Path",
-          "doc": "Path to the directory or file where the 'source' is copied"
-        }
-      ]
-    },
-    {
-      "name": "Branch",
-      "name_plural": "Branches",
-      "doc": "Represents a versioned branch of a project",
-      "props": [
-        {
-          "ref": "project",
-          "doc": "Id of the project this branch / version is part of"
-        },
-        {
-          "name": "name",
-          "type": "NonEmptyString(8-128)",
-          "doc": "Name of this branch"
-        },
-        {
-          "type": "creation",
-          "doc": "Time when this branch was introduced",
-          "index": false
-        },
-        {
-          "type": "deprecation",
-          "doc": "Time when this branch was removed"
-        },
-        {
-          "name": "isDefault",
-          "name_plural": "areDefaults",
-          "type": "Boolean",
-          "doc": "Whether this is the default branch of the associated project"
-        }
-      ]
-    },
-    {
-      "name": "Deployment",
-      "doc": "Represents an event where a project is deployed",
-      "props": [
-        {
-          "ref": "branch",
-          "doc": "Id of the branch that was deployed"
-        },
-        {
-          "type": "creation",
-          "doc": "Time when this deployment was made"
-        },
-        {
-          "name": "version",
-          "type": "Option[Version]",
-          "doc": "Deployed project version. None if versioning is not being used."
-        }
-      ]
-    }
-  ]
+  }
 }
