@@ -321,6 +321,7 @@
       {
         "name": "PlacedLink",
         "trait": true,
+        "access": "doc.link",
         "doc": "Common trait for links which place the referenced item to a specific location within the parent item",
         "combo_prop": ["parentId", "orderIndex"],
         "props": [
