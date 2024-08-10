@@ -1,7 +1,7 @@
 package vf.optidepy.app.action
 
 import utopia.flow.collection.CollectionExtensions._
-import utopia.flow.collection.immutable.Pair
+import utopia.flow.collection.immutable.{Empty, Pair}
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.console.ConsoleExtensions._
@@ -31,11 +31,12 @@ object ProjectActions
 	
 	// OTHER    -------------------------
 	
+	// TODO: Refactor to use the new models
 	def setup(rootDirectory: Path)(implicit log: Logger) = {
 		/*
-		(name: String, rootPath: Path, modules: Vector[VersionedModuleWithReleases] = Vector.empty,
+		(name: String, rootPath: Path, modules: Vector[VersionedModuleWithReleases] = Empty,
                    deploymentConfig: Option[ProjectDeployments] = None,
-                   moduleDependencies: Vector[ModuleDependency] = Vector.empty,
+                   moduleDependencies: Vector[ModuleDependency] = Empty,
                    relativeArtifactsDirPath: Option[Path] = None)
 
 		 */
@@ -48,7 +49,7 @@ object ProjectActions
 		// TODO: Make sure this project doesn't exist yet
 		
 		// Looks for versioned modules
-		val (partialModules, modules) = findModules(rootDirectory).logToOption.getOrElse(Vector.empty -> Vector.empty)
+		val (partialModules, modules) = findModules(rootDirectory).logToOption.getOrElse(Empty -> Empty)
 		// Prints the results
 		if (modules.isEmpty) {
 			if (partialModules.isEmpty)
@@ -85,7 +86,7 @@ object ProjectActions
 	
 	private def setupDeploymentConfig(rootDirectory: Path, projectName: String) = {
 		val input = StdIn.readNonEmptyLine(
-			s"Please specify the path common for all deployment inputs. \nSpeficy a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
+			s"Please specify the path common for all deployment inputs. \nSpecify a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
 		{
 			case Some(input) => rootDirectory/input
 			case None => rootDirectory

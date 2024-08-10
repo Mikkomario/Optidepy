@@ -1,33 +1,56 @@
 package vf.optidepy.model.combined.deployment
 
-import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
-import vf.optidepy.model.factory.deployment.DeploymentConfigFactoryWrapper
-import vf.optidepy.model.partial.deployment.DeploymentConfigData
 import vf.optidepy.model.stored.deployment.{Binding, DeploymentConfig}
+
+object DetailedDeploymentConfig
+{
+	// OTHER	--------------------
+	
+	/**
+	  * @param config config to wrap
+	  * @param binding binding to attach to this config
+	  * @return Combination of the specified config and binding
+	  */
+	def apply(config: DeploymentConfig, binding: Seq[Binding]): DetailedDeploymentConfig = 
+		_DetailedDeploymentConfig(config, binding)
+	
+	
+	// NESTED	--------------------
+	
+	/**
+	  * @param config config to wrap
+	  * @param binding binding to attach to this config
+	  */
+	private case class _DetailedDeploymentConfig(config: DeploymentConfig, binding: Seq[Binding]) 
+		extends DetailedDeploymentConfig
+	{
+		// IMPLEMENTED	--------------------
+		
+		override protected def wrap(factory: DeploymentConfig) = copy(config = factory)
+	}
+}
 
 /**
   * Includes individual deployment bindings with the general configuration
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
-case class DetailedDeploymentConfig(config: DeploymentConfig, binding: Seq[Binding]) 
-	extends Extender[DeploymentConfigData] with HasId[Int]
-		with DeploymentConfigFactoryWrapper[DeploymentConfig, DetailedDeploymentConfig]
+trait DetailedDeploymentConfig extends CombinedDeploymentConfig[DetailedDeploymentConfig]
 {
-	// COMPUTED	--------------------
+	// ABSTRACT	--------------------
 	
 	/**
-	  * Id of this config in the database
+	 * @return The wrapped deployment config
+	 */
+	def config: DeploymentConfig
+	/**
+	  * Binding that are attached to this config
 	  */
-	def id = config.id
+	def binding: Seq[Binding]
 	
 	
 	// IMPLEMENTED	--------------------
 	
-	override def wrapped = config.data
-	override protected def wrappedFactory = config
-	
-	override protected def wrap(factory: DeploymentConfig) = copy(config = factory)
+	override def deploymentConfig = config
 }
 

@@ -9,7 +9,7 @@ import utopia.flow.util.StringExtensions._
 import java.io.FileNotFoundException
 import java.nio.file.Path
 
-
+@deprecated("Will be replaced with the new models", "v1.2")
 object ArtifactJarPath
 {
 	/**
@@ -58,6 +58,7 @@ object ArtifactJarPath
  * @author Mikko Hilpinen
  * @since Maverick v0.1, 4.10.2021; Added to Optidepy 9.4.2024 v1.2
  */
+@deprecated("Will be replaced with the new models", "v1.2")
 class ArtifactJarPath(original: Path, val version: Version, originalIsVersioned: Boolean) extends EqualsBy
 {
 	// ATTRIBUTES   -------------------------------

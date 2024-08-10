@@ -12,6 +12,7 @@ import vf.optidepy.util.Common._
 
 import java.time.Instant
 
+@deprecated("Will be replaced with the new models", "v1.2")
 object ModuleRelease extends FromModelFactoryWithSchema[ModuleRelease]
 {
 	// ATTRIBUTES   -----------------------
@@ -38,6 +39,7 @@ object ModuleRelease extends FromModelFactoryWithSchema[ModuleRelease]
  * @author Mikko Hilpinen
  * @since 15.04.2024, v1.2
  */
+@deprecated("Will be replaced with the new models", "v1.2")
 case class ModuleRelease(version: Version, changeDoc: DocSection = DocSection.empty, timestamp: Instant = Now)
 	extends ModelConvertible
 {

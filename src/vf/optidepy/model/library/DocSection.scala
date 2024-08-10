@@ -10,6 +10,7 @@ import utopia.flow.operator.MaybeEmpty
 
 import scala.util.Try
 
+@deprecated("Will be replaced with the new models", "v1.2")
 object DocSection extends FromModelFactory[DocSection]
 {
 	// ATTRIBUTES   -----------------------
@@ -65,6 +66,7 @@ object DocSection extends FromModelFactory[DocSection]
  * @author Mikko Hilpinen
  * @since 15.04.2024, v1.2
  */
+@deprecated("Will be replaced with the new models", "v1.2")
 case class DocSection(header: String, lines: Vector[String] = Vector.empty,
                       subSections: Vector[DocSection] = Vector.empty)
 	extends MaybeEmpty[DocSection] with ModelConvertible

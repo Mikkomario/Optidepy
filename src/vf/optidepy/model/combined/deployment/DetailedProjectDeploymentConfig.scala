@@ -1,10 +1,6 @@
 package vf.optidepy.model.combined.deployment
 
 import utopia.flow.parse.file.FileExtensions._
-import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
-import vf.optidepy.model.factory.deployment.DeploymentConfigFactoryWrapper
-import vf.optidepy.model.partial.deployment.DeploymentConfigData
 import vf.optidepy.model.stored.deployment.{Binding, DeploymentConfig}
 import vf.optidepy.model.stored.project.Project
 
@@ -18,7 +14,7 @@ import vf.optidepy.model.stored.project.Project
  * @since 10.08.2024, v1.2
  */
 case class DetailedProjectDeploymentConfig(config: DeploymentConfig, project: Project, bindings: Seq[Binding])
-	extends ProjectDeploymentConfig
+	extends ProjectDeploymentConfig with CombinedDeploymentConfig[DetailedProjectDeploymentConfig]
 {
 	// ATTRIBUTES   ------------------------
 	
@@ -33,9 +29,6 @@ case class DetailedProjectDeploymentConfig(config: DeploymentConfig, project: Pr
 	 * @return Directory bindings where input is absolute and output is relative
 	 */
 	lazy val sourceCorrectedBindings = bindings.map { _.underSource(inputDirectory) }
-	
-	
-	// COMPUTED ----------------------------
 	
 	
 	// IMPLEMENTED  ------------------------

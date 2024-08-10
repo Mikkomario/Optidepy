@@ -8,6 +8,7 @@ import utopia.flow.view.template.Extender
 
 import scala.util.Try
 
+@deprecated("Will be replaced with the new models", "v1.2")
 object VersionedModuleWithReleases extends FromModelFactory[VersionedModuleWithReleases]
 {
 	override def apply(model: ModelLike[Property]): Try[VersionedModuleWithReleases] =
@@ -21,6 +22,7 @@ object VersionedModuleWithReleases extends FromModelFactory[VersionedModuleWithR
  * @author Mikko Hilpinen
  * @since 15.04.2024, v1.2
  */
+@deprecated("Will be replaced with the new models", "v1.2")
 case class VersionedModuleWithReleases(module: VersionedModule, releases: Vector[ModuleRelease])
 	extends Extender[VersionedModule] with ModelConvertible
 {

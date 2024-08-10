@@ -14,8 +14,9 @@ import utopia.flow.util.{ProgressTracker, TryCatch}
 import utopia.flow.view.immutable.caching.Lazy
 import utopia.flow.view.mutable.async.Volatile
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.cached.deployment.CachedBinding
-import vf.optidepy.model.deployment.{Deployment, ProjectDeploymentConfig, ProjectDeployments}
+import vf.optidepy.model.combined.deployment.{DetailedProjectDeploymentConfig, PossiblyDeployedBranch}
+import vf.optidepy.model.partial.deployment.DeploymentData
+import vf.optidepy.model.template.deployment.HasBindingProps
 
 import java.nio.file.{Path, Paths}
 import java.time.Instant
@@ -43,60 +44,40 @@ object Deploy2
 	// OTHER    -----------------------------
 	
 	/**
-	 * @param project A project
-	 * @param branch Name of the branch to deploy
-	 * @param since The time after which all changes should be included in the deployment,
-	 *              regardless of whether there was a deployment in between or not.
-	 *              Default = None = just include changes since the last project deployment
-	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
-	 * @param counter A counter for indexing deployments
-	 * @param log Logging implementation for non-critical failures
-	 * @return Success or failure, containing up-to-date project state.
-	 */
-	// TODO: Rewrite using the new models
-	def apply(project: ProjectDeployments, branch: String, since: Option[Instant],
-	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean, fullRebuild: Boolean)
-	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext): Try[ProjectDeployments] =
-	{
-		val lastProjectDeployTime = project.lastDeploymentOf(branch).map { _.timestamp }
-		// If the "since" parameter is specified, may use an earlier "last deployment time"
-		// If rebuild flag is set to true, will consider the project to not have been deployed previously
-		val appliedLastDeploymentTime = {
-			if (fullRebuild)
-				None
-			else
-				since match {
-					case Some(since) => lastProjectDeployTime.map { _ min since }
-					case None => lastProjectDeployTime
-				}
-		}
-		apply(project.project, branch, appliedLastDeploymentTime, skipSeparateBuildDirectory,
-			skipFileRemoval)
-			.map {
-				case Some(d) => project + (branch -> d)
-				case None => project
-			}
-	}
-	
-	/**
 	 * Deploys a new project version
-	 * @param project Project to deploy
-	 * @param branch Name of the branch to deploy
-	 * @param lastDeploymentTime Time when this project / branch was deployed the last time
-	 *                           (default = None = not deployed before)
+	 * @param config Deployment configurations
+	 * @param branch The branch to deploy, including information about the latest deployment, if applicable
+	 * @param includeChangesAfter A time threshold after which all changes are included
+	 *                            regardless of the last deployment time.
+	 *                            Default = None = include changes after the last deployment.
 	 * @param skipSeparateBuildDirectory Whether there should not be a separate directory created for this build.
 	 *                                   Default = false = create a separate build directory.
 	 * @param skipFileRemoval Whether the file-removal process should be skipped (default = false)
+	 * @param fullRebuild Whether to perform a full rebuild and not just copy the changed files. Default = false.
 	 * @param counter A counter for indexing deployments
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(project: ProjectDeploymentConfig, branch: String, lastDeploymentTime: Option[Instant] = None,
-	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false)
+	def apply(config: DetailedProjectDeploymentConfig, branch: PossiblyDeployedBranch,
+	          includeChangesAfter: Option[Instant] = None,
+	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false,
+	          fullRebuild: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext) =
 	{
-		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
-		project.sourceCorrectedBindings
+		val fullOutputDirectory = config.fullOutputDirectoryFor(branch.name)
+		lazy val lastDeploymentTime = {
+			if (fullRebuild)
+				None
+			else
+				branch.deployment.map { _.created }.map { lastBranchDeployment =>
+					includeChangesAfter match {
+						case Some(inclusionThreshold) => lastBranchDeployment min inclusionThreshold
+						case None => lastBranchDeployment
+					}
+				}
+		}
+		
+		config.sourceCorrectedBindings
 			.tryFlatMap { binding =>
 				// Converts the binding to its absolute format (i.e. targeting the right output directory)
 				val absoluteBinding = binding.underTarget(fullOutputDirectory)
@@ -112,14 +93,14 @@ object Deploy2
 				}
 				// Case: Files were altered
 				else {
-					val deployment = Deployment()
+					val deployment = DeploymentData(branch.id)
 					// Copies the altered files to a specific build directory (optional feature)
 					// Updates the full copy -directory, also
 					val buildDirectory = {
-						if (skipSeparateBuildDirectory || !project.usesBuildDirectories)
+						if (skipSeparateBuildDirectory || !config.usesBuildDirectories)
 							None
 						else
-							Some(project.directoryForDeployment(branch, deployment))
+							Some(config.directoryForDeployment(branch.name, deployment))
 					}
 					val outputDirectories = buildDirectory.toVector :+ fullOutputDirectory
 					val targetFileCount = altered.size
@@ -151,10 +132,10 @@ object Deploy2
 						.flatMap { _ =>
 							println("All files successfully copied")
 							// Handles removed files as well (unless disabled)
-							if (skipFileRemoval || lastDeploymentTime.isEmpty || !project.fileDeletionEnabled)
+							if (skipFileRemoval || lastDeploymentTime.isEmpty || !config.fileDeletionEnabled)
 								Success(Some(deployment))
 							else
-								checkForRemovedFiles(project, branch, buildDirectory, deployment.index)
+								checkForRemovedFiles(config, branch.name, buildDirectory, deployment.index)
 									.logToTry.map { _ => Some(deployment) }
 						}
 				}
@@ -162,7 +143,7 @@ object Deploy2
 	}
 	
 	// Finds all files that were modified since the last deployment from the specified binding
-	private def findAlteredFiles(absoluteBinding: CachedBinding, lastDeploymentTime: Option[Instant])
+	private def findAlteredFiles(absoluteBinding: HasBindingProps, lastDeploymentTime: Option[Instant])
 	                            (implicit log: Logger, exc: ExecutionContext) =
 	{
 		lastDeploymentTime match {
@@ -195,7 +176,7 @@ object Deploy2
 		}
 	}
 	
-	private def findAlteredFilesFromDirectory(binding: CachedBinding, lastDeploymentTime: Instant,
+	private def findAlteredFilesFromDirectory(binding: HasBindingProps, lastDeploymentTime: Instant,
 	                                          directoryNode: LazyTree[Path],
 	                                          deploymentFilesBuilder: VectorBuilder[Path], actionQueue: ActionQueue)
 	                                          (implicit log: Logger, exc: ExecutionContext): Future[Unit] =
@@ -234,11 +215,11 @@ object Deploy2
 		}
 	}
 	
-	private def checkForRemovedFiles(project: ProjectDeploymentConfig, branch: String,
+	private def checkForRemovedFiles(project: DetailedProjectDeploymentConfig, branchName: String,
 	                                 buildDirectory: => Option[Path], deploymentIndex: => Int)
 	                                (implicit exc: ExecutionContext) =
 	{
-		val fullOutputDirectory = project.fullOutputDirectoryFor(branch)
+		val fullOutputDirectory = project.fullOutputDirectoryFor(branchName)
 		println(s"Checking for removed files from $fullOutputDirectory...")
 		val backupDir = buildDirectory.map { dir => Lazy { dir/"deleted-files" } }
 		// Groups the bindings into different categories:
@@ -263,6 +244,7 @@ object Deploy2
 		
 		// Writes a note concerning the deleted files, if any were found
 		if (deletedFiles.nonEmpty) {
+			// TODO: Document these deleted files in the database
 			println(s"Deleted ${deletedFiles.size} files")
 			val noteWriteResult = buildDirectory match {
 				// Case: Files were deleted and build directory was specified => Writes a note
@@ -290,8 +272,8 @@ object Deploy2
 	//   (based on file-specific bindings)
 	// - Backup directory matches this directory
 	private def handleFileDeletion(targetDirectory: Path, relativeTargetDirectory: Lazy[Path],
-	                               mappedBindings: Iterable[(CachedBinding, Path)],
-	                               otherBindings: Iterable[(CachedBinding, Path)], keepFiles: Set[Path],
+	                               mappedBindings: Iterable[(HasBindingProps, Path)],
+	                               otherBindings: Iterable[(HasBindingProps, Path)], keepFiles: Set[Path],
 	                               backupDir: Option[Lazy[Path]], deletedPathsBuilder: VectorBuilder[Path],
 	                               failuresBuilder: VectorBuilder[Throwable])
 	                              (implicit exc: ExecutionContext): Try[Unit] =
@@ -363,7 +345,7 @@ object Deploy2
 			}
 	}
 	
-	private def hasChanged(binding: CachedBinding, file: Path, lastDeploymentTime: Instant)(implicit log: Logger) = {
+	private def hasChanged(binding: HasBindingProps, file: Path, lastDeploymentTime: Instant)(implicit log: Logger) = {
 		val lastModifiedChanged = file.lastModified match {
 			// Case: Last modified available => Checks whether it has updated
 			case Success(t) => t > lastDeploymentTime

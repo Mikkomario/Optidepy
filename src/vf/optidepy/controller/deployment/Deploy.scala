@@ -29,6 +29,7 @@ import scala.util.{Failure, Success, Try}
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
+@deprecated("Replace with the new version once possible", "v1.2")
 object Deploy
 {
 	// ATTRIBUTES   -------------------------

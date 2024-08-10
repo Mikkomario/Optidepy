@@ -11,6 +11,7 @@ import vf.optidepy.model.library.VersionedModule.scalaJarRegex
 
 import java.nio.file.Path
 
+@deprecated("Will be replaced with the new models", "v1.2")
 object VersionedModule extends FromModelFactoryWithSchema[VersionedModule]
 {
 	// ATTRIBUTES   -----------------------
@@ -33,6 +34,7 @@ object VersionedModule extends FromModelFactoryWithSchema[VersionedModule]
  * @author Mikko Hilpinen
  * @since Maverick v0.1 3.10.2021, added to Optidepy 9.4.2024
  */
+@deprecated("Will be replaced with the new models", "v1.2")
 case class VersionedModule(id: String, name: String, changeListPath: Path, artifactDirectory: Path)
 	extends ModelConvertible
 {

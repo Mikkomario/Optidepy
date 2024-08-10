@@ -12,7 +12,7 @@ object BranchWithDeployments
 	  * @return Combination of the specified branch and deployment
 	  */
 	def apply(branch: Branch, deployments: Seq[Deployment]): BranchWithDeployments = 
-		_BranchWithDeployments(branch, deployments)
+		_BranchWithDeployments(branch, deployments.sortBy { _.created })
 	
 	
 	// NESTED	--------------------
@@ -35,13 +35,22 @@ object BranchWithDeployments
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
-trait BranchWithDeployments extends CombinedBranch[BranchWithDeployments]
+trait BranchWithDeployments extends PossiblyDeployedBranch with CombinedBranch[BranchWithDeployments]
 {
 	// ABSTRACT	--------------------
 	
 	/**
-	  * Deployments that are attached to this branch
+	  * Deployments that are attached to this branch.
+	 * Chronologically ordered.
 	  */
 	def deployments: Seq[Deployment]
+	
+	
+	// COMPUTED ---------------------
+	
+	/**
+	 * @return The latest deployment of this branch
+	 */
+	override def deployment: Option[Deployment] = deployments.lastOption
 }
 

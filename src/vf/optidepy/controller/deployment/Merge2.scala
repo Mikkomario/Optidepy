@@ -4,7 +4,7 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.time.Today
-import vf.optidepy.model.deployment.ProjectDeployments
+import vf.optidepy.model.combined.deployment.{BranchWithDeployments, ProjectDeploymentConfig}
 
 import java.nio.file.Path
 import java.time.Instant
@@ -15,38 +15,36 @@ import scala.util.Success
  * @author Mikko Hilpinen
  * @since 21.3.2023, v1.0.1
  */
-@deprecated("Replace with the new version once possible", "v1.2")
-object Merge
+object Merge2
 {
 	/**
 	 * Merges all recent deployments of a project
-	 * @param project A project
+	 * @param config A project
 	 * @param since Time threshold for merged deployments
 	 * @return Success or failure.
 	 *         Contains None if no merging was done.
 	 *         Contains Some(merged directory) when merging was done
 	 */
-	// TODO: Refactor to use the new models
-	def apply(project: ProjectDeployments, branch: String = ProjectDeployments.defaultBranchName,
-	          since: Option[Instant] = None) =
-	{
+	def apply(config: ProjectDeploymentConfig, branch: BranchWithDeployments, since: Option[Instant] = None) = {
 		// Finds the targeted mergeable deployments
-		val targets = project.deployments.getOrElse(branch, Vector()).reverseIterator
-			.takeWhile { dep => since.forall { dep.timestamp >= _ } }
-			.map { dep => dep -> project.directoryForDeployment(branch, dep) }
+		val targets = branch.deployments.reverseIterator
+			.takeWhile { dep => since.forall { dep.created >= _ } }
+			.map { dep => dep -> config.directoryForDeployment(branch.name, dep) }
 			// The deployment directories must still exist
-			.takeWhile { _._2.exists }.toVector
+			.takeWhile { _._2.exists }
+			.toOptimizedSeq
 		// Case: No targets to merge
 		if (targets.isEmpty)
 			Success(None)
 		else
 			(targets.only match {
 				// Case: Only one target => Simply renames the directory
-				case Some((dep, dir)) => dir.rename(s"$branch-merge-${ dep.index }-$Today")
+				case Some((dep, dir)) => dir.rename(s"${branch.name}-merge-${ dep.index }-$Today")
 				// Case: Multiple targets => Merges
 				case None =>
 					// Creates the target directory
-					(project.output/s"$branch-merge-${ targets.last._1.index }-to-${ targets.head._1.index }-$Today")
+					(config.outputDirectory/s"${branch.name}-merge-${ targets.last._1.index }-to-${
+						targets.head._1.index }-$Today")
 						.asExistingDirectory
 						.flatMap { targetDirectory =>
 							// Moves the latest copy of each file to the merge directory

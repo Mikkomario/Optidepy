@@ -2,10 +2,7 @@ package vf.optidepy.model.combined.deployment
 
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
-import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
-import vf.optidepy.model.factory.deployment.DeploymentConfigFactoryWrapper
-import vf.optidepy.model.partial.deployment.{DeploymentConfigData, DeploymentData}
+import vf.optidepy.model.partial.deployment.DeploymentData
 import vf.optidepy.model.stored.deployment.DeploymentConfig
 import vf.optidepy.model.stored.project.Project
 
@@ -36,9 +33,7 @@ object ProjectDeploymentConfig
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-trait ProjectDeploymentConfig
-	extends Extender[DeploymentConfigData] with HasId[Int] 
-		with DeploymentConfigFactoryWrapper[DeploymentConfig, ProjectDeploymentConfig]
+trait ProjectDeploymentConfig extends CombinedDeploymentConfig[ProjectDeploymentConfig]
 {
 	// ABSTRACT --------------------
 	
@@ -55,11 +50,6 @@ trait ProjectDeploymentConfig
 	// COMPUTED	--------------------
 	
 	/**
-	  * Id of this config in the database
-	  */
-	def id = config.id
-	
-	/**
 	 * @return Directory under which all deployed files will be placed
 	 */
 	def outputDirectory = project.rootPath/config.outputDirectory
@@ -73,8 +63,7 @@ trait ProjectDeploymentConfig
 	
 	// IMPLEMENTED	--------------------
 	
-	override def wrapped = config.data
-	override protected def wrappedFactory = config
+	override def deploymentConfig: DeploymentConfig = config
 	
 	
 	// OTHER    ------------------------

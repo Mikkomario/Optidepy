@@ -15,19 +15,17 @@ object BranchWithDeploymentsDbFactory
 {
 	// IMPLEMENTED	--------------------
 	
+	override def parentFactory = BranchDbFactory
 	override def childFactory = DeploymentDbFactory
 	
 	override def isAlwaysLinked = false
 	
 	override def nonDeprecatedCondition = parentFactory.nonDeprecatedCondition
 	
-	override def parentFactory = BranchDbFactory
-	
 	/**
 	  * @param branch branch to wrap
 	  * @param deployments deployments to attach to this branch
 	  */
-	override def apply(branch: Branch, deployments: Seq[Deployment]) = BranchWithDeployments(branch, 
-		deployments)
+	override def apply(branch: Branch, deployments: Seq[Deployment]) = BranchWithDeployments(branch, deployments)
 }
 
