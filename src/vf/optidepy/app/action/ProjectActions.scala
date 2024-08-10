@@ -2,21 +2,18 @@ package vf.optidepy.app.action
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.{Empty, Pair, Single}
+import utopia.flow.collection.mutable.iterator.OptionsIterator
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger
 import utopia.vault.database.Connection
-import vf.optidepy.database.access.many.library.module.DbVersionedModules
+import vf.optidepy.database.access.many.project.DbProjectsWithModules
 import vf.optidepy.database.access.single.project.DbProject
 import vf.optidepy.model.cached.deployment.{CachedBinding, NewDeploymentConfig}
 import vf.optidepy.model.cached.library.NewModule
-import vf.optidepy.model.deployment.ProjectDeploymentConfig
-import vf.optidepy.model.library.VersionedModule
-import vf.optidepy.model.partial.deployment.DeploymentConfigData
 
 import java.nio.file.Path
-import java.util.UUID
 import scala.io.StdIn
 
 /**
@@ -119,16 +116,62 @@ object ProjectActions
 	}
 	
 	private def setupDependencies(rootDirectory: Path)(implicit connection: Connection) = {
-		// Scans for versioned modules
-		val modules = DbVersionedModules.pull
+		// Scans for projects with versioned modules
+		val projects = DbProjectsWithModules.havingModules.pull
 		
 		// Case: No modules => Impossible to add any dependencies
-		if (modules.isEmpty)
+		if (projects.isEmpty || !StdIn.ask("Do you want to add any dependencies to this project?"))
 			Empty
 		else {
-			val multiModalProjectIds = ???
-			val multiModalProjects = ???
+			// Requests the dependencies to add from the user
+			var remainingOptions = projects.flatMap { project =>
+				project.modules.oneOrMany match {
+					case Left(module) => Single(module -> module.name)
+					case Right(modules) => modules.map { module => module -> s"${project.name}/${module.name}" }
+				}
+			}
+			val dependencies = OptionsIterator
+				.continually {
+					if (remainingOptions.isEmpty)
+						None
+					else {
+						println("\nPlease select the next dependency to add. Empty input stops adding dependencies.")
+						val nextDependency = StdIn.selectFrom(remainingOptions, "modules", maxListCount = 30)
+						// Removes the selected module from the available options
+						nextDependency.foreach { module =>
+							remainingOptions = remainingOptions.filterNot { _._1.id == module.id }
+						}
+						nextDependency
+					}
+				}
+				.toOptimizedSeq
+			
+			if (dependencies.isEmpty)
+				Empty
+			else {
+				// Determines the locations where these dependencies will be placed
+				val dependenciesWithLibDirectories = {
+					if (dependencies.hasSize > 1 &&
+						StdIn.ask("Do you want to place all these jars in the same directory?"))
+					{
+						val relativeLibDir = requestLibDirectory(rootDirectory, "these jars")
+						dependencies.map { _ -> relativeLibDir }
+					}
+					else
+						dependencies.map { module => module -> requestLibDirectory(rootDirectory, module.name) }
+				}
+				// TODO: Continue by scanning for library files
+				???
+			}
 		}
+	}
+	
+	private def requestLibDirectory(rootDirectory: Path, placedModulesStr: String) = {
+		println(s"In which directory shall $placedModulesStr be placed?")
+		println(s"Please specify a path relative to $rootDirectory")
+		println("Default = data/lib")
+		val pathStr = StdIn.readNonEmptyLine().getOrElse("data/lib")
+		pathStr: Path
 	}
 	
 	/**

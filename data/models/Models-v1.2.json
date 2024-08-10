@@ -9,7 +9,15 @@
       {
         "name": "Project",
         "doc": "Represents a project that may be deployed, released or updated",
-        "has_combos": true,
+        "has_many_combos": true,
+        "combo": {
+          "name": "ProjectWithModules",
+          "name_plural": "ProjectsWithModules",
+          "children": "VersionedModule",
+          "is_always_linked": true,
+          "child_alias": "module",
+          "doc": "Includes versioned modules to a project"
+        },
         "props": [
           {
             "name": "name",
