@@ -180,7 +180,8 @@
             "in": "ofBranches"
           },
           {
-            "name": "index",
+            "name": "deploymentIndex",
+            "name_plural": "deploymentIndices",
             "type": "Int",
             "doc": "Ordered index of this deployment. Relative to other deployments targeting the same branch."
           },

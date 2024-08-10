@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/../Utopia/BunnyMunch/BunnyMunch.iml" filepath="$PROJECT_DIR$/../Utopia/BunnyMunch/BunnyMunch.iml" />
       <module fileurl="file://$PROJECT_DIR$/../Utopia/Flow/Flow.iml" filepath="$PROJECT_DIR$/../Utopia/Flow/Flow.iml" />
       <module fileurl="file://$PROJECT_DIR$/Optidepy.iml" filepath="$PROJECT_DIR$/Optidepy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Utopia-Scala/Vault/Vault.iml" filepath="$PROJECT_DIR$/../Utopia-Scala/Vault/Vault.iml" />
     </modules>
   </component>
 </project>
