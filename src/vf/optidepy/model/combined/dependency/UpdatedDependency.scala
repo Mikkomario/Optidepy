@@ -11,8 +11,9 @@ import vf.optidepy.model.stored.dependency.{Dependency, DependencyUpdate}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class UpdatedDependency(dependency: Dependency, update: Option[DependencyUpdate]) 
-	extends Extender[DependencyData] with HasId[Int] with DependencyFactoryWrapper[Dependency, UpdatedDependency]
+case class UpdatedDependency(dependency: Dependency, update: DependencyUpdate) 
+	extends Extender[DependencyData] with HasId[Int] 
+		with DependencyFactoryWrapper[Dependency, UpdatedDependency]
 {
 	// COMPUTED	--------------------
 	

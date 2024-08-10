@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.deployment
 
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import utopia.vault.nosql.template.Deprecatable
 import vf.optidepy.database.factory.project.ProjectDbFactory
 import vf.optidepy.model.combined.deployment.ProjectDeploymentConfig
@@ -13,7 +13,7 @@ import vf.optidepy.model.stored.project.Project
   * @since 09.08.2024, v1.2
   */
 object ProjectDeploymentConfigDbFactory 
-	extends PossiblyCombiningFactory[ProjectDeploymentConfig, DeploymentConfig, Project] with Deprecatable
+	extends CombiningFactory[ProjectDeploymentConfig, DeploymentConfig, Project] with Deprecatable
 {
 	// IMPLEMENTED	--------------------
 	
@@ -24,7 +24,6 @@ object ProjectDeploymentConfigDbFactory
 	
 	override def parentFactory = DeploymentConfigDbFactory
 	
-	override def apply(config: DeploymentConfig, project: Option[Project]) = 
-		ProjectDeploymentConfig(config, project)
+	override def apply(config: DeploymentConfig, project: Project) = ProjectDeploymentConfig(config, project)
 }
 

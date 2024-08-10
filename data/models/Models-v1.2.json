@@ -45,6 +45,7 @@
           {
             "name": "ProjectDeploymentConfig",
             "child": "Project",
+            "is_always_linked": true,
             "parent_alias": "config",
             "doc": "Combines project and deployment configuration information"
           },
@@ -129,12 +130,16 @@
         "combos": [
           {
             "name": "ProjectBranch",
+            "name_plural": "ProjectBranches",
             "child": "Project",
+            "is_always_linked": true,
             "doc": "Combines project and branch information"
           },
           {
             "name": "DeployedBranch",
+            "name_plural": "DeployedBranches",
             "child": "Deployment",
+            "is_always_linked": true,
             "doc": "Includes information about a specific branch deployment"
           }
         ],
@@ -208,12 +213,14 @@
           {
             "name": "VersionedProjectModule",
             "child": "Project",
+            "is_always_linked": true,
             "parent_alias": "module",
             "doc": "Combines project and module information"
           },
           {
             "name": "ReleasedModule",
             "child": "ModuleRelease",
+            "is_always_linked": true,
             "parent_alias": "module",
             "child_alias": "release",
             "doc": "Includes a single release's information in a module"
@@ -260,6 +267,7 @@
         "combo": {
           "name": "PlacedDocLine",
           "child": "DocLineLink",
+          "is_always_linked": true,
           "child_alias": "link",
           "doc": "Represents a specific text line which appears in a specific documentation section"
         },
@@ -293,6 +301,7 @@
           {
             "name": "DocSectionWithHeader",
             "child": "DocText",
+            "is_always_linked": true,
             "parent_alias": "section",
             "child_alias": "header",
             "doc": "Includes header text in a doc section"
@@ -300,6 +309,7 @@
           {
             "name": "SubSection",
             "child": "SubSectionLink",
+            "is_always_linked": true,
             "parent_alias": "section",
             "child_alias": "link",
             "doc": "Represents a documentation section which appears as a subsection of another section."
@@ -433,11 +443,13 @@
           {
             "name": "ProjectDependency",
             "child": "Project",
+            "is_always_linked": true,
             "doc": "Combines project and dependency information"
           },
           {
             "name": "UpdatedDependency",
             "child": "DependencyUpdate",
+            "is_always_linked": true,
             "child_alias": "update",
             "doc": "Represents a dependency that has been updated at some point"
           }

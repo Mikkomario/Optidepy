@@ -20,14 +20,14 @@ object DbProjectBranch
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked branches
-	  */
-	protected def model = BranchDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked project
 	  */
 	protected def projectModel = ProjectDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked branches
+	  */
+	private def model = BranchDbModel
 	
 	
 	// IMPLEMENTED	--------------------

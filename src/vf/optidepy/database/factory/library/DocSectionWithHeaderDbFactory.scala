@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.library
 
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import vf.optidepy.model.combined.library.DocSectionWithHeader
 import vf.optidepy.model.stored.library.{DocSection, DocText}
 
@@ -9,8 +9,7 @@ import vf.optidepy.model.stored.library.{DocSection, DocText}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-object DocSectionWithHeaderDbFactory 
-	extends PossiblyCombiningFactory[DocSectionWithHeader, DocSection, DocText]
+object DocSectionWithHeaderDbFactory extends CombiningFactory[DocSectionWithHeader, DocSection, DocText]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -18,6 +17,6 @@ object DocSectionWithHeaderDbFactory
 	
 	override def parentFactory = DocSectionDbFactory
 	
-	override def apply(section: DocSection, header: Option[DocText]) = DocSectionWithHeader(section, header)
+	override def apply(section: DocSection, header: DocText) = DocSectionWithHeader(section, header)
 }
 

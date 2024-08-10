@@ -11,8 +11,8 @@ import vf.optidepy.model.stored.library.{ModuleRelease, VersionedModule}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ReleasedModule(module: VersionedModule, release: Option[ModuleRelease]) 
-	extends Extender[VersionedModuleData] with HasId[Int]
+case class ReleasedModule(module: VersionedModule, release: ModuleRelease) 
+	extends Extender[VersionedModuleData] with HasId[Int] 
 		with VersionedModuleFactoryWrapper[VersionedModule, ReleasedModule]
 {
 	// COMPUTED	--------------------

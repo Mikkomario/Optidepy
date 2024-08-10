@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.dependency
 
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import utopia.vault.nosql.template.Deprecatable
 import vf.optidepy.database.factory.project.ProjectDbFactory
 import vf.optidepy.model.combined.dependency.ProjectDependency
@@ -13,7 +13,7 @@ import vf.optidepy.model.stored.project.Project
   * @since 09.08.2024, v1.2
   */
 object ProjectDependencyDbFactory 
-	extends PossiblyCombiningFactory[ProjectDependency, Dependency, Project] with Deprecatable
+	extends CombiningFactory[ProjectDependency, Dependency, Project] with Deprecatable
 {
 	// IMPLEMENTED	--------------------
 	
@@ -24,7 +24,6 @@ object ProjectDependencyDbFactory
 	
 	override def parentFactory = DependencyDbFactory
 	
-	override def apply(dependency: Dependency, project: Option[Project]) = ProjectDependency(dependency, 
-		project)
+	override def apply(dependency: Dependency, project: Project) = ProjectDependency(dependency, project)
 }
 

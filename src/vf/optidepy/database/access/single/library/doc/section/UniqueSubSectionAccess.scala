@@ -1,5 +1,6 @@
 package vf.optidepy.database.access.single.library.doc.section
 
+import utopia.vault.database.Connection
 import utopia.vault.nosql.access.single.model.SingleRowModelAccess
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
@@ -35,6 +36,24 @@ trait UniqueSubSectionAccess
 		with SingleRowModelAccess[SubSection]
 {
 	// COMPUTED	--------------------
+	
+	/**
+	  * Id of the parent section, which contains the child section. 
+	  * None if no sub section link (or value) was found.
+	  */
+	def linkParentId(implicit connection: Connection) = pullColumn(linkModel.parentId.column).int
+	
+	/**
+	  * Id of the section contained within the parent section. 
+	  * None if no sub section link (or value) was found.
+	  */
+	def linkChildId(implicit connection: Connection) = pullColumn(linkModel.childId.column).int
+	
+	/**
+	  * 0-based index determining the location where the linked item is placed. 
+	  * None if no sub section link (or value) was found.
+	  */
+	def linkOrderIndex(implicit connection: Connection) = pullColumn(linkModel.orderIndex.column).int
 	
 	/**
 	  * A database model (factory) used for interacting with the linked link

@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.library
 
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import vf.optidepy.model.combined.library.PlacedDocLine
 import vf.optidepy.model.stored.library.{DocLineLink, DocText}
 
@@ -9,7 +9,7 @@ import vf.optidepy.model.stored.library.{DocLineLink, DocText}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-object PlacedDocLineDbFactory extends PossiblyCombiningFactory[PlacedDocLine, DocText, DocLineLink]
+object PlacedDocLineDbFactory extends CombiningFactory[PlacedDocLine, DocText, DocLineLink]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -17,6 +17,6 @@ object PlacedDocLineDbFactory extends PossiblyCombiningFactory[PlacedDocLine, Do
 	
 	override def parentFactory = DocTextDbFactory
 	
-	override def apply(docText: DocText, link: Option[DocLineLink]) = PlacedDocLine(docText, link)
+	override def apply(docText: DocText, link: DocLineLink) = PlacedDocLine(docText, link)
 }
 

@@ -21,14 +21,14 @@ object DbProjectDeploymentConfig
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked configs
-	  */
-	protected def model = DeploymentConfigDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked project
 	  */
 	protected def projectModel = ProjectDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked configs
+	  */
+	private def model = DeploymentConfigDbModel
 	
 	
 	// IMPLEMENTED	--------------------

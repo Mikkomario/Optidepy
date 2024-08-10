@@ -19,14 +19,14 @@ object DbDeployedBranch
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked branches
-	  */
-	protected def model = BranchDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked deployment
 	  */
 	protected def deploymentModel = DeploymentDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked branches
+	  */
+	private def model = BranchDbModel
 	
 	
 	// IMPLEMENTED	--------------------

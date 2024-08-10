@@ -1,5 +1,6 @@
 package vf.optidepy.database.access.many.library.doc.text
 
+import utopia.vault.database.Connection
 import utopia.vault.nosql.access.many.model.ManyRowModelAccess
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
@@ -37,6 +38,24 @@ trait ManyPlacedDocLinesAccess
 	// COMPUTED	--------------------
 	
 	/**
+	  * section ids of the accessible doc line links
+	  */
+	def linkSectionIds(implicit connection: Connection) = 
+		pullColumn(linkModel.sectionId.column).map { v => v.getInt }
+	
+	/**
+	  * text ids of the accessible doc line links
+	  */
+	def linkTextIds(implicit connection: Connection) = pullColumn(linkModel.textId.column)
+		.map { v => v.getInt }
+	
+	/**
+	  * order indices of the accessible doc line links
+	  */
+	def linkOrderIndices(implicit connection: Connection) = 
+		pullColumn(linkModel.orderIndex.column).map { v => v.getInt }
+	
+	/**
 	  * Model (factory) used for interacting the doc line links associated with this placed doc line
 	  */
 	protected def linkModel = DocLineLinkDbModel
@@ -45,6 +64,7 @@ trait ManyPlacedDocLinesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = PlacedDocLineDbFactory
+	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyPlacedDocLinesAccess = ManyPlacedDocLinesAccess(condition)

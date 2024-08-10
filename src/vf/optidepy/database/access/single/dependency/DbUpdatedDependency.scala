@@ -19,14 +19,14 @@ object DbUpdatedDependency
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked dependencies
-	  */
-	protected def model = DependencyDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked update
 	  */
 	protected def updateModel = DependencyUpdateDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked dependencies
+	  */
+	private def model = DependencyDbModel
 	
 	
 	// IMPLEMENTED	--------------------

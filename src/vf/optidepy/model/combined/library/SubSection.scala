@@ -11,7 +11,7 @@ import vf.optidepy.model.stored.library.{DocSection, SubSectionLink}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class SubSection(section: DocSection, link: Option[SubSectionLink]) 
+case class SubSection(section: DocSection, link: SubSectionLink) 
 	extends Extender[DocSectionData] with HasId[Int] with DocSectionFactoryWrapper[DocSection, SubSection]
 {
 	// COMPUTED	--------------------

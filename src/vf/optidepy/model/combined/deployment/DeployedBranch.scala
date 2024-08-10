@@ -11,7 +11,7 @@ import vf.optidepy.model.stored.deployment.{Branch, Deployment}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class DeployedBranch(branch: Branch, deployment: Option[Deployment]) 
+case class DeployedBranch(branch: Branch, deployment: Deployment) 
 	extends Extender[BranchData] with HasId[Int] with BranchFactoryWrapper[Branch, DeployedBranch]
 {
 	// COMPUTED	--------------------

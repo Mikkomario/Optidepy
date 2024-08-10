@@ -19,14 +19,14 @@ object DbReleasedModule
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked modules
-	  */
-	protected def model = VersionedModuleDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked release
 	  */
 	protected def releaseModel = ModuleReleaseDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked modules
+	  */
+	private def model = VersionedModuleDbModel
 	
 	
 	// IMPLEMENTED	--------------------

@@ -13,7 +13,7 @@ import vf.optidepy.model.combined.deployment.ProjectBranch
 import java.nio.file.Path
 import java.time.Instant
 
-object ManyProjectBranchsAccess extends ViewFactory[ManyProjectBranchsAccess]
+object ManyProjectBranchesAccess extends ViewFactory[ManyProjectBranchesAccess]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -21,14 +21,14 @@ object ManyProjectBranchsAccess extends ViewFactory[ManyProjectBranchsAccess]
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): ManyProjectBranchsAccess = 
-		_ManyProjectBranchsAccess(Some(condition))
+	override def apply(condition: Condition): ManyProjectBranchesAccess =
+		_ManyProjectBranchesAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _ManyProjectBranchsAccess(override val accessCondition: Option[Condition]) 
-		extends ManyProjectBranchsAccess
+	private case class _ManyProjectBranchesAccess(override val accessCondition: Option[Condition])
+		extends ManyProjectBranchesAccess
 }
 
 /**
@@ -36,8 +36,8 @@ object ManyProjectBranchsAccess extends ViewFactory[ManyProjectBranchsAccess]
   * @author Mikko Hilpinen
   * @since 09.08.2024
   */
-trait ManyProjectBranchsAccess 
-	extends ManyBranchesAccessLike[ProjectBranch, ManyProjectBranchsAccess] 
+trait ManyProjectBranchesAccess
+	extends ManyBranchesAccessLike[ProjectBranch, ManyProjectBranchesAccess]
 		with ManyRowModelAccess[ProjectBranch]
 {
 	// COMPUTED	--------------------
@@ -51,19 +51,19 @@ trait ManyProjectBranchsAccess
 	/**
 	  * root paths of the accessible projects
 	  */
-	def projectRootPaths(implicit connection: Connection) = 
+	def projectRootPaths(implicit connection: Connection) =
 		pullColumn(projectModel.rootPath.column).flatMap { _.string }.map { v => v: Path }
 	
 	/**
 	  * creation times of the accessible projects
 	  */
-	def projectCreationTimes(implicit connection: Connection) = 
+	def projectCreationTimes(implicit connection: Connection) =
 		pullColumn(projectModel.created.column).map { v => v.getInstant }
 	
 	/**
 	  * deprecation times of the accessible projects
 	  */
-	def projectDeprecationTimes(implicit connection: Connection) = 
+	def projectDeprecationTimes(implicit connection: Connection) =
 		pullColumn(projectModel.deprecatedAfter.column).flatMap { v => v.instant }
 	
 	/**
@@ -78,7 +78,7 @@ trait ManyProjectBranchsAccess
 	
 	override protected def self = this
 	
-	override def apply(condition: Condition): ManyProjectBranchsAccess = ManyProjectBranchsAccess(condition)
+	override def apply(condition: Condition): ManyProjectBranchesAccess = ManyProjectBranchesAccess(condition)
 	
 	
 	// OTHER	--------------------

@@ -11,8 +11,8 @@ import vf.optidepy.model.stored.library.{DocSection, DocText}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class DocSectionWithHeader(section: DocSection, header: Option[DocText]) 
-	extends Extender[DocSectionData] with HasId[Int]
+case class DocSectionWithHeader(section: DocSection, header: DocText) 
+	extends Extender[DocSectionData] with HasId[Int] 
 		with DocSectionFactoryWrapper[DocSection, DocSectionWithHeader]
 {
 	// COMPUTED	--------------------

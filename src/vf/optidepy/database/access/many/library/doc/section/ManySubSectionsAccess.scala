@@ -1,5 +1,6 @@
 package vf.optidepy.database.access.many.library.doc.section
 
+import utopia.vault.database.Connection
 import utopia.vault.nosql.access.many.model.ManyRowModelAccess
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
@@ -33,6 +34,24 @@ trait ManySubSectionsAccess
 	extends ManyDocSectionsAccessLike[SubSection, ManySubSectionsAccess] with ManyRowModelAccess[SubSection]
 {
 	// COMPUTED	--------------------
+	
+	/**
+	  * parent ids of the accessible sub section links
+	  */
+	def linkParentIds(implicit connection: Connection) = 
+		pullColumn(linkModel.parentId.column).map { v => v.getInt }
+	
+	/**
+	  * child ids of the accessible sub section links
+	  */
+	def linkChildIds(implicit connection: Connection) = pullColumn(linkModel.childId.column)
+		.map { v => v.getInt }
+	
+	/**
+	  * order indices of the accessible sub section links
+	  */
+	def linkOrderIndices(implicit connection: Connection) = 
+		pullColumn(linkModel.orderIndex.column).map { v => v.getInt }
 	
 	/**
 	  * Model (factory) used for interacting the sub section links associated with this sub section

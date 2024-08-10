@@ -20,14 +20,14 @@ object DbProjectDependency
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked dependencies
-	  */
-	protected def model = DependencyDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked project
 	  */
 	protected def projectModel = ProjectDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked dependencies
+	  */
+	private def model = DependencyDbModel
 	
 	
 	// IMPLEMENTED	--------------------

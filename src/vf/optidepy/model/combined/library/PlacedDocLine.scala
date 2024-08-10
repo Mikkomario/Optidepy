@@ -11,7 +11,7 @@ import vf.optidepy.model.stored.library.{DocLineLink, DocText}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class PlacedDocLine(docText: DocText, link: Option[DocLineLink]) 
+case class PlacedDocLine(docText: DocText, link: DocLineLink) 
 	extends Extender[DocTextData] with HasId[Int] with DocTextFactoryWrapper[DocText, PlacedDocLine]
 {
 	// COMPUTED	--------------------

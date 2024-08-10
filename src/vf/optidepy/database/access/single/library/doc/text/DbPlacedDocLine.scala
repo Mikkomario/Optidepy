@@ -18,14 +18,14 @@ object DbPlacedDocLine extends SingleRowModelAccess[PlacedDocLine] with Uncondit
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked doc texts
-	  */
-	protected def model = DocTextDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked link
 	  */
 	protected def linkModel = DocLineLinkDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked doc texts
+	  */
+	private def model = DocTextDbModel
 	
 	
 	// IMPLEMENTED	--------------------

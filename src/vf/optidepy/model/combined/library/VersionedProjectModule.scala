@@ -12,8 +12,8 @@ import vf.optidepy.model.stored.project.Project
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class VersionedProjectModule(module: VersionedModule, project: Option[Project]) 
-	extends Extender[VersionedModuleData] with HasId[Int]
+case class VersionedProjectModule(module: VersionedModule, project: Project) 
+	extends Extender[VersionedModuleData] with HasId[Int] 
 		with VersionedModuleFactoryWrapper[VersionedModule, VersionedProjectModule]
 {
 	// COMPUTED	--------------------

@@ -1,7 +1,7 @@
 package vf.optidepy.database.factory.library
 
 import utopia.vault.nosql.factory.row.FromTimelineRowFactory
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import utopia.vault.nosql.template.Deprecatable
 import vf.optidepy.database.factory.project.ProjectDbFactory
 import vf.optidepy.model.combined.library.VersionedProjectModule
@@ -14,7 +14,7 @@ import vf.optidepy.model.stored.project.Project
   * @since 09.08.2024, v1.2
   */
 object VersionedProjectModuleDbFactory 
-	extends PossiblyCombiningFactory[VersionedProjectModule, VersionedModule, Project] 
+	extends CombiningFactory[VersionedProjectModule, VersionedModule, Project] 
 		with FromTimelineRowFactory[VersionedProjectModule] with Deprecatable
 {
 	// IMPLEMENTED	--------------------
@@ -28,7 +28,6 @@ object VersionedProjectModuleDbFactory
 	
 	override def timestamp = parentFactory.timestamp
 	
-	override def apply(module: VersionedModule, project: Option[Project]) = 
-		VersionedProjectModule(module, project)
+	override def apply(module: VersionedModule, project: Project) = VersionedProjectModule(module, project)
 }
 

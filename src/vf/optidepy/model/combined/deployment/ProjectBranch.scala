@@ -12,7 +12,7 @@ import vf.optidepy.model.stored.project.Project
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ProjectBranch(branch: Branch, project: Option[Project]) 
+case class ProjectBranch(branch: Branch, project: Project) 
 	extends Extender[BranchData] with HasId[Int] with BranchFactoryWrapper[Branch, ProjectBranch]
 {
 	// COMPUTED	--------------------

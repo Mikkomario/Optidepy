@@ -19,14 +19,14 @@ object DbDocSectionWithHeader
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked sections
-	  */
-	protected def model = DocSectionDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked header
 	  */
 	protected def headerModel = DocTextDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked sections
+	  */
+	private def model = DocSectionDbModel
 	
 	
 	// IMPLEMENTED	--------------------

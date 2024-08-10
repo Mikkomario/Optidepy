@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.library
 
-import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
+import utopia.vault.nosql.factory.row.linked.CombiningFactory
 import vf.optidepy.model.combined.library.SubSection
 import vf.optidepy.model.stored.library.{DocSection, SubSectionLink}
 
@@ -9,7 +9,7 @@ import vf.optidepy.model.stored.library.{DocSection, SubSectionLink}
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-object SubSectionDbFactory extends PossiblyCombiningFactory[SubSection, DocSection, SubSectionLink]
+object SubSectionDbFactory extends CombiningFactory[SubSection, DocSection, SubSectionLink]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -17,6 +17,6 @@ object SubSectionDbFactory extends PossiblyCombiningFactory[SubSection, DocSecti
 	
 	override def parentFactory = DocSectionDbFactory
 	
-	override def apply(section: DocSection, link: Option[SubSectionLink]) = SubSection(section, link)
+	override def apply(section: DocSection, link: SubSectionLink) = SubSection(section, link)
 }
 

@@ -9,7 +9,7 @@ import vf.optidepy.database.factory.deployment.DeployedBranchDbFactory
 import vf.optidepy.database.storable.deployment.DeploymentDbModel
 import vf.optidepy.model.combined.deployment.DeployedBranch
 
-object ManyDeployedBranchsAccess extends ViewFactory[ManyDeployedBranchsAccess]
+object ManyDeployedBranchesAccess extends ViewFactory[ManyDeployedBranchesAccess]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -17,14 +17,14 @@ object ManyDeployedBranchsAccess extends ViewFactory[ManyDeployedBranchsAccess]
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): ManyDeployedBranchsAccess = 
-		_ManyDeployedBranchsAccess(Some(condition))
+	override def apply(condition: Condition): ManyDeployedBranchesAccess =
+		_ManyDeployedBranchesAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _ManyDeployedBranchsAccess(override val accessCondition: Option[Condition]) 
-		extends ManyDeployedBranchsAccess
+	private case class _ManyDeployedBranchesAccess(override val accessCondition: Option[Condition])
+		extends ManyDeployedBranchesAccess
 }
 
 /**
@@ -32,8 +32,8 @@ object ManyDeployedBranchsAccess extends ViewFactory[ManyDeployedBranchsAccess]
   * @author Mikko Hilpinen
   * @since 09.08.2024
   */
-trait ManyDeployedBranchsAccess 
-	extends ManyBranchesAccessLike[DeployedBranch, ManyDeployedBranchsAccess] 
+trait ManyDeployedBranchesAccess
+	extends ManyBranchesAccessLike[DeployedBranch, ManyDeployedBranchesAccess]
 		with ManyRowModelAccess[DeployedBranch]
 {
 	// COMPUTED	--------------------
@@ -41,25 +41,25 @@ trait ManyDeployedBranchsAccess
 	/**
 	  * branch ids of the accessible deployments
 	  */
-	def deploymentBranchIds(implicit connection: Connection) = 
+	def deploymentBranchIds(implicit connection: Connection) =
 		pullColumn(deploymentModel.branchId.column).map { v => v.getInt }
 	
 	/**
-	  * indices of the accessible deployments
+	  * deployment indices of the accessible deployments
 	  */
-	def deploymentIndices(implicit connection: Connection) = 
+	def deploymentDeploymentIndices(implicit connection: Connection) =
 		pullColumn(deploymentModel.deploymentIndex.column).map { v => v.getInt }
 	
 	/**
 	  * creation times of the accessible deployments
 	  */
-	def deploymentCreationTimes(implicit connection: Connection) = 
+	def deploymentCreationTimes(implicit connection: Connection) =
 		pullColumn(deploymentModel.created.column).map { v => v.getInstant }
 	
 	/**
 	  * versions of the accessible deployments
 	  */
-	def deploymentVersions(implicit connection: Connection) = 
+	def deploymentVersions(implicit connection: Connection) =
 		pullColumn(deploymentModel.version.column).flatMap { _.string }.map { v => Some(Version(v)) }
 	
 	/**
@@ -74,6 +74,6 @@ trait ManyDeployedBranchsAccess
 	
 	override protected def self = this
 	
-	override def apply(condition: Condition): ManyDeployedBranchsAccess = ManyDeployedBranchsAccess(condition)
+	override def apply(condition: Condition): ManyDeployedBranchesAccess = ManyDeployedBranchesAccess(condition)
 }
 

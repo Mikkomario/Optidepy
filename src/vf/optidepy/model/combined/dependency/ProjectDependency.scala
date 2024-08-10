@@ -12,8 +12,9 @@ import vf.optidepy.model.stored.project.Project
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ProjectDependency(dependency: Dependency, project: Option[Project]) 
-	extends Extender[DependencyData] with HasId[Int] with DependencyFactoryWrapper[Dependency, ProjectDependency]
+case class ProjectDependency(dependency: Dependency, project: Project) 
+	extends Extender[DependencyData] with HasId[Int] 
+		with DependencyFactoryWrapper[Dependency, ProjectDependency]
 {
 	// COMPUTED	--------------------
 	

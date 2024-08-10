@@ -21,14 +21,14 @@ object DbVersionedProjectModule
 	// COMPUTED	--------------------
 	
 	/**
-	  * A database model (factory) used for interacting with linked modules
-	  */
-	protected def model = VersionedModuleDbModel
-	
-	/**
 	  * A database model (factory) used for interacting with the linked project
 	  */
 	protected def projectModel = ProjectDbModel
+	
+	/**
+	  * A database model (factory) used for interacting with linked modules
+	  */
+	private def model = VersionedModuleDbModel
 	
 	
 	// IMPLEMENTED	--------------------

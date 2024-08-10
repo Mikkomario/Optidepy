@@ -1,5 +1,6 @@
 package vf.optidepy.database.access.single.library.doc.text
 
+import utopia.vault.database.Connection
 import utopia.vault.nosql.access.single.model.SingleRowModelAccess
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
@@ -35,6 +36,24 @@ trait UniquePlacedDocLineAccess
 		with SingleRowModelAccess[PlacedDocLine]
 {
 	// COMPUTED	--------------------
+	
+	/**
+	  * Id of the doc section linked with this doc line link. 
+	  * None if no doc line link (or value) was found.
+	  */
+	def linkSectionId(implicit connection: Connection) = pullColumn(linkModel.sectionId.column).int
+	
+	/**
+	  * Id of the doc text linked with this doc line link. 
+	  * None if no doc line link (or value) was found.
+	  */
+	def linkTextId(implicit connection: Connection) = pullColumn(linkModel.textId.column).int
+	
+	/**
+	  * 0-based index determining the location where the linked item is placed. 
+	  * None if no doc line link (or value) was found.
+	  */
+	def linkOrderIndex(implicit connection: Connection) = pullColumn(linkModel.orderIndex.column).int
 	
 	/**
 	  * A database model (factory) used for interacting with the linked link

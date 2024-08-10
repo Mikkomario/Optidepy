@@ -48,7 +48,8 @@ trait UniqueDeployedBranchAccess
 	  * Ordered index of this deployment. Relative to other deployments targeting the same branch. 
 	  * None if no deployment (or value) was found.
 	  */
-	def deploymentIndex(implicit connection: Connection) = pullColumn(deploymentModel.deploymentIndex.column).int
+	def deploymentDeploymentIndex(implicit connection: Connection) = 
+		pullColumn(deploymentModel.deploymentIndex.column).int
 	
 	/**
 	  * Time when this deployment was made. 

@@ -12,8 +12,8 @@ import vf.optidepy.model.stored.project.Project
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ProjectDeploymentConfig(config: DeploymentConfig, project: Option[Project]) 
-	extends Extender[DeploymentConfigData] with HasId[Int]
+case class ProjectDeploymentConfig(config: DeploymentConfig, project: Project) 
+	extends Extender[DeploymentConfigData] with HasId[Int] 
 		with DeploymentConfigFactoryWrapper[DeploymentConfig, ProjectDeploymentConfig]
 {
 	// COMPUTED	--------------------
