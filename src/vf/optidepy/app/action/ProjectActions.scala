@@ -6,7 +6,8 @@ import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger
-import vf.optidepy.model.deployment.{Binding, ProjectDeploymentConfig}
+import vf.optidepy.model.cached.deployment.CachedBinding
+import vf.optidepy.model.deployment.ProjectDeploymentConfig
 import vf.optidepy.model.library.VersionedModule
 
 import java.nio.file.Path
@@ -176,7 +177,7 @@ object ProjectActions
 					case Some(out) => out: Path
 					case None => default
 				}
-				Some(Binding(sourcePath, out))
+				Some(CachedBinding(sourcePath, out))
 			}
 			else
 				None

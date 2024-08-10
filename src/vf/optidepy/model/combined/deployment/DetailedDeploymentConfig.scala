@@ -26,7 +26,6 @@ case class DetailedDeploymentConfig(config: DeploymentConfig, binding: Seq[Bindi
 	// IMPLEMENTED	--------------------
 	
 	override def wrapped = config.data
-	
 	override protected def wrappedFactory = config
 	
 	override protected def wrap(factory: DeploymentConfig) = copy(config = factory)

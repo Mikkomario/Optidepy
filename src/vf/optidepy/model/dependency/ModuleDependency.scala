@@ -9,6 +9,7 @@ import utopia.flow.parse.file.FileExtensions._
 
 import java.nio.file.Path
 
+@deprecated("Replaced with a new version", "v1.2")
 object ModuleDependency extends FromModelFactoryWithSchema[ModuleDependency]
 {
 	override lazy val schema: ModelDeclaration =
@@ -30,6 +31,7 @@ object ModuleDependency extends FromModelFactoryWithSchema[ModuleDependency]
  * @author Mikko Hilpinen
  * @since 10.04.2024, v1.2
  */
+@deprecated("Replaced with a new version", "v1.2")
 case class ModuleDependency(moduleId: String, relativeJarDirectory: Path,
                             relativeLibraryFilePath: Option[Path] = None)
 	extends ModelConvertible

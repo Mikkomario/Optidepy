@@ -18,18 +18,17 @@ object ProjectData extends FromModelFactoryWithSchema[ProjectData]
 {
 	// ATTRIBUTES	--------------------
 	
-	override lazy val schema = 
-		ModelDeclaration(Vector(PropertyDeclaration("name", StringType), PropertyDeclaration("rootPath", 
-			StringType, Single("root_path")), PropertyDeclaration("created", InstantType, isOptional = true), 
-			PropertyDeclaration("deprecatedAfter", InstantType, Single("deprecated_after"), 
-			isOptional = true)))
+	override lazy val schema = ModelDeclaration(Vector(
+		PropertyDeclaration("name", StringType), PropertyDeclaration("rootPath", StringType, Single("root_path")),
+		PropertyDeclaration("created", InstantType, isOptional = true),
+		PropertyDeclaration("deprecatedAfter", InstantType, Single("deprecated_after"), isOptional = true)))
 	
 	
 	// IMPLEMENTED	--------------------
 	
-	override protected def fromValidatedModel(valid: Model) = 
-		ProjectData(valid("name").getString, valid("rootPath").getString: Path, valid("created").getInstant, 
-			valid("deprecatedAfter").instant)
+	override protected def fromValidatedModel(valid: Model) = ProjectData(
+		valid("name").getString, valid("rootPath").getString: Path, valid("created").getInstant,
+		valid("deprecatedAfter").instant)
 }
 
 /**
@@ -41,8 +40,7 @@ object ProjectData extends FromModelFactoryWithSchema[ProjectData]
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ProjectData(name: String, rootPath: Path, created: Instant = Now, 
-	deprecatedAfter: Option[Instant] = None) 
+case class ProjectData(name: String, rootPath: Path, created: Instant = Now, deprecatedAfter: Option[Instant] = None)
 	extends ProjectFactory[ProjectData] with ModelConvertible
 {
 	// COMPUTED	--------------------
@@ -51,7 +49,6 @@ case class ProjectData(name: String, rootPath: Path, created: Instant = Now,
 	  * Whether this project has already been deprecated
 	  */
 	def isDeprecated = deprecatedAfter.isDefined
-	
 	/**
 	  * Whether this project is still valid (not deprecated)
 	  */
@@ -60,16 +57,12 @@ case class ProjectData(name: String, rootPath: Path, created: Instant = Now,
 	
 	// IMPLEMENTED	--------------------
 	
-	override def toModel = 
-		Model(Vector("name" -> name, "rootPath" -> rootPath.toJson, "created" -> created, 
-			"deprecatedAfter" -> deprecatedAfter))
+	override def toModel = Model(Vector(
+		"name" -> name, "rootPath" -> rootPath.toJson, "created" -> created, "deprecatedAfter" -> deprecatedAfter))
 	
 	override def withCreated(created: Instant) = copy(created = created)
-	
 	override def withDeprecatedAfter(deprecatedAfter: Instant) = copy(deprecatedAfter = Some(deprecatedAfter))
-	
 	override def withName(name: String) = copy(name = name)
-	
 	override def withRootPath(rootPath: Path) = copy(rootPath = rootPath)
 }
 

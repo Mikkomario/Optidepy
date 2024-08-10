@@ -12,6 +12,7 @@ import utopia.flow.view.template.Extender
 
 import scala.util.Try
 
+@deprecated("Will be replaced with a new version", "v1.2")
 object ProjectDeployments extends FromModelFactory[ProjectDeployments]
 {
 	// ATTRIBUTES   --------------------
@@ -54,6 +55,7 @@ object ProjectDeployments extends FromModelFactory[ProjectDeployments]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
+@deprecated("Will be replaced with a new version", "v1.2")
 case class ProjectDeployments(project: ProjectDeploymentConfig, deployments: Map[String, Vector[Deployment]] = Map())
 	extends Extender[ProjectDeploymentConfig] with ModelConvertible
 {

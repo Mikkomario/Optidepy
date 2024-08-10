@@ -71,6 +71,9 @@ object BindingDbModel
 	  */
 	override def withTarget(target: Path) = apply(target = target.toJson)
 	
+	override def withPaths(source: Path, target: Path): BindingDbModel =
+		apply(source = source.toJson, target = target.toJson)
+	
 	override protected def complete(id: Value, data: BindingData) = Binding(id.getInt, data)
 }
 
@@ -100,17 +103,18 @@ case class BindingDbModel(id: Option[Int] = None, configId: Option[Int] = None, 
 	override def withId(id: Int) = copy(id = Some(id))
 	
 	/**
-	  * 
-		@param source Path to the file or directory that is being deployed. Relative to the input root directory.
+	  * @param source Path to the file or directory that is being deployed. Relative to the input root directory.
 	  * @return A new copy of this model with the specified source
 	  */
 	override def withSource(source: Path) = copy(source = source.toJson)
-	
 	/**
 	  * @param target Path to the directory or file where the 'source' is copied. Relative to the root
 	  *  output directory.
 	  * @return A new copy of this model with the specified target
 	  */
 	override def withTarget(target: Path) = copy(target = target.toJson)
+	
+	override def withPaths(source: Path, target: Path): BindingDbModel =
+		copy(source = source.toJson, target = target.toJson)
 }
 

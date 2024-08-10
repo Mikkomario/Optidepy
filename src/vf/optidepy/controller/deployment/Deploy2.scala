@@ -29,7 +29,7 @@ import scala.util.{Failure, Success, Try}
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
-object Deploy
+object Deploy2
 {
 	// ATTRIBUTES   -------------------------
 	
@@ -53,6 +53,7 @@ object Deploy
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure, containing up-to-date project state.
 	 */
+	// TODO: Rewrite using the new models
 	def apply(project: ProjectDeployments, branch: String, since: Option[Instant],
 	          skipSeparateBuildDirectory: Boolean, skipFileRemoval: Boolean, fullRebuild: Boolean)
 	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext): Try[ProjectDeployments] =

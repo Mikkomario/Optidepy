@@ -6,19 +6,21 @@ import utopia.flow.generic.model.immutable.Model
 import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
+import vf.optidepy.model.cached.deployment.CachedBinding
 
 import java.nio.file.{Path, Paths}
 import scala.util.{Success, Try}
 
+@deprecated("Will be replaced with the new models", "v1.2")
 object ProjectDeploymentConfig extends FromModelFactory[ProjectDeploymentConfig]
 {
 	override def apply(model: ModelLike[Property]): Try[ProjectDeploymentConfig] = {
 		val inputOutput = model("output").string match {
 			case Some(out) => Success(model("input").string.map { Paths.get(_) } -> Paths.get(out))
-			case None => Binding(model("root").getModel).map { b => Some(b.source) -> b.target }
+			case None => CachedBinding(model("root").getModel).map { b => Some(b.source) -> b.target }
 		}
 		inputOutput.flatMap { case (input, output) =>
-			model("bindings").tryVectorWith { v => Binding(v.getModel) }.map { bindings =>
+			model("bindings").tryVectorWith { v => CachedBinding(v.getModel) }.map { bindings =>
 				apply(model("name").getString, input, output, bindings,
 					model("useBuildDir").booleanOr(true), model("deletionEnabled").booleanOr(true))
 			}
@@ -40,8 +42,9 @@ object ProjectDeploymentConfig extends FromModelFactory[ProjectDeploymentConfig]
  * @param fileDeletionEnabled Whether automatic file deletion is allowed within this project (default = true).
  *                            If false, all old files must be deleted manually.
  */
-// TODO: Remove the project name -property
-case class ProjectDeploymentConfig(name: String, input: Option[Path], output: Path, relativeBindings: Vector[Binding],
+@deprecated("Will be replaced with the new models", "v1.2")
+case class ProjectDeploymentConfig(name: String, input: Option[Path], output: Path,
+                                   relativeBindings: Vector[CachedBinding],
                                    usesBuildDirectories: Boolean = true, fileDeletionEnabled: Boolean = true)
 	extends ModelConvertible
 {
@@ -87,6 +90,7 @@ case class ProjectDeploymentConfig(name: String, input: Option[Path], output: Pa
 	 * @param newInput New input root
 	 * @return Copy of this project with altered input root
 	 */
+	// TODO: This method needs to be written with the new models, also (check use-cases)
 	def withInput(newInput: Option[Path]) = {
 		// Transforms the input paths to their absolute form for the conversion
 		val absoluteBindings = input match {

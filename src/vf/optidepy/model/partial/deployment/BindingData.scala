@@ -9,6 +9,7 @@ import utopia.flow.generic.model.mutable.DataType.StringType
 import utopia.flow.generic.model.template.ModelConvertible
 import utopia.flow.parse.file.FileExtensions._
 import vf.optidepy.model.factory.deployment.BindingFactory
+import vf.optidepy.model.template.deployment.BindingLike
 
 import java.nio.file.Path
 
@@ -38,17 +39,13 @@ object BindingData extends FromModelFactoryWithSchema[BindingData]
   * @since 09.08.2024, v1.2
   */
 case class BindingData(configId: Int, source: Path, target: Path) 
-	extends BindingFactory[BindingData] with ModelConvertible
+	extends BindingFactory[BindingData] with ModelConvertible with BindingLike[BindingData]
 {
 	// IMPLEMENTED	--------------------
 	
-	override def toModel = 
-		Model(Vector("configId" -> configId, "source" -> source.toJson, "target" -> target.toJson))
+	override def toModel = Model(Vector("configId" -> configId, "source" -> source.toJson, "target" -> target.toJson))
 	
 	override def withConfigId(configId: Int) = copy(configId = configId)
-	
-	override def withSource(source: Path) = copy(source = source)
-	
-	override def withTarget(target: Path) = copy(target = target)
+	override def withPaths(source: Path, target: Path): BindingData = copy(source = source, target = target)
 }
 

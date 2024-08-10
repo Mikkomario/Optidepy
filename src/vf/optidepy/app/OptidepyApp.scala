@@ -15,7 +15,8 @@ import utopia.flow.util.console.{ArgumentSchema, Command, Console}
 import utopia.flow.util.StringExtensions._
 import vf.optidepy.controller.deployment.{Deploy, Merge, Standardize}
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.deployment.{Binding, ProjectDeploymentConfig, ProjectDeployments}
+import vf.optidepy.model.cached.deployment.CachedBinding
+import vf.optidepy.model.deployment.{ProjectDeploymentConfig, ProjectDeployments}
 import vf.optidepy.util.Common._
 
 import java.nio.file.{Path, Paths}
@@ -354,7 +355,7 @@ object OptidepyApp extends App
 					case Some(out) => out: Path
 					case None => default
 				}
-				Some(Binding(sourcePath, out))
+				Some(CachedBinding(sourcePath, out))
 			}
 			else
 				None

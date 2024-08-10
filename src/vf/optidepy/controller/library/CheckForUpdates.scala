@@ -13,6 +13,7 @@ import vf.optidepy.model.library.{VersionedModule, ModuleVersionExport, ModuleUp
  * @author Mikko Hilpinen
  * @since 3.10.2021, v0.1
  */
+@deprecated("Needs to be rewritten", "v1.2")
 object CheckForUpdates
 {
 	private val versionLineRegex = Regex.escape('#') + Regex.any + Version.regex + Regex.any

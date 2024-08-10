@@ -15,6 +15,7 @@ import vf.optidepy.util.Common._
 
 import java.nio.file.Path
 
+@deprecated("Will be replaced with a new version", "v1.2")
 object Project extends FromModelFactoryWithSchema[Project]
 {
 	// ATTRIBUTES   ----------------------------
@@ -60,6 +61,7 @@ object Project extends FromModelFactoryWithSchema[Project]
  * @author Mikko Hilpinen
  * @since 15.04.2024, v1.2
  */
+@deprecated("Will be replaced with a new version", "v1.2")
 case class Project(name: String, rootPath: Path, modules: Vector[VersionedModuleWithReleases] = Vector.empty,
                    deploymentConfig: Option[ProjectDeployments] = None,
                    moduleDependencies: Vector[ModuleDependency] = Vector.empty,

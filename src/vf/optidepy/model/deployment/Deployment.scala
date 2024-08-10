@@ -11,6 +11,7 @@ import vf.optidepy.controller.IndexCounter
 
 import java.time.Instant
 
+@deprecated("Replaced with a new DeploymentData", "v1.2")
 object Deployment extends FromModelFactoryWithSchema[Deployment]
 {
 	// ATTRIBUTES   ---------------------
@@ -48,6 +49,7 @@ object Deployment extends FromModelFactoryWithSchema[Deployment]
  * @author Mikko Hilpinen
  * @since 20.3.2023, v0.1
  */
+@deprecated("Replaced with a new DeploymentData", "v1.2")
 case class Deployment(index: Int, timestamp: Instant, version: Option[Version] = None) extends ModelConvertible
 {
 	override def toModel: Model = Model.from(
