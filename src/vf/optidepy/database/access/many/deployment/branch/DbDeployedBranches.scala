@@ -6,10 +6,10 @@ import vf.optidepy.model.combined.deployment.DeployedBranch
 /**
   * The root access point when targeting multiple deployed branches at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
-object DbDeployedBranches
-	extends ManyDeployedBranchesAccess with NonDeprecatedView[DeployedBranch]
+object DbDeployedBranches 
+	extends ManyDeployedBranchesAccess with NonDeprecatedView[DeployedBranch] 
 		with ViewManyByIntIds[ManyDeployedBranchesAccess]
 {
 	// COMPUTED	--------------------

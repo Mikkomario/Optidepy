@@ -5,11 +5,11 @@ import utopia.vault.database.Connection
 import utopia.vault.nosql.access.single.model.SingleRowModelAccess
 import utopia.vault.nosql.view.{NullDeprecatableView, ViewFactory}
 import utopia.vault.sql.Condition
-import vf.optidepy.database.factory.deployment.DeployedBranchDbFactory
+import vf.optidepy.database.factory.deployment.PossiblyDeployedBranchDbFactory
 import vf.optidepy.database.storable.deployment.DeploymentDbModel
-import vf.optidepy.model.combined.deployment.DeployedBranch
+import vf.optidepy.model.combined.deployment.PossiblyDeployedBranch
 
-object UniqueDeployedBranchAccess extends ViewFactory[UniqueDeployedBranchAccess]
+object UniquePossiblyDeployedBranchAccess extends ViewFactory[UniquePossiblyDeployedBranchAccess]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -17,24 +17,25 @@ object UniqueDeployedBranchAccess extends ViewFactory[UniqueDeployedBranchAccess
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): UniqueDeployedBranchAccess = 
-		_UniqueDeployedBranchAccess(Some(condition))
+	override def apply(condition: Condition): UniquePossiblyDeployedBranchAccess = 
+		_UniquePossiblyDeployedBranchAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _UniqueDeployedBranchAccess(override val accessCondition: Option[Condition]) 
-		extends UniqueDeployedBranchAccess
+	private case class _UniquePossiblyDeployedBranchAccess(override val accessCondition: Option[Condition]) 
+		extends UniquePossiblyDeployedBranchAccess
 }
 
 /**
-  * A common trait for access points that return distinct deployed branches
+  * A common trait for access points that return distinct possibly deployed branches
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
-trait UniqueDeployedBranchAccess 
-	extends UniqueBranchAccessLike[DeployedBranch, UniqueDeployedBranchAccess] 
-		with SingleRowModelAccess[DeployedBranch] with NullDeprecatableView[UniqueDeployedBranchAccess]
+trait UniquePossiblyDeployedBranchAccess 
+	extends UniqueBranchAccessLike[PossiblyDeployedBranch, UniquePossiblyDeployedBranchAccess] 
+		with SingleRowModelAccess[PossiblyDeployedBranch] 
+		with NullDeprecatableView[UniquePossiblyDeployedBranchAccess]
 {
 	// COMPUTED	--------------------
 	
@@ -73,11 +74,11 @@ trait UniqueDeployedBranchAccess
 	
 	// IMPLEMENTED	--------------------
 	
-	override def factory = DeployedBranchDbFactory
+	override def factory = PossiblyDeployedBranchDbFactory
 	
 	override protected def self = this
 	
-	override
-		 def apply(condition: Condition): UniqueDeployedBranchAccess = UniqueDeployedBranchAccess(condition)
+	override def apply(condition: Condition): UniquePossiblyDeployedBranchAccess = 
+		UniquePossiblyDeployedBranchAccess(condition)
 }
 

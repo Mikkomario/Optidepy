@@ -21,23 +21,23 @@ object ManyProjectBranchesAccess extends ViewFactory[ManyProjectBranchesAccess]
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): ManyProjectBranchesAccess =
+	override def apply(condition: Condition): ManyProjectBranchesAccess = 
 		_ManyProjectBranchesAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _ManyProjectBranchesAccess(override val accessCondition: Option[Condition])
+	private case class _ManyProjectBranchesAccess(override val accessCondition: Option[Condition]) 
 		extends ManyProjectBranchesAccess
 }
 
 /**
-  * A common trait for access points that return multiple project branchs at a time
+  * A common trait for access points that return multiple project branches at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024
+  * @since 10.08.2024
   */
-trait ManyProjectBranchesAccess
-	extends ManyBranchesAccessLike[ProjectBranch, ManyProjectBranchesAccess]
+trait ManyProjectBranchesAccess 
+	extends ManyBranchesAccessLike[ProjectBranch, ManyProjectBranchesAccess] 
 		with ManyRowModelAccess[ProjectBranch]
 {
 	// COMPUTED	--------------------
@@ -51,19 +51,19 @@ trait ManyProjectBranchesAccess
 	/**
 	  * root paths of the accessible projects
 	  */
-	def projectRootPaths(implicit connection: Connection) =
+	def projectRootPaths(implicit connection: Connection) = 
 		pullColumn(projectModel.rootPath.column).flatMap { _.string }.map { v => v: Path }
 	
 	/**
 	  * creation times of the accessible projects
 	  */
-	def projectCreationTimes(implicit connection: Connection) =
+	def projectCreationTimes(implicit connection: Connection) = 
 		pullColumn(projectModel.created.column).map { v => v.getInstant }
 	
 	/**
 	  * deprecation times of the accessible projects
 	  */
-	def projectDeprecationTimes(implicit connection: Connection) =
+	def projectDeprecationTimes(implicit connection: Connection) = 
 		pullColumn(projectModel.deprecatedAfter.column).flatMap { v => v.instant }
 	
 	/**

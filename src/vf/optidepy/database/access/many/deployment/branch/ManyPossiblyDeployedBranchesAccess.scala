@@ -5,11 +5,11 @@ import utopia.vault.database.Connection
 import utopia.vault.nosql.access.many.model.ManyRowModelAccess
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
-import vf.optidepy.database.factory.deployment.DeployedBranchDbFactory
+import vf.optidepy.database.factory.deployment.PossiblyDeployedBranchDbFactory
 import vf.optidepy.database.storable.deployment.DeploymentDbModel
-import vf.optidepy.model.combined.deployment.DeployedBranch
+import vf.optidepy.model.combined.deployment.PossiblyDeployedBranch
 
-object ManyDeployedBranchesAccess extends ViewFactory[ManyDeployedBranchesAccess]
+object ManyPossiblyDeployedBranchesAccess extends ViewFactory[ManyPossiblyDeployedBranchesAccess]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -17,24 +17,24 @@ object ManyDeployedBranchesAccess extends ViewFactory[ManyDeployedBranchesAccess
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): ManyDeployedBranchesAccess = 
-		_ManyDeployedBranchesAccess(Some(condition))
+	override def apply(condition: Condition): ManyPossiblyDeployedBranchesAccess = 
+		_ManyPossiblyDeployedBranchesAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _ManyDeployedBranchesAccess(override val accessCondition: Option[Condition]) 
-		extends ManyDeployedBranchesAccess
+	private case class _ManyPossiblyDeployedBranchesAccess(override val accessCondition: Option[Condition]) 
+		extends ManyPossiblyDeployedBranchesAccess
 }
 
 /**
-  * A common trait for access points that return multiple deployed branches at a time
+  * A common trait for access points that return multiple possibly deployed branches at a time
   * @author Mikko Hilpinen
   * @since 10.08.2024
   */
-trait ManyDeployedBranchesAccess 
-	extends ManyBranchesAccessLike[DeployedBranch, ManyDeployedBranchesAccess] 
-		with ManyRowModelAccess[DeployedBranch]
+trait ManyPossiblyDeployedBranchesAccess 
+	extends ManyBranchesAccessLike[PossiblyDeployedBranch, ManyPossiblyDeployedBranchesAccess] 
+		with ManyRowModelAccess[PossiblyDeployedBranch]
 {
 	// COMPUTED	--------------------
 	
@@ -63,18 +63,18 @@ trait ManyDeployedBranchesAccess
 		pullColumn(deploymentModel.version.column).flatMap { _.string }.map { v => Some(Version(v)) }
 	
 	/**
-	  * Model (factory) used for interacting the deployments associated with this deployed branch
+	  * Model (factory) used for interacting the deployments associated with this possibly deployed branch
 	  */
 	protected def deploymentModel = DeploymentDbModel
 	
 	
 	// IMPLEMENTED	--------------------
 	
-	override def factory = DeployedBranchDbFactory
+	override def factory = PossiblyDeployedBranchDbFactory
 	
 	override protected def self = this
 	
-	override
-		 def apply(condition: Condition): ManyDeployedBranchesAccess = ManyDeployedBranchesAccess(condition)
+	override def apply(condition: Condition): ManyPossiblyDeployedBranchesAccess = 
+		ManyPossiblyDeployedBranchesAccess(condition)
 }
 

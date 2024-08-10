@@ -1,34 +1,46 @@
 package vf.optidepy.model.combined.deployment
 
-import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
-import vf.optidepy.model.factory.deployment.BranchFactoryWrapper
-import vf.optidepy.model.partial.deployment.BranchData
 import vf.optidepy.model.stored.deployment.Branch
 import vf.optidepy.model.stored.project.Project
+
+object ProjectBranch
+{
+	// OTHER	--------------------
+	
+	/**
+	  * @param branch branch to wrap
+	  * @param project project to attach to this branch
+	  * @return Combination of the specified branch and project
+	  */
+	def apply(branch: Branch, project: Project): ProjectBranch = _ProjectBranch(branch, project)
+	
+	
+	// NESTED	--------------------
+	
+	/**
+	  * @param branch branch to wrap
+	  * @param project project to attach to this branch
+	  */
+	private case class _ProjectBranch(branch: Branch, project: Project) extends ProjectBranch
+	{
+		// IMPLEMENTED	--------------------
+		
+		override protected def wrap(factory: Branch) = copy(branch = factory)
+	}
+}
 
 /**
   * Combines project and branch information
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
-case class ProjectBranch(branch: Branch, project: Project) 
-	extends Extender[BranchData] with HasId[Int] with BranchFactoryWrapper[Branch, ProjectBranch]
+trait ProjectBranch extends CombinedBranch[ProjectBranch]
 {
-	// COMPUTED	--------------------
+	// ABSTRACT	--------------------
 	
 	/**
-	  * Id of this branch in the database
+	  * The project that is attached to this branch
 	  */
-	def id = branch.id
-	
-	
-	// IMPLEMENTED	--------------------
-	
-	override def wrapped = branch.data
-	
-	override protected def wrappedFactory = branch
-	
-	override protected def wrap(factory: Branch) = copy(branch = factory)
+	def project: Project
 }
 

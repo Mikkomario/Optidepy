@@ -2,7 +2,7 @@ package vf.optidepy.model.combined.deployment
 
 import vf.optidepy.model.stored.deployment.{Branch, Deployment}
 
-object DeployedBranch
+object PossiblyDeployedBranch
 {
 	// OTHER	--------------------
 	
@@ -11,7 +11,8 @@ object DeployedBranch
 	  * @param deployment deployment to attach to this branch
 	  * @return Combination of the specified branch and deployment
 	  */
-	def apply(branch: Branch, deployment: Deployment): DeployedBranch = _DeployedBranch(branch, deployment)
+	def apply(branch: Branch, deployment: Option[Deployment]): PossiblyDeployedBranch = 
+		_PossiblyDeployedBranch(branch, deployment)
 	
 	
 	// NESTED	--------------------
@@ -20,7 +21,8 @@ object DeployedBranch
 	  * @param branch branch to wrap
 	  * @param deployment deployment to attach to this branch
 	  */
-	private case class _DeployedBranch(branch: Branch, deployment: Deployment) extends DeployedBranch
+	private case class _PossiblyDeployedBranch(branch: Branch, deployment: Option[Deployment]) 
+		extends PossiblyDeployedBranch
 	{
 		// IMPLEMENTED	--------------------
 		
@@ -29,17 +31,17 @@ object DeployedBranch
 }
 
 /**
-  * Includes information about a specific branch deployment
+  * Includes information about a specific branch deployment, if available.
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
-trait DeployedBranch extends CombinedBranch[DeployedBranch]
+trait PossiblyDeployedBranch extends CombinedBranch[PossiblyDeployedBranch]
 {
 	// ABSTRACT	--------------------
 	
 	/**
 	  * The deployment that is attached to this branch
 	  */
-	def deployment: Deployment
+	def deployment: Option[Deployment]
 }
 

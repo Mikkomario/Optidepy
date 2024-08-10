@@ -1,16 +1,17 @@
 package vf.optidepy.database.factory.deployment
 
-import utopia.vault.nosql.factory.row.linked.CombiningFactory
+import utopia.vault.nosql.factory.row.linked.PossiblyCombiningFactory
 import utopia.vault.nosql.template.Deprecatable
-import vf.optidepy.model.combined.deployment.DeployedBranch
+import vf.optidepy.model.combined.deployment.PossiblyDeployedBranch
 import vf.optidepy.model.stored.deployment.{Branch, Deployment}
 
 /**
-  * Used for reading deployed branches from the database
+  * Used for reading possibly deployed branches from the database
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
-object DeployedBranchDbFactory extends CombiningFactory[DeployedBranch, Branch, Deployment] with Deprecatable
+object PossiblyDeployedBranchDbFactory 
+	extends PossiblyCombiningFactory[PossiblyDeployedBranch, Branch, Deployment] with Deprecatable
 {
 	// IMPLEMENTED	--------------------
 	
@@ -24,6 +25,7 @@ object DeployedBranchDbFactory extends CombiningFactory[DeployedBranch, Branch, 
 	  * @param branch branch to wrap
 	  * @param deployment deployment to attach to this branch
 	  */
-	override def apply(branch: Branch, deployment: Deployment) = DeployedBranch(branch, deployment)
+	override def apply(branch: Branch, deployment: Option[Deployment]) = 
+		PossiblyDeployedBranch(branch, deployment)
 }
 

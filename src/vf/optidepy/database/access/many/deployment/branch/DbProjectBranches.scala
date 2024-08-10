@@ -4,18 +4,18 @@ import utopia.vault.nosql.view.{NonDeprecatedView, UnconditionalView, ViewManyBy
 import vf.optidepy.model.combined.deployment.ProjectBranch
 
 /**
-  * The root access point when targeting multiple project Branches at a time
+  * The root access point when targeting multiple project branches at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
 object DbProjectBranches 
-	extends ManyProjectBranchesAccess with NonDeprecatedView[ProjectBranch]
+	extends ManyProjectBranchesAccess with NonDeprecatedView[ProjectBranch] 
 		with ViewManyByIntIds[ManyProjectBranchesAccess]
 {
 	// COMPUTED	--------------------
 	
 	/**
-	  * A copy of this access point that includes historical (i.e. deprecated) project Branches
+	  * A copy of this access point that includes historical (i.e. deprecated) project branches
 	  */
 	def includingHistory = DbProjectBranchesIncludingHistory
 	

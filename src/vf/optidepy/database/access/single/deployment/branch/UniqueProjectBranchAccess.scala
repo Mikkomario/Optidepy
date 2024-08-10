@@ -32,9 +32,9 @@ object UniqueProjectBranchAccess extends ViewFactory[UniqueProjectBranchAccess]
 }
 
 /**
-  * A common trait for access points that return distinct project branchs
+  * A common trait for access points that return distinct project branches
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
 trait UniqueProjectBranchAccess 
 	extends UniqueBranchAccessLike[ProjectBranch, UniqueProjectBranchAccess] 

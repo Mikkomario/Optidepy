@@ -10,9 +10,9 @@ import vf.optidepy.database.storable.project.ProjectDbModel
 import vf.optidepy.model.combined.deployment.ProjectBranch
 
 /**
-  * Used for accessing individual project branchs
+  * Used for accessing individual project branches
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 10.08.2024, v1.2
   */
 object DbProjectBranch 
 	extends SingleRowModelAccess[ProjectBranch] with NonDeprecatedView[ProjectBranch] with Indexed
@@ -46,7 +46,7 @@ object DbProjectBranch
 	/**
 	  * 
 		@param additionalCondition Filter condition to apply in addition to this root view's condition. Should yield
-	  *  unique project branchs.
+	  *  unique project branches.
 	  * @return An access point to the project branch that satisfies the specified condition
 	  */
 	protected def filterDistinct(additionalCondition: Condition) = 

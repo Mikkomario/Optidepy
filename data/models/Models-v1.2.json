@@ -141,6 +141,18 @@
             "child": "Deployment",
             "is_always_linked": true,
             "doc": "Includes information about a specific branch deployment"
+          },
+          {
+            "name": "PossiblyDeployedBranch",
+            "name_plural": "PossiblyDeployedBranches",
+            "child": "Deployment",
+            "doc": "Includes information about a specific branch deployment, if available."
+          },
+          {
+            "name": "BranchWithDeployments",
+            "name_plural": "BranchesWithDeployments",
+            "children": "Deployment",
+            "doc": "Attaches 0-n Deployments to a Branch"
           }
         ],
         "combo_prop": ["projectId", "name"],
