@@ -1,5 +1,6 @@
 package vf.optidepy.database.access.single.project
 
+import utopia.flow.generic.casting.ValueConversions._
 import utopia.vault.nosql.access.single.model.SingleRowModelAccess
 import utopia.vault.nosql.template.Indexed
 import utopia.vault.nosql.view.NonDeprecatedView
@@ -37,8 +38,13 @@ object DbProject extends SingleRowModelAccess[Project] with NonDeprecatedView[Pr
 	def apply(id: Int) = DbSingleProject(id)
 	
 	/**
-	  * 
-		@param additionalCondition Filter condition to apply in addition to this root view's condition. Should yield
+	 * @param name Targeted project's name
+	 * @return Access to that project's information
+	 */
+	def withName(name: String) = filterDistinct(model.name <=> name)
+	
+	/**
+	  * @param additionalCondition Filter condition to apply in addition to this root view's condition. Should yield
 	  *  unique projects.
 	  * @return An access point to the project that satisfies the specified condition
 	  */

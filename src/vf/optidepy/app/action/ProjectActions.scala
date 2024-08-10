@@ -1,14 +1,19 @@
 package vf.optidepy.app.action
 
 import utopia.flow.collection.CollectionExtensions._
-import utopia.flow.collection.immutable.{Empty, Pair}
+import utopia.flow.collection.immutable.{Empty, Pair, Single}
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger
-import vf.optidepy.model.cached.deployment.CachedBinding
+import utopia.vault.database.Connection
+import vf.optidepy.database.access.many.library.module.DbVersionedModules
+import vf.optidepy.database.access.single.project.DbProject
+import vf.optidepy.model.cached.deployment.{CachedBinding, NewDeploymentConfig}
+import vf.optidepy.model.cached.library.NewModule
 import vf.optidepy.model.deployment.ProjectDeploymentConfig
 import vf.optidepy.model.library.VersionedModule
+import vf.optidepy.model.partial.deployment.DeploymentConfigData
 
 import java.nio.file.Path
 import java.util.UUID
@@ -32,22 +37,37 @@ object ProjectActions
 	// OTHER    -------------------------
 	
 	// TODO: Refactor to use the new models
-	def setup(rootDirectory: Path)(implicit log: Logger) = {
-		/*
-		(name: String, rootPath: Path, modules: Vector[VersionedModuleWithReleases] = Empty,
-                   deploymentConfig: Option[ProjectDeployments] = None,
-                   moduleDependencies: Vector[ModuleDependency] = Empty,
-                   relativeArtifactsDirPath: Option[Path] = None)
-
-		 */
+	def setup(rootDirectory: Path)(implicit log: Logger, connection: Connection) = {
 		// Identifies project name
 		val defaultProjectName = rootDirectory.fileName
 		val projectName = StdIn.readNonEmptyLine(
 			s"What name do you want to use for this project? \nDefault = $defaultProjectName")
 			.getOrElse(defaultProjectName)
 		
-		// TODO: Make sure this project doesn't exist yet
-		
+		// Checks whether the project exists already
+		if (DbProject.withName(projectName).nonEmpty)
+			setupModules(rootDirectory) { modules =>
+				val deploymentConfig = {
+					if (StdIn.ask("Do you want to specify deployment settings for this project?", default = true))
+						Some(setupDeploymentConfig(rootDirectory, projectName)).filter { _.bindings.nonEmpty }
+					else
+						None
+				}
+				
+				// TODO: Shouldn't be able to create a project with just dependencies?
+				if (modules.isEmpty && deploymentConfig.isEmpty)
+					println("No versioned modules found and no deployments were specified. \nProject creation canceled.")
+				else {
+					// TODO: Add library dependencies (needs access to projects)
+				}
+			}
+		else
+			println(s"Project with name \"$projectName\" already exists. Cancels project creation.")
+	}
+	
+	// 'f' is called unless the user cancels this process.
+	// Returns None if canceled and Some with return value of 'f' if continued.
+	private def setupModules[A](rootDirectory: Path)(f: IndexedSeq[NewModule] => A)(implicit log: Logger) = {
 		// Looks for versioned modules
 		val (partialModules, modules) = findModules(rootDirectory).logToOption.getOrElse(Empty -> Empty)
 		// Prints the results
@@ -63,33 +83,22 @@ object ProjectActions
 		}
 		
 		// Handles the case where there are partial modules (these are ignored if the user chooses to continue)
-		if (partialModules.nonEmpty || StdIn.ask(
+		if (partialModules.isEmpty || StdIn.ask(
 			s"Following versioned modules didn't contain an artifact directory and will be ignored: \n\t- ${
 				partialModules.mkString("\n\t- ") }\nIs it okay to continue nonetheless?", default = true))
-		{
-			val deploymentConfig = {
-				if (StdIn.ask("Do you also want to specify deployment settings for this project?", default = true))
-					Some(setupDeploymentConfig(rootDirectory, projectName)).filter { _.relativeBindings.nonEmpty }
-				else
-					None
-			}
-			
-			if (modules.isEmpty && deploymentConfig.isEmpty)
-				println("No versioned modules found and no deployments were specified. \nProject creation canceled.")
-			else {
-				// TODO: Add library dependencies (needs access to projects)
-			}
-		}
-		else
+			Some(f(modules))
+		else {
 			println("Project creation canceled")
+			None
+		}
 	}
 	
 	private def setupDeploymentConfig(rootDirectory: Path, projectName: String) = {
-		val input = StdIn.readNonEmptyLine(
+		val (input, relativeInput) = StdIn.readNonEmptyLine(
 			s"Please specify the path common for all deployment inputs. \nSpecify a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
 		{
-			case Some(input) => rootDirectory/input
-			case None => rootDirectory
+			case Some(input) => (rootDirectory/input) -> Some(input: Path)
+			case None => rootDirectory -> None
 		}
 		val defaultOutput: Path = s"out/$projectName"
 		val output = StdIn
@@ -105,7 +114,21 @@ object ProjectActions
 			"Do you want to collect changed files to separate build directories?", default = true)
 		val fileRemovalEnabled = StdIn.ask(
 			"Should automatic deletion of non-source files be enabled?", default = true)
-		ProjectDeploymentConfig(projectName, Some(input), output, bindings, usesBuildDirectories, fileRemovalEnabled)
+		
+		NewDeploymentConfig(output, relativeInput, bindings, usesBuildDirectories, fileRemovalEnabled)
+	}
+	
+	private def setupDependencies(rootDirectory: Path)(implicit connection: Connection) = {
+		// Scans for versioned modules
+		val modules = DbVersionedModules.pull
+		
+		// Case: No modules => Impossible to add any dependencies
+		if (modules.isEmpty)
+			Empty
+		else {
+			val multiModalProjectIds = ???
+			val multiModalProjects = ???
+		}
 	}
 	
 	/**
@@ -117,8 +140,10 @@ object ProjectActions
 	private def findModules(projectDirectory: Path)(implicit log: Logger) = {
 		// Finds directories which contain a change list document
 		val modulePaths = findModuleDirectories(projectDirectory)
+		
 		// Next, makes sure the modules have an associated artifact
 		val artifactsDirectory = projectDirectory/"out/artifacts"
+		
 		// Finds all possible specific artifact directories
 		artifactsDirectory.iterateChildren { _.filter { _.isDirectory }.toVector }.map { artifactDirectories =>
 			// Finds, which artifact directory matches with which module
@@ -129,7 +154,7 @@ object ProjectActions
 					val upperCaseLocations = Regex.upperCaseLetter.startIndexIteratorIn(part)
 						.toVector.dropWhile { _ == 0 }
 					if (upperCaseLocations.isEmpty)
-						Vector(part)
+						Single(part)
 					else
 						part.substring(0, upperCaseLocations.head) +:
 							upperCaseLocations.paired.map { case Pair(start, end) => part.substring(start, end) } :+
@@ -138,17 +163,19 @@ object ProjectActions
 				val lowerModuleNameParts = moduleNameParts.map { _.toLowerCase }
 				val moduleName = moduleNameParts.mkString(" ")
 				// The matching is performed based on module name vs. directory name
-				artifactDirectories.filter { dir =>
-					val dirNameParts = nameSplitterRegex.split(dir.fileName).toVector.map { _.toLowerCase }
-					lowerModuleNameParts.forall(dirNameParts.contains)
-					// In case of multiple possible results, the shortest name is selected
-				}.minByOption { _.fileName.length } match {
-					// Case: Matching directory found
-					case Some(artifactDirectory) =>
-						Right(VersionedModule(UUID.randomUUID().toString, moduleName, changeListPath, artifactDirectory))
-					// Case: No matching directory found
-					case None => Left(moduleName)
-				}
+				artifactDirectories.view
+					.filter { dir =>
+						val dirNameParts = nameSplitterRegex.split(dir.fileName).toVector.map { _.toLowerCase }
+						lowerModuleNameParts.forall(dirNameParts.contains)
+						// In case of multiple possible results, the shortest name is selected
+					}
+					.minByOption { _.fileName.length } match {
+						// Case: Matching directory found
+						case Some(artifactDirectory) =>
+							Right(NewModule(moduleName, changeListPath, artifactDirectory))
+						// Case: No matching directory found
+						case None => Left(moduleName)
+					}
 			}
 		}
 	}
@@ -164,6 +191,7 @@ object ProjectActions
 			}
 			.toVector
 	
+	// Returns relative bindings
 	private def collectBindings(input: Path, output: Path) = {
 		println(s"Please specify directories or files under $input that should be copied during deployment.\nEmpty line ends input.")
 		StdIn.readLineIteratorWithPrompt("Next file").takeWhile { _.nonEmpty }.flatMap { inputLine =>

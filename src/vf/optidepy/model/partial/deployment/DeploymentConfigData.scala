@@ -11,6 +11,7 @@ import utopia.flow.generic.model.mutable.DataType.StringType
 import utopia.flow.generic.model.template.ModelConvertible
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.Now
+import utopia.flow.time.TimeExtensions._
 import vf.optidepy.model.factory.deployment.DeploymentConfigFactory
 
 import java.nio.file.Path
@@ -77,6 +78,25 @@ case class DeploymentConfigData(projectId: Int, outputDirectory: Path,
 		"relativeInputDirectory" -> (relativeInputDirectory match { case Some(v) => v.toJson; case None => Value.empty }),
 		"created" -> created, "deprecatedAfter" -> deprecatedAfter,
 		"usesBuildDirectories" -> usesBuildDirectories, "fileDeletionEnabled" -> fileDeletionEnabled))
+	
+	/**
+	 * @param branch Name of the targeted branch
+	 * @return The directory that will contain the full project output for that branch
+	 */
+	def fullOutputDirectoryFor(branch: String) = outputDirectory / branch
+	
+	/**
+	 * @param branch Name of the deployed branch
+	 * @param deployment Targeted deployment
+	 * @return A directory where that deployment should be stored
+	 */
+	def directoryForDeployment(branch: String, deployment: DeploymentData) = {
+		val versionStr = deployment.version match {
+			case Some(version) => s"-${version.toString.replace('.', '-')}"
+			case None => ""
+		}
+		outputDirectory/s"$branch$versionStr-build-${ deployment.index }-${deployment.created.toLocalDate.toString}"
+	}
 	
 	override def withCreated(created: Instant) = copy(created = created)
 	override def withDeprecatedAfter(deprecatedAfter: Instant) =

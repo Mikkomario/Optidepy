@@ -19,23 +19,21 @@ object VersionedModuleData extends FromModelFactoryWithSchema[VersionedModuleDat
 {
 	// ATTRIBUTES	--------------------
 	
-	override lazy val schema = 
-		ModelDeclaration(Vector(PropertyDeclaration("projectId", IntType, Single("project_id")), 
-			PropertyDeclaration("name", StringType), PropertyDeclaration("relativeChangeListPath", 
-			StringType, Single("relative_change_list_path")), 
-			PropertyDeclaration("relativeArtifactDirectory", StringType, 
-			Single("relative_artifact_directory")), PropertyDeclaration("created", InstantType, 
-			isOptional = true), PropertyDeclaration("deprecatedAfter", InstantType, 
-			Single("deprecated_after"), isOptional = true)))
+	override lazy val schema = ModelDeclaration(Vector(
+		PropertyDeclaration("projectId", IntType, Single("project_id")),
+		PropertyDeclaration("name", StringType),
+		PropertyDeclaration("relativeChangeListPath", StringType, Single("relative_change_list_path")),
+		PropertyDeclaration("relativeArtifactDirectory", StringType, Single("relative_artifact_directory")),
+		PropertyDeclaration("created", InstantType, isOptional = true),
+		PropertyDeclaration("deprecatedAfter", InstantType, Single("deprecated_after"), isOptional = true)))
 	
 	
 	// IMPLEMENTED	--------------------
 	
-	override protected def fromValidatedModel(valid: Model) = 
-		VersionedModuleData(valid("projectId").getInt, valid("name").getString, 
-			valid("relativeChangeListPath").getString: Path, 
-			valid("relativeArtifactDirectory").getString: Path, valid("created").getInstant, 
-			valid("deprecatedAfter").instant)
+	override protected def fromValidatedModel(valid: Model) = VersionedModuleData(
+		valid("projectId").getInt, valid("name").getString, valid("relativeChangeListPath").getString: Path,
+		valid("relativeArtifactDirectory").getString: Path, valid("created").getInstant,
+		valid("deprecatedAfter").instant)
 }
 
 /**
@@ -51,8 +49,9 @@ object VersionedModuleData extends FromModelFactoryWithSchema[VersionedModuleDat
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class VersionedModuleData(projectId: Int, name: String, relativeChangeListPath: Path, 
-	relativeArtifactDirectory: Path, created: Instant = Now, deprecatedAfter: Option[Instant] = None) 
+case class VersionedModuleData(projectId: Int, name: String, relativeChangeListPath: Path,
+                               relativeArtifactDirectory: Path, created: Instant = Now,
+                               deprecatedAfter: Option[Instant] = None)
 	extends VersionedModuleFactory[VersionedModuleData] with ModelConvertible
 {
 	// COMPUTED	--------------------
@@ -61,7 +60,6 @@ case class VersionedModuleData(projectId: Int, name: String, relativeChangeListP
 	  * Whether this versioned module has already been deprecated
 	  */
 	def isDeprecated = deprecatedAfter.isDefined
-	
 	/**
 	  * Whether this versioned module is still valid (not deprecated)
 	  */
@@ -70,23 +68,17 @@ case class VersionedModuleData(projectId: Int, name: String, relativeChangeListP
 	
 	// IMPLEMENTED	--------------------
 	
-	override def toModel = 
-		Model(Vector("projectId" -> projectId, "name" -> name, 
-			"relativeChangeListPath" -> relativeChangeListPath.toJson, 
-			"relativeArtifactDirectory" -> relativeArtifactDirectory.toJson, "created" -> created, 
-			"deprecatedAfter" -> deprecatedAfter))
+	override def toModel = Model(Vector(
+		"projectId" -> projectId, "name" -> name, "relativeChangeListPath" -> relativeChangeListPath.toJson,
+		"relativeArtifactDirectory" -> relativeArtifactDirectory.toJson, "created" -> created,
+		"deprecatedAfter" -> deprecatedAfter))
 	
 	override def withCreated(created: Instant) = copy(created = created)
-	
 	override def withDeprecatedAfter(deprecatedAfter: Instant) = copy(deprecatedAfter = Some(deprecatedAfter))
-	
 	override def withName(name: String) = copy(name = name)
-	
 	override def withProjectId(projectId: Int) = copy(projectId = projectId)
-	
 	override def withRelativeArtifactDirectory(relativeArtifactDirectory: Path) = 
 		copy(relativeArtifactDirectory = relativeArtifactDirectory)
-	
 	override def withRelativeChangeListPath(relativeChangeListPath: Path) = 
 		copy(relativeChangeListPath = relativeChangeListPath)
 }

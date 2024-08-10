@@ -4,7 +4,8 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.time.Today
-import vf.optidepy.model.combined.deployment.{BranchWithDeployments, ProjectDeploymentConfig}
+import vf.optidepy.model.combined.deployment.BranchWithDeployments
+import vf.optidepy.model.partial.deployment.DeploymentConfigData
 
 import java.nio.file.Path
 import java.time.Instant
@@ -25,7 +26,7 @@ object Merge2
 	 *         Contains None if no merging was done.
 	 *         Contains Some(merged directory) when merging was done
 	 */
-	def apply(config: ProjectDeploymentConfig, branch: BranchWithDeployments, since: Option[Instant] = None) = {
+	def apply(config: DeploymentConfigData, branch: BranchWithDeployments, since: Option[Instant] = None) = {
 		// Finds the targeted mergeable deployments
 		val targets = branch.deployments.reverseIterator
 			.takeWhile { dep => since.forall { dep.created >= _ } }

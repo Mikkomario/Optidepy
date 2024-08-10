@@ -1,8 +1,5 @@
 package vf.optidepy.model.combined.deployment
 
-import utopia.flow.parse.file.FileExtensions._
-import utopia.flow.time.TimeExtensions._
-import vf.optidepy.model.partial.deployment.DeploymentData
 import vf.optidepy.model.stored.deployment.DeploymentConfig
 import vf.optidepy.model.stored.project.Project
 
@@ -47,38 +44,8 @@ trait ProjectDeploymentConfig extends CombinedDeploymentConfig[ProjectDeployment
 	def project: Project
 	
 	
-	// COMPUTED	--------------------
-	
-	/**
-	 * @return Directory under which all deployed files will be placed
-	 */
-	def outputDirectory = project.rootPath/config.outputDirectory
-	
-	/**
-	 * @param branch Name of the targeted branch
-	 * @return The directory that will contain the full project output for that branch
-	 */
-	def fullOutputDirectoryFor(branch: String) = outputDirectory / branch
-	
-	
 	// IMPLEMENTED	--------------------
 	
 	override def deploymentConfig: DeploymentConfig = config
-	
-	
-	// OTHER    ------------------------
-	
-	/**
-	 * @param branch Name of the deployed branch
-	 * @param deployment Targeted deployment
-	 * @return A directory where that deployment should be stored
-	 */
-	def directoryForDeployment(branch: String, deployment: DeploymentData) = {
-		val versionStr = deployment.version match {
-			case Some(version) => s"-${version.toString.replace('.', '-')}"
-			case None => ""
-		}
-		outputDirectory/s"$branch$versionStr-build-${ deployment.index }-${deployment.created.toLocalDate.toString}"
-	}
 }
 
