@@ -33,6 +33,11 @@
             "doc": "Path to the directory that contains this project"
           },
           {
+            "name": "relativeIdeaPath",
+            "type": "Option[Path(32-1024)]",
+            "doc": "Path to the .idea directory, if applicable. Relative to this project's root directory."
+          },
+          {
             "type": "creation",
             "doc": "Time when this project was introduced",
             "index": false
@@ -65,6 +70,7 @@
             "doc": "Includes individual deployment bindings with the general configuration"
           }
         ],
+        "combo_prop": ["projectId", "name"],
         "props": [
           {
             "ref": "project",
@@ -80,8 +86,19 @@
           {
             "name": "relativeInputDirectory",
             "name_plural": "relativeInputDirectories",
-            "type": "Option[Path(128-1024)]",
-            "doc": "Path relative to this project's root directory which contains all deployed files. \nNone if the same as the project root path."
+            "type": "Path(128-1024)",
+            "doc": "Path relative to this project's root directory which contains all deployed files. \nEmpty if same as the project root path."
+          },
+          {
+            "name": "name",
+            "type": "String(16-255)",
+            "doc": "Name of this deployment configuration. May be empty."
+          },
+          {
+            "name": "moduleId",
+            "ref": "versioned_module",
+            "type": "Option[Int]",
+            "doc": "Id of the module this deployment is linked to. None if not linked to a specific versioned module."
           },
           {
             "type": "creation",
@@ -490,12 +507,13 @@
           {
             "name": "relativeLibDirectory",
             "type": "Path(24-1024)",
-            "doc": "Path to the directory where library jars will be placed. \nRelative to the project's root path."
+            "doc": "Path to the directory where library jars will be placed. \nRelative to the project's root root directory."
           },
           {
-            "name": "libraryFilePath",
-            "type": "Option[Path]",
-            "doc": "Path to the library file matching this dependency. Relative to the project's root path. \nNone if not applicable."
+            "name": "libraryFileName",
+            "type": "String(32-255)",
+            "mutable": true,
+            "doc": "Name of the library file matching this dependency. \nEmpty if not applicable."
           },
           {
             "type": "creation",

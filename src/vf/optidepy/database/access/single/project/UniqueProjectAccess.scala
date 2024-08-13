@@ -26,7 +26,7 @@ object UniqueProjectAccess extends ViewFactory[UniqueProjectAccess]
 /**
   * A common trait for access points that return individual and distinct projects.
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait UniqueProjectAccess 
 	extends UniqueProjectAccessLike[Project, UniqueProjectAccess] with SingleRowModelAccess[Project] 

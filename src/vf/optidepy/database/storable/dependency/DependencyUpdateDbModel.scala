@@ -13,14 +13,15 @@ import vf.optidepy.model.stored.dependency.DependencyUpdate
 import java.time.Instant
 
 /**
-  * Used for constructing DependencyUpdateDbModel instances and for inserting dependency updates to the database
+  * 
+	Used for constructing DependencyUpdateDbModel instances and for inserting dependency updates to the database
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
 object DependencyUpdateDbModel 
 	extends StorableFactory[DependencyUpdateDbModel, DependencyUpdate, DependencyUpdateData] 
-		with FromIdFactory[Int, DependencyUpdateDbModel] with DependencyUpdateFactory[DependencyUpdateDbModel]
-		with HasIdProperty
+		with FromIdFactory[Int, DependencyUpdateDbModel] with HasIdProperty 
+		with DependencyUpdateFactory[DependencyUpdateDbModel]
 {
 	// ATTRIBUTES	--------------------
 	
@@ -80,8 +81,8 @@ object DependencyUpdateDbModel
   */
 case class DependencyUpdateDbModel(id: Option[Int] = None, dependencyId: Option[Int] = None, 
 	releaseId: Option[Int] = None, created: Option[Instant] = None) 
-	extends Storable with FromIdFactory[Int, DependencyUpdateDbModel] 
-		with DependencyUpdateFactory[DependencyUpdateDbModel] with HasId[Option[Int]]
+	extends Storable with HasId[Option[Int]] with FromIdFactory[Int, DependencyUpdateDbModel] 
+		with DependencyUpdateFactory[DependencyUpdateDbModel]
 {
 	// IMPLEMENTED	--------------------
 	

@@ -42,10 +42,10 @@ trait ManyDependenciesAccessLike[+A, +Repr]
 		pullColumn(model.relativeLibDirectory.column).flatMap { _.string }.map { v => v: Path }
 	
 	/**
-	  * library file paths of the accessible dependencies
+	  * library file names of the accessible dependencies
 	  */
-	def libraryFilePaths(implicit connection: Connection) = 
-		pullColumn(model.libraryFilePath.column).flatMap { _.string }.map { v => Some(v: Path) }
+	def libraryFileNames(implicit connection: Connection) = 
+		pullColumn(model.libraryFileName.column).flatMap { _.string }
 	
 	/**
 	  * creation times of the accessible dependencies
@@ -63,6 +63,12 @@ trait ManyDependenciesAccessLike[+A, +Repr]
 	  * Unique ids of the accessible dependencies
 	  */
 	def ids(implicit connection: Connection) = pullColumn(index).map { v => v.getInt }
+	
+	/**
+	  * library file paths of the accessible dependencies
+	  */
+	def libraryFilePaths(implicit connection: Connection) = 
+		pullColumn(model.libraryFilePath.column).flatMap { _.string }.map { v => Some(v: Path) }
 	
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
@@ -83,7 +89,7 @@ trait ManyDependenciesAccessLike[+A, +Repr]
 	/**
 	  * @param dependentProjectId dependent project id to target
 	  * @return Copy of this access point that only includes dependencies 
-		with the specified dependent project id
+	  * with the specified dependent project id
 	  */
 	def inProject(dependentProjectId: Int) = filter(model.dependentProjectId.column <=> dependentProjectId)
 	
@@ -91,10 +97,18 @@ trait ManyDependenciesAccessLike[+A, +Repr]
 	  * @param dependentProjectIds Targeted dependent project ids
 	  * 
 		@return Copy of this access point that only includes dependencies where dependent project id is within the
-	  *  specified value set
+	  * specified value set
 	  */
 	def inProjects(dependentProjectIds: Iterable[Int]) = 
 		filter(model.dependentProjectId.column.in(dependentProjectIds))
+	
+	/**
+	  * Updates the library file names of the targeted dependencies
+	  * @param newLibraryFileName A new library file name to assign
+	  * @return Whether any dependency was affected
+	  */
+	def libraryFileNames_=(newLibraryFileName: String)(implicit connection: Connection) = 
+		putColumn(model.libraryFileName.column, newLibraryFileName)
 	
 	/**
 	  * @param usedModuleId used module id to target
@@ -105,7 +119,7 @@ trait ManyDependenciesAccessLike[+A, +Repr]
 	/**
 	  * @param usedModuleIds Targeted used module ids
 	  * @return Copy of this access point that only includes dependencies where used module id is within the
-	  *  specified value set
+	  * specified value set
 	  */
 	def ofModules(usedModuleIds: Iterable[Int]) = filter(model.usedModuleId.column.in(usedModuleIds))
 }

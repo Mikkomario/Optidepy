@@ -18,7 +18,7 @@ import java.time.Instant
   * @tparam A Type of read (projects -like) instances
   * @tparam Repr Type of this access point
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait UniqueProjectAccessLike[+A, +Repr] 
 	extends SingleModelAccess[A] with DistinctModelAccess[A, Option[A], Value] with FilterableView[Repr] 
@@ -37,6 +37,13 @@ trait UniqueProjectAccessLike[+A, +Repr]
 	  * None if no project (or value) was found.
 	  */
 	def rootPath(implicit connection: Connection) = Some(pullColumn(model.rootPath.column).getString: Path)
+	
+	/**
+	  * Path to the .idea directory, if applicable. Relative to this project's root directory. 
+	  * None if no project (or value) was found.
+	  */
+	def relativeIdeaPath(implicit connection: Connection) = 
+		Some(pullColumn(model.relativeIdeaPath.column).getString: Path)
 	
 	/**
 	  * Time when this project was introduced. 

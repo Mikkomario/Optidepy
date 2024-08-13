@@ -14,8 +14,7 @@ object UniqueDependencyAccess extends ViewFactory[UniqueDependencyAccess]
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override
-		 def apply(condition: Condition): UniqueDependencyAccess = _UniqueDependencyAccess(Some(condition))
+	override def apply(condition: Condition): UniqueDependencyAccess = _UniqueDependencyAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
@@ -36,7 +35,6 @@ trait UniqueDependencyAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = DependencyDbFactory
-	
 	override protected def self = this
 	
 	override def apply(condition: Condition): UniqueDependencyAccess = UniqueDependencyAccess(condition)

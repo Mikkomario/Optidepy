@@ -11,7 +11,7 @@ import java.time.Instant
   * @tparam A Type of constructed instances
   * @tparam Repr Implementing type of this factory
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait DeploymentConfigFactoryWrapper[A <: DeploymentConfigFactory[A], +Repr] 
 	extends DeploymentConfigFactory[Repr]
@@ -40,6 +40,10 @@ trait DeploymentConfigFactoryWrapper[A <: DeploymentConfigFactory[A], +Repr]
 	
 	override def withFileDeletionEnabled(fileDeletionEnabled: Boolean) = 
 		mapWrapped { _.withFileDeletionEnabled(fileDeletionEnabled) }
+	
+	override def withModuleId(moduleId: Int) = mapWrapped { _.withModuleId(moduleId) }
+	
+	override def withName(name: String) = mapWrapped { _.withName(name) }
 	
 	override def withOutputDirectory(outputDirectory: Path) = 
 		mapWrapped { _.withOutputDirectory(outputDirectory) }

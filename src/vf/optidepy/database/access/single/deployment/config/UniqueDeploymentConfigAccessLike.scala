@@ -18,7 +18,7 @@ import java.time.Instant
   * @tparam A Type of read (deployment configs -like) instances
   * @tparam Repr Type of this access point
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait UniqueDeploymentConfigAccessLike[+A, +Repr] 
 	extends SingleModelAccess[A] with DistinctModelAccess[A, Option[A], Value] with FilterableView[Repr] 
@@ -41,11 +41,23 @@ trait UniqueDeploymentConfigAccessLike[+A, +Repr]
 	
 	/**
 	  * Path relative to this project's root directory which contains all deployed files. 
-	  * None if the same as the project root path. 
+	  * Empty if same as the project root path. 
 	  * None if no deployment config (or value) was found.
 	  */
 	def relativeInputDirectory(implicit connection: Connection) = 
 		Some(pullColumn(model.relativeInputDirectory.column).getString: Path)
+	
+	/**
+	  * Name of this deployment configuration. May be empty. 
+	  * None if no deployment config (or value) was found.
+	  */
+	def name(implicit connection: Connection) = pullColumn(model.name.column).getString
+	
+	/**
+	  * Id of the module this deployment is linked to. None if not linked to a specific versioned module. 
+	  * None if no deployment config (or value) was found.
+	  */
+	def moduleId(implicit connection: Connection) = pullColumn(model.moduleId.column).int
 	
 	/**
 	  * Time when this configuration was added. 
@@ -93,5 +105,13 @@ trait UniqueDeploymentConfigAccessLike[+A, +Repr]
 	  */
 	def deprecatedAfter_=(newDeprecatedAfter: Instant)(implicit connection: Connection) = 
 		putColumn(model.deprecatedAfter.column, newDeprecatedAfter)
+	
+	/**
+	  * Updates the module ids of the targeted deployment configs
+	  * @param newModuleId A new module id to assign
+	  * @return Whether any deployment config was affected
+	  */
+	def moduleId_=(newModuleId: Int)(implicit connection: Connection) = 
+		putColumn(model.moduleId.column, newModuleId)
 }
 

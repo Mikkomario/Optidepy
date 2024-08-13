@@ -39,7 +39,7 @@ object DependencyDbFactory extends FromValidatedRowModelFactory[Dependency] with
 			DependencyData(valid(this.model.dependentProjectId.name).getInt, 
 			valid(this.model.usedModuleId.name).getInt, 
 			valid(this.model.relativeLibDirectory.name).getString: Path, 
-			Some(valid(this.model.libraryFilePath.name).getString: Path), 
-			valid(this.model.created.name).getInstant, valid(this.model.deprecatedAfter.name).instant))
+			valid(this.model.libraryFileName.name).getString, valid(this.model.created.name).getInstant, 
+			valid(this.model.deprecatedAfter.name).instant))
 }
 

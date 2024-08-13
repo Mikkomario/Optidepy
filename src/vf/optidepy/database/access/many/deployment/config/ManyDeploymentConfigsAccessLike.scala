@@ -16,7 +16,7 @@ import java.time.Instant
   * @tparam A Type of read (deployment configs -like) instances
   * @tparam Repr Type of this access point
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait ManyDeploymentConfigsAccessLike[+A, +Repr] 
 	extends ManyModelAccess[A] with Indexed with NullDeprecatableView[Repr]
@@ -38,7 +38,17 @@ trait ManyDeploymentConfigsAccessLike[+A, +Repr]
 	  * relative input directories of the accessible deployment configs
 	  */
 	def relativeInputDirectories(implicit connection: Connection) = 
-		pullColumn(model.relativeInputDirectory.column).flatMap { _.string }.map { v => Some(v: Path) }
+		pullColumn(model.relativeInputDirectory.column).flatMap { _.string }.map { v => v: Path }
+	
+	/**
+	  * names of the accessible deployment configs
+	  */
+	def names(implicit connection: Connection) = pullColumn(model.name.column).flatMap { _.string }
+	
+	/**
+	  * module ids of the accessible deployment configs
+	  */
+	def moduleIds(implicit connection: Connection) = pullColumn(model.moduleId.column).flatMap { v => v.int }
 	
 	/**
 	  * creation times of the accessible deployment configs
@@ -84,6 +94,14 @@ trait ManyDeploymentConfigsAccessLike[+A, +Repr]
 	  */
 	def deprecationTimes_=(newDeprecatedAfter: Instant)(implicit connection: Connection) = 
 		putColumn(model.deprecatedAfter.column, newDeprecatedAfter)
+	
+	/**
+	  * Updates the module ids of the targeted deployment configs
+	  * @param newModuleId A new module id to assign
+	  * @return Whether any deployment config was affected
+	  */
+	def moduleIds_=(newModuleId: Int)(implicit connection: Connection) = 
+		putColumn(model.moduleId.column, newModuleId)
 	
 	/**
 	  * @param projectId project id to target

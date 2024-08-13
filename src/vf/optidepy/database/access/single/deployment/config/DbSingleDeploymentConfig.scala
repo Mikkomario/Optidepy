@@ -6,7 +6,7 @@ import vf.optidepy.model.stored.deployment.DeploymentConfig
 /**
   * An access point to individual deployment configs, based on their id
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 case class DbSingleDeploymentConfig(id: Int) 
 	extends UniqueDeploymentConfigAccess with SingleIntIdModelAccess[DeploymentConfig]

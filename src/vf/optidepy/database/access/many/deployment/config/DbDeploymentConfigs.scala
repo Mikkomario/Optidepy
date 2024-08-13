@@ -6,7 +6,7 @@ import vf.optidepy.model.stored.deployment.DeploymentConfig
 /**
   * The root access point when targeting multiple deployment configs at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object DbDeploymentConfigs 
 	extends ManyDeploymentConfigsAccess with NonDeprecatedView[DeploymentConfig] 

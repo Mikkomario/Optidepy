@@ -26,7 +26,7 @@ object ManyProjectsAccess extends ViewFactory[ManyProjectsAccess]
 /**
   * A common trait for access points which target multiple projects at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait ManyProjectsAccess 
 	extends ManyProjectsAccessLike[Project, ManyProjectsAccess] with ManyRowModelAccess[Project]
@@ -34,6 +34,7 @@ trait ManyProjectsAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectDbFactory
+	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyProjectsAccess = ManyProjectsAccess(condition)

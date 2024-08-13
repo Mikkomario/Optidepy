@@ -4,7 +4,7 @@ import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.model.immutable.Value
 import utopia.flow.parse.file.FileExtensions._
 import utopia.vault.model.immutable.{DbPropertyDeclaration, Storable}
-import utopia.vault.model.template.{FromIdFactory, HasIdProperty}
+import utopia.vault.model.template.{FromIdFactory, HasId, HasIdProperty}
 import utopia.vault.nosql.storable.StorableFactory
 import utopia.vault.nosql.storable.deprecation.DeprecatableAfter
 import vf.optidepy.database.OptidepyTables
@@ -19,13 +19,12 @@ import java.time.Instant
   * 
 	Used for constructing DeploymentConfigDbModel instances and for inserting deployment configs to the database
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object DeploymentConfigDbModel 
 	extends StorableFactory[DeploymentConfigDbModel, DeploymentConfig, DeploymentConfigData] 
-		with FromIdFactory[Int, DeploymentConfigDbModel] 
+		with FromIdFactory[Int, DeploymentConfigDbModel] with HasIdProperty 
 		with DeploymentConfigFactory[DeploymentConfigDbModel] with DeprecatableAfter[DeploymentConfigDbModel]
-		with HasIdProperty
 {
 	// ATTRIBUTES	--------------------
 	
@@ -45,6 +44,16 @@ object DeploymentConfigDbModel
 	  * Database property used for interacting with relative input directories
 	  */
 	lazy val relativeInputDirectory = property("relativeInputDirectory")
+	
+	/**
+	  * Database property used for interacting with names
+	  */
+	lazy val name = property("name")
+	
+	/**
+	  * Database property used for interacting with module ids
+	  */
+	lazy val moduleId = property("moduleId")
 	
 	/**
 	  * Database property used for interacting with creation times
@@ -71,15 +80,10 @@ object DeploymentConfigDbModel
 	
 	override def table = OptidepyTables.deploymentConfig
 	
-	override def apply(data: DeploymentConfigData) = {
-		val inputDir = data.relativeInputDirectory match {
-			case Some(dir) => dir.toJson
-			case None => ""
-		}
-		apply(None, Some(data.projectId), data.outputDirectory.toJson,
-			inputDir, Some(data.created), data.deprecatedAfter,
+	override def apply(data: DeploymentConfigData) = 
+		apply(None, Some(data.projectId), data.outputDirectory.toJson, data.relativeInputDirectory.toJson, 
+			data.name, data.moduleId, Some(data.created), data.deprecatedAfter, 
 			Some(data.usesBuildDirectories), Some(data.fileDeletionEnabled))
-	}
 	
 	/**
 	  * @param created Time when this configuration was added
@@ -105,6 +109,19 @@ object DeploymentConfigDbModel
 	override def withId(id: Int) = apply(id = Some(id))
 	
 	/**
+	  * @param moduleId Id of the module this deployment is linked to. None if not linked to a
+	  *  specific versioned module.
+	  * @return A model containing only the specified module id
+	  */
+	override def withModuleId(moduleId: Int) = apply(moduleId = Some(moduleId))
+	
+	/**
+	  * @param name Name of this deployment configuration. May be empty.
+	  * @return A model containing only the specified name
+	  */
+	override def withName(name: String) = apply(name = name)
+	
+	/**
 	  * @param outputDirectory Directory to which all the deployed files / sub-directories will be placed
 	  * @return A model containing only the specified output directory
 	  */
@@ -119,7 +136,7 @@ object DeploymentConfigDbModel
 	/**
 	  * @param relativeInputDirectory Path relative to this project's root directory which contains
 	  *  all deployed files. 
-	  * None if the same as the project root path.
+	  * Empty if same as the project root path.
 	  * @return A model containing only the specified relative input directory
 	  */
 	override def withRelativeInputDirectory(relativeInputDirectory: Path) = 
@@ -139,13 +156,13 @@ object DeploymentConfigDbModel
   * Used for interacting with DeploymentConfigs in the database
   * @param id deployment config database id
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 case class DeploymentConfigDbModel(id: Option[Int] = None, projectId: Option[Int] = None, 
-	outputDirectory: String = "", relativeInputDirectory: String = "", created: Option[Instant] = None, 
-	deprecatedAfter: Option[Instant] = None, usesBuildDirectories: Option[Boolean] = None, 
-	fileDeletionEnabled: Option[Boolean] = None) 
-	extends Storable with FromIdFactory[Int, DeploymentConfigDbModel] 
+	outputDirectory: String = "", relativeInputDirectory: String = "", name: String = "", 
+	moduleId: Option[Int] = None, created: Option[Instant] = None, deprecatedAfter: Option[Instant] = None, 
+	usesBuildDirectories: Option[Boolean] = None, fileDeletionEnabled: Option[Boolean] = None) 
+	extends Storable with HasId[Option[Int]] with FromIdFactory[Int, DeploymentConfigDbModel] 
 		with DeploymentConfigFactory[DeploymentConfigDbModel]
 {
 	// IMPLEMENTED	--------------------
@@ -156,6 +173,7 @@ case class DeploymentConfigDbModel(id: Option[Int] = None, projectId: Option[Int
 		Vector(DeploymentConfigDbModel.id.name -> id, DeploymentConfigDbModel.projectId.name -> projectId, 
 			DeploymentConfigDbModel.outputDirectory.name -> outputDirectory, 
 			DeploymentConfigDbModel.relativeInputDirectory.name -> relativeInputDirectory, 
+			DeploymentConfigDbModel.name.name -> name, DeploymentConfigDbModel.moduleId.name -> moduleId, 
 			DeploymentConfigDbModel.created.name -> created, 
 			DeploymentConfigDbModel.deprecatedAfter.name -> deprecatedAfter, 
 			DeploymentConfigDbModel.usesBuildDirectories.name -> usesBuildDirectories, 
@@ -184,6 +202,19 @@ case class DeploymentConfigDbModel(id: Option[Int] = None, projectId: Option[Int
 	override def withId(id: Int) = copy(id = Some(id))
 	
 	/**
+	  * @param moduleId Id of the module this deployment is linked to. None if not linked to a
+	  *  specific versioned module.
+	  * @return A new copy of this model with the specified module id
+	  */
+	override def withModuleId(moduleId: Int) = copy(moduleId = Some(moduleId))
+	
+	/**
+	  * @param name Name of this deployment configuration. May be empty.
+	  * @return A new copy of this model with the specified name
+	  */
+	override def withName(name: String) = copy(name = name)
+	
+	/**
 	  * @param outputDirectory Directory to which all the deployed files / sub-directories will be placed
 	  * @return A new copy of this model with the specified output directory
 	  */
@@ -198,7 +229,7 @@ case class DeploymentConfigDbModel(id: Option[Int] = None, projectId: Option[Int
 	/**
 	  * @param relativeInputDirectory Path relative to this project's root directory which contains
 	  *  all deployed files. 
-	  * None if the same as the project root path.
+	  * Empty if same as the project root path.
 	  * @return A new copy of this model with the specified relative input directory
 	  */
 	override def withRelativeInputDirectory(relativeInputDirectory: Path) = 

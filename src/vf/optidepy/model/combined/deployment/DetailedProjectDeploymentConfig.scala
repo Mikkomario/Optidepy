@@ -21,10 +21,7 @@ case class DetailedProjectDeploymentConfig(config: DeploymentConfig, project: Pr
 	/**
 	 * Directory that hosts all the input files. All input bindings are relative to this path by default.
 	 */
-	lazy val inputDirectory = config.relativeInputDirectory match {
-		case Some(input) => project.rootPath/input
-		case None => project.rootPath
-	}
+	lazy val inputDirectory = project.rootPath/config.relativeInputDirectory
 	/**
 	 * @return Directory bindings where input is absolute and output is relative
 	 */

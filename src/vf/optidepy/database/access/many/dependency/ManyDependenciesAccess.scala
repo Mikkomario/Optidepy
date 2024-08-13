@@ -14,8 +14,7 @@ object ManyDependenciesAccess extends ViewFactory[ManyDependenciesAccess]
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override
-		 def apply(condition: Condition): ManyDependenciesAccess = _ManyDependenciesAccess(Some(condition))
+	override def apply(condition: Condition): ManyDependenciesAccess = _ManyDependenciesAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
@@ -35,7 +34,6 @@ trait ManyDependenciesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = DependencyDbFactory
-	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyDependenciesAccess = ManyDependenciesAccess(condition)

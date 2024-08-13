@@ -11,7 +11,7 @@ import vf.optidepy.model.stored.deployment.DeploymentConfig
 /**
   * Used for accessing individual deployment configs
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object DbDeploymentConfig 
 	extends SingleRowModelAccess[DeploymentConfig] with NonDeprecatedView[DeploymentConfig] with Indexed
@@ -21,7 +21,7 @@ object DbDeploymentConfig
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DeploymentConfigDbModel
+	private def model = DeploymentConfigDbModel
 	
 	
 	// IMPLEMENTED	--------------------

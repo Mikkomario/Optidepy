@@ -40,19 +40,18 @@ trait UniqueDependencyAccessLike[+A, +Repr]
 	
 	/**
 	  * Path to the directory where library jars will be placed. 
-	  * Relative to the project's root path. 
+	  * Relative to the project's root root directory. 
 	  * None if no dependency (or value) was found.
 	  */
 	def relativeLibDirectory(implicit connection: Connection) = 
 		Some(pullColumn(model.relativeLibDirectory.column).getString: Path)
 	
 	/**
-	  * Path to the library file matching this dependency. Relative to the project's root path. 
-	  * None if not applicable. 
+	  * Name of the library file matching this dependency. 
+	  * Empty if not applicable. 
 	  * None if no dependency (or value) was found.
 	  */
-	def libraryFilePath(implicit connection: Connection) = 
-		Some(pullColumn(model.libraryFilePath.column).getString: Path)
+	def libraryFileName(implicit connection: Connection) = pullColumn(model.libraryFileName.column).getString
 	
 	/**
 	  * Time when this dependency was registered. 
@@ -72,6 +71,14 @@ trait UniqueDependencyAccessLike[+A, +Repr]
 	def id(implicit connection: Connection) = pullColumn(index).int
 	
 	/**
+	  * Path to the library file matching this dependency. Relative to the project's root path. 
+	  * None if not applicable. 
+	  * None if no dependency (or value) was found.
+	  */
+	def libraryFilePath(implicit connection: Connection) = 
+		Some(pullColumn(model.libraryFilePath.column).getString: Path)
+	
+	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
 	protected def model = DependencyDbModel
@@ -86,5 +93,13 @@ trait UniqueDependencyAccessLike[+A, +Repr]
 	  */
 	def deprecatedAfter_=(newDeprecatedAfter: Instant)(implicit connection: Connection) = 
 		putColumn(model.deprecatedAfter.column, newDeprecatedAfter)
+	
+	/**
+	  * Updates the library file names of the targeted dependencies
+	  * @param newLibraryFileName A new library file name to assign
+	  * @return Whether any dependency was affected
+	  */
+	def libraryFileName_=(newLibraryFileName: String)(implicit connection: Connection) = 
+		putColumn(model.libraryFileName.column, newLibraryFileName)
 }
 

@@ -21,7 +21,7 @@ object Project extends StoredFromModelFactory[ProjectData, Project]
   * @param id id of this project in the database
   * @param data Wrapped project data
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 case class Project(id: Int, data: ProjectData) 
 	extends StoredModelConvertible[ProjectData] with FromIdFactory[Int, Project] 

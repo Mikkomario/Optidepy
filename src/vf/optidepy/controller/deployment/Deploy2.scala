@@ -64,7 +64,7 @@ object Deploy2
 	          fullRebuild: Boolean = false)
 	         (implicit counter: IndexCounter, log: Logger, exc: ExecutionContext) =
 	{
-		val fullOutputDirectory = config.fullOutputDirectoryFor(branch.name)
+		val fullOutputDirectory = config.outputDirectoryFor(branch.name)
 		lazy val lastDeploymentTime = {
 			if (fullRebuild)
 				None
@@ -219,7 +219,7 @@ object Deploy2
 	                                 buildDirectory: => Option[Path], deploymentIndex: => Int)
 	                                (implicit exc: ExecutionContext) =
 	{
-		val fullOutputDirectory = project.fullOutputDirectoryFor(branchName)
+		val fullOutputDirectory = project.outputDirectoryFor(branchName)
 		println(s"Checking for removed files from $fullOutputDirectory...")
 		val backupDir = buildDirectory.map { dir => Lazy { dir/"deleted-files" } }
 		// Groups the bindings into different categories:

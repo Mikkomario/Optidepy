@@ -14,7 +14,7 @@ import java.nio.file.Path
 /**
   * Used for reading project data from the DB
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object ProjectDbFactory extends FromValidatedRowModelFactory[Project] with Deprecatable
 {
@@ -36,7 +36,8 @@ object ProjectDbFactory extends FromValidatedRowModelFactory[Project] with Depre
 	
 	override protected def fromValidatedModel(valid: Model) = 
 		Project(valid(this.model.id.name).getInt, ProjectData(valid(this.model.name.name).getString, 
-			valid(this.model.rootPath.name).getString: Path, valid(this.model.created.name).getInstant, 
-			valid(this.model.deprecatedAfter.name).instant))
+			valid(this.model.rootPath.name).getString: Path, 
+			Some(valid(this.model.relativeIdeaPath.name).getString: Path), 
+			valid(this.model.created.name).getInstant, valid(this.model.deprecatedAfter.name).instant))
 }
 

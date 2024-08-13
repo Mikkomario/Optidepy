@@ -27,7 +27,7 @@ object ManyDeploymentConfigsAccess extends ViewFactory[ManyDeploymentConfigsAcce
 /**
   * A common trait for access points which target multiple deployment configs at a time
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait ManyDeploymentConfigsAccess 
 	extends ManyDeploymentConfigsAccessLike[DeploymentConfig, ManyDeploymentConfigsAccess] 

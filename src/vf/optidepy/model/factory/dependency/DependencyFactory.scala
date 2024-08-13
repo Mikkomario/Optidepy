@@ -32,10 +32,10 @@ trait DependencyFactory[+A]
 	def withDeprecatedAfter(deprecatedAfter: Instant): A
 	
 	/**
-	  * @param libraryFilePath New library file path to assign
-	  * @return Copy of this item with the specified library file path
+	  * @param libraryFileName New library file name to assign
+	  * @return Copy of this item with the specified library file name
 	  */
-	def withLibraryFilePath(libraryFilePath: Path): A
+	def withLibraryFileName(libraryFileName: String): A
 	
 	/**
 	  * @param relativeLibDirectory New relative lib directory to assign

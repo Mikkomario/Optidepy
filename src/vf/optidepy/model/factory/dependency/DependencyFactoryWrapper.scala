@@ -39,8 +39,8 @@ trait DependencyFactoryWrapper[A <: DependencyFactory[A], +Repr] extends Depende
 	override def withDeprecatedAfter(deprecatedAfter: Instant) = 
 		mapWrapped { _.withDeprecatedAfter(deprecatedAfter) }
 	
-	override def withLibraryFilePath(libraryFilePath: Path) = 
-		mapWrapped { _.withLibraryFilePath(libraryFilePath) }
+	override def withLibraryFileName(libraryFileName: String) = 
+		mapWrapped { _.withLibraryFileName(libraryFileName) }
 	
 	override def withRelativeLibDirectory(relativeLibDirectory: Path) = 
 		mapWrapped { _.withRelativeLibDirectory(relativeLibDirectory) }

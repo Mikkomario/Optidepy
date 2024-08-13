@@ -20,7 +20,7 @@ object DbDependencyUpdate extends SingleRowModelAccess[DependencyUpdate] with Un
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DependencyUpdateDbModel
+	private def model = DependencyUpdateDbModel
 	
 	
 	// IMPLEMENTED	--------------------

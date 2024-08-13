@@ -7,7 +7,7 @@ import java.time.Instant
   * Common trait for deployment config-related factories which allow construction with individual properties
   * @tparam A Type of constructed instances
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait DeploymentConfigFactory[+A]
 {
@@ -30,6 +30,18 @@ trait DeploymentConfigFactory[+A]
 	  * @return Copy of this item with the specified file deletion enabled
 	  */
 	def withFileDeletionEnabled(fileDeletionEnabled: Boolean): A
+	
+	/**
+	  * @param moduleId New module id to assign
+	  * @return Copy of this item with the specified module id
+	  */
+	def withModuleId(moduleId: Int): A
+	
+	/**
+	  * @param name New name to assign
+	  * @return Copy of this item with the specified name
+	  */
+	def withName(name: String): A
 	
 	/**
 	  * @param outputDirectory New output directory to assign

@@ -83,14 +83,14 @@ trait ManyDependencyUpdatesAccess
 	  * @param dependencyIds Targeted dependency ids
 	  * 
 		@return Copy of this access point that only includes dependency updates where dependency id is within the
-	  *  specified value set
+	  * specified value set
 	  */
 	def ofDependencies(dependencyIds: Iterable[Int]) = filter(model.dependencyId.column.in(dependencyIds))
 	
 	/**
 	  * @param dependencyId dependency id to target
 	  * @return Copy of this access point that only includes dependency updates 
-		with the specified dependency id
+	  * with the specified dependency id
 	  */
 	def ofDependency(dependencyId: Int) = filter(model.dependencyId.column <=> dependencyId)
 	
@@ -103,7 +103,7 @@ trait ManyDependencyUpdatesAccess
 	/**
 	  * @param releaseIds Targeted release ids
 	  * @return Copy of this access point that only includes dependency updates where release id is within the
-	  *  specified value set
+	  * specified value set
 	  */
 	def toReleases(releaseIds: Iterable[Int]) = filter(model.releaseId.column.in(releaseIds))
 }

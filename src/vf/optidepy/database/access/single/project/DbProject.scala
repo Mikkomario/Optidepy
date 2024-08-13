@@ -12,7 +12,7 @@ import vf.optidepy.model.stored.project.Project
 /**
   * Used for accessing individual projects
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object DbProject extends SingleRowModelAccess[Project] with NonDeprecatedView[Project] with Indexed
 {
@@ -21,7 +21,7 @@ object DbProject extends SingleRowModelAccess[Project] with NonDeprecatedView[Pr
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = ProjectDbModel
+	private def model = ProjectDbModel
 	
 	
 	// IMPLEMENTED	--------------------
@@ -38,8 +38,8 @@ object DbProject extends SingleRowModelAccess[Project] with NonDeprecatedView[Pr
 	def apply(id: Int) = DbSingleProject(id)
 	
 	/**
-	 * @param name Targeted project's name
-	 * @return Access to that project's information
+	 * @param name Name of the targeted project
+	 * @return Access to a project with that name
 	 */
 	def withName(name: String) = filterDistinct(model.name <=> name)
 	

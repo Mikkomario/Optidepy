@@ -27,7 +27,7 @@ object UniqueDeploymentConfigAccess extends ViewFactory[UniqueDeploymentConfigAc
 /**
   * A common trait for access points that return individual and distinct deployment configs.
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait UniqueDeploymentConfigAccess 
 	extends UniqueDeploymentConfigAccessLike[DeploymentConfig, UniqueDeploymentConfigAccess] 

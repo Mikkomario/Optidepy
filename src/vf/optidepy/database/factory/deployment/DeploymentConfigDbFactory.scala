@@ -14,7 +14,7 @@ import java.nio.file.Path
 /**
   * Used for reading deployment config data from the DB
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 object DeploymentConfigDbFactory extends FromValidatedRowModelFactory[DeploymentConfig] with Deprecatable
 {
@@ -38,7 +38,8 @@ object DeploymentConfigDbFactory extends FromValidatedRowModelFactory[Deployment
 		DeploymentConfig(valid(this.model.id.name).getInt, 
 			DeploymentConfigData(valid(this.model.projectId.name).getInt, 
 			valid(this.model.outputDirectory.name).getString: Path, 
-			Some(valid(this.model.relativeInputDirectory.name).getString: Path), 
+			valid(this.model.relativeInputDirectory.name).getString: Path, 
+			valid(this.model.name.name).getString, valid(this.model.moduleId.name).int, 
 			valid(this.model.created.name).getInstant, valid(this.model.deprecatedAfter.name).instant, 
 			valid(this.model.usesBuildDirectories.name).getBoolean, 
 			valid(this.model.fileDeletionEnabled.name).getBoolean))

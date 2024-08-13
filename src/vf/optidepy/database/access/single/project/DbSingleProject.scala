@@ -6,7 +6,7 @@ import vf.optidepy.model.stored.project.Project
 /**
   * An access point to individual projects, based on their id
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 case class DbSingleProject(id: Int) extends UniqueProjectAccess with SingleIntIdModelAccess[Project]
 

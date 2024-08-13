@@ -7,7 +7,7 @@ import java.time.Instant
   * Common trait for project-related factories which allow construction with individual properties
   * @tparam A Type of constructed instances
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 12.08.2024, v1.2
   */
 trait ProjectFactory[+A]
 {
@@ -30,6 +30,12 @@ trait ProjectFactory[+A]
 	  * @return Copy of this item with the specified name
 	  */
 	def withName(name: String): A
+	
+	/**
+	  * @param relativeIdeaPath New relative idea path to assign
+	  * @return Copy of this item with the specified relative idea path
+	  */
+	def withRelativeIdeaPath(relativeIdeaPath: Path): A
 	
 	/**
 	  * @param rootPath New root path to assign
