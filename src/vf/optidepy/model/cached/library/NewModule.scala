@@ -1,5 +1,7 @@
 package vf.optidepy.model.cached.library
 
+import vf.optidepy.model.partial.library.VersionedModuleData
+
 import java.nio.file.Path
 
 /**
@@ -13,3 +15,11 @@ import java.nio.file.Path
  * @since 10.08.2024, v1.2
  */
 case class NewModule(name: String, relativeChangeListPath: Path, relativeArtifactDirectory: Path)
+{
+	/**
+	 * @param projectId Project id attached to this module data
+	 * @return Module data including this information, plus the specified project id
+	 */
+	def toModuleUnder(projectId: Int) =
+		VersionedModuleData(projectId, name, relativeChangeListPath, relativeArtifactDirectory)
+}

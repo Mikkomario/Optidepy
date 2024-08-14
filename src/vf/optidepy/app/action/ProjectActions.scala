@@ -8,10 +8,15 @@ import utopia.flow.parse.string.Regex
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger
 import utopia.vault.database.Connection
+import vf.optidepy.controller.dependency.IdeaFiles
+import vf.optidepy.database.access.many.deployment.config.DbDeploymentConfigs
 import vf.optidepy.database.access.many.project.DbProjectsWithModules
 import vf.optidepy.database.access.single.project.DbProject
+import vf.optidepy.database.storable.library.VersionedModuleDbModel
+import vf.optidepy.database.storable.project.ProjectDbModel
 import vf.optidepy.model.cached.deployment.{CachedBinding, NewDeploymentConfig}
 import vf.optidepy.model.cached.library.NewModule
+import vf.optidepy.model.partial.project.ProjectData
 
 import java.nio.file.Path
 import scala.io.StdIn
@@ -50,16 +55,30 @@ object ProjectActions
 					else
 						None
 				}
+				val dependencies = setupDependencies(rootDirectory)
 				
-				// TODO: Shouldn't be able to create a project with just dependencies?
-				if (modules.isEmpty && deploymentConfig.isEmpty)
-					println("No versioned modules found and no deployments were specified. \nProject creation canceled.")
+				// Case: No deployments, modules or dependencies => Cancels
+				if (modules.isEmpty && deploymentConfig.isEmpty && dependencies.isEmpty) {
+					println("No data for this project was specified. \nProject creation canceled.")
+					None
+				}
 				else {
-					// TODO: Add library dependencies (needs access to projects)
+					// Saves the project data
+					val ideaPath = IdeaFiles.locate(rootDirectory)
+					val project = ProjectDbModel
+						.insert(ProjectData(projectName, rootDirectory, ideaPath.map { _.ideaDirectory }))
+					val storedModules = VersionedModuleDbModel.insert(modules.map { _.toModuleUnder(project.id) })
+					// TODO: Continue
+					val storedDeploymentConfig = ??? // DbDeploymentConfigs.insert(project.id, Single(deploymentConfig))
+					
+					
+					???
 				}
 			}
-		else
+		else {
 			println(s"Project with name \"$projectName\" already exists. Cancels project creation.")
+			None
+		}
 	}
 	
 	// 'f' is called unless the user cancels this process.
@@ -91,12 +110,9 @@ object ProjectActions
 	}
 	
 	private def setupDeploymentConfig(rootDirectory: Path, projectName: String) = {
-		val (input, relativeInput) = StdIn.readNonEmptyLine(
-			s"Please specify the path common for all deployment inputs. \nSpecify a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.") match
-		{
-			case Some(input) => (rootDirectory/input) -> Some(input: Path)
-			case None => rootDirectory -> None
-		}
+		val relativeInput: Path = StdIn.readLine(
+			s"Please specify the path common for all deployment inputs. \nSpecify a path relative to $rootDirectory\nIf empty, $rootDirectory will be used as the common root.")
+		val input = rootDirectory/relativeInput
 		val defaultOutput: Path = s"out/$projectName"
 		val output = StdIn
 			.readNonEmptyLine(s"Please specify the path where output build directories will be placed. \nDefault = ${
@@ -112,7 +128,10 @@ object ProjectActions
 		val fileRemovalEnabled = StdIn.ask(
 			"Should automatic deletion of non-source files be enabled?", default = true)
 		
-		NewDeploymentConfig(output, relativeInput, bindings, usesBuildDirectories, fileRemovalEnabled)
+		println("Specify a name for this configuration. \nThis step is optional, but useful if you plan to use multiple configurations on this project.")
+		val name = StdIn.readLine()
+		
+		NewDeploymentConfig(name, output, relativeInput, bindings, usesBuildDirectories, fileRemovalEnabled)
 	}
 	
 	private def setupDependencies(rootDirectory: Path)(implicit connection: Connection) = {
@@ -150,18 +169,16 @@ object ProjectActions
 				Empty
 			else {
 				// Determines the locations where these dependencies will be placed
-				val dependenciesWithLibDirectories = {
-					if (dependencies.hasSize > 1 &&
-						StdIn.ask("Do you want to place all these jars in the same directory?"))
-					{
-						val relativeLibDir = requestLibDirectory(rootDirectory, "these jars")
-						dependencies.map { _ -> relativeLibDir }
-					}
-					else
-						dependencies.map { module => module -> requestLibDirectory(rootDirectory, module.name) }
+				// Case: Places all dependency jars in the same directory
+				if (dependencies.hasSize > 1 &&
+					StdIn.ask("Do you want to place all these jars in the same directory?"))
+				{
+					val relativeLibDir = requestLibDirectory(rootDirectory, "these jars")
+					dependencies.map { _ -> relativeLibDir }
 				}
-				// TODO: Continue by scanning for library files
-				???
+				// Case: Places each dependency separately
+				else
+					dependencies.map { module => module -> requestLibDirectory(rootDirectory, module.name) }
 			}
 		}
 	}

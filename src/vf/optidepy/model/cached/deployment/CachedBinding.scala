@@ -6,6 +6,7 @@ import utopia.flow.generic.model.immutable.{Model, ModelDeclaration}
 import utopia.flow.generic.model.mutable.DataType.StringType
 import utopia.flow.generic.model.template.ModelConvertible
 import utopia.flow.parse.file.FileExtensions._
+import vf.optidepy.model.partial.deployment.BindingData
 import vf.optidepy.model.template.deployment.BindingLike
 
 import java.nio.file.Path
@@ -27,6 +28,15 @@ object CachedBinding extends FromModelFactoryWithSchema[CachedBinding]
  */
 case class CachedBinding(source: Path, target: Path) extends ModelConvertible with BindingLike[CachedBinding]
 {
+	// COMPUTED --------------------------
+	
+	/**
+	 * @param configId Id of the deployment configuration to attach this data under
+	 * @return Binding data based on this binding
+	 */
+	def toBindingData(configId: Int) = BindingData(configId, source, target)
+	
+	
 	// IMPLEMENTED  ----------------------
 	
 	override def toModel: Model = Model.from("source" -> source.toJson, "target" -> target.toJson)
