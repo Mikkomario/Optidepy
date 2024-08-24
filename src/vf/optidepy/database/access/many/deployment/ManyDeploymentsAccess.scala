@@ -7,6 +7,8 @@ import utopia.vault.nosql.access.many.model.ManyRowModelAccess
 import utopia.vault.nosql.template.Indexed
 import utopia.vault.nosql.view.{ChronoRowFactoryView, ViewFactory}
 import utopia.vault.sql.Condition
+import utopia.vault.sql.OrderDirection.{Ascending, Descending}
+import vf.optidepy.database.access.single.deployment.LatestOrEarliestDeploymentAccess
 import vf.optidepy.database.factory.deployment.DeploymentDbFactory
 import vf.optidepy.database.storable.deployment.DeploymentDbModel
 import vf.optidepy.model.stored.deployment.Deployment
@@ -43,24 +45,20 @@ trait ManyDeploymentsAccess
 	  * branch ids of the accessible deployments
 	  */
 	def branchIds(implicit connection: Connection) = pullColumn(model.branchId.column).map { v => v.getInt }
-	
 	/**
 	  * indices of the accessible deployments
 	  */
 	def indices(implicit connection: Connection) = pullColumn(model.deploymentIndex.column).map { v => v.getInt }
-	
 	/**
 	  * creation times of the accessible deployments
 	  */
 	def creationTimes(implicit connection: Connection) = 
 		pullColumn(model.created.column).map { v => v.getInstant }
-	
 	/**
 	  * versions of the accessible deployments
 	  */
 	def versions(implicit connection: Connection) = 
 		pullColumn(model.version.column).flatMap { _.string }.map { v => Some(Version(v)) }
-	
 	/**
 	  * Unique ids of the accessible deployments
 	  */
@@ -75,8 +73,10 @@ trait ManyDeploymentsAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = DeploymentDbFactory
-	
 	override protected def self = this
+	
+	override def latest = LatestOrEarliestDeploymentAccess(Descending, accessCondition)
+	override def earliest = LatestOrEarliestDeploymentAccess(Ascending, accessCondition)
 	
 	override def apply(condition: Condition): ManyDeploymentsAccess = ManyDeploymentsAccess(condition)
 	
@@ -88,7 +88,6 @@ trait ManyDeploymentsAccess
 	  * @return Copy of this access point that only includes deployments with the specified branch id
 	  */
 	def ofBranch(branchId: Int) = filter(model.branchId.column <=> branchId)
-	
 	/**
 	  * @param branchIds Targeted branch ids
 	  * @return Copy of this access point that only includes deployments where branch id is within the specified
@@ -101,7 +100,6 @@ trait ManyDeploymentsAccess
 	  * @return Copy of this access point that only includes deployments with the specified version
 	  */
 	def ofVersion(version: Version) = filter(model.version.column <=> version.toString)
-	
 	/**
 	  * @param versions Targeted versions
 	  * @return Copy of this access point that only includes deployments where version is within the
