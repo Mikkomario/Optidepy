@@ -3,7 +3,7 @@ package vf.optidepy.model.stored.deployment
 import utopia.flow.generic.model.template.ModelLike.AnyModel
 import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.deployment.config.DbSingleDeploymentConfig
-import vf.optidepy.model.combined.deployment.DetailedDeploymentConfig
+import vf.optidepy.model.combined.deployment.DeploymentConfigWithBindings
 import vf.optidepy.model.factory.deployment.DeploymentConfigFactoryWrapper
 import vf.optidepy.model.partial.deployment.DeploymentConfigData
 
@@ -51,6 +51,6 @@ case class DeploymentConfig(id: Int, data: DeploymentConfigData)
 	 * @param bindings Bindings to attach to this configuration
 	 * @return Copy of this configuration with the specified bindings included
 	 */
-	def withBindings(bindings: Seq[Binding]) = DetailedDeploymentConfig(this, bindings)
+	def withBindings(bindings: Seq[Binding]) = DeploymentConfigWithBindings(this, bindings)
 }
 

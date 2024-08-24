@@ -63,7 +63,8 @@
             "doc": "Combines project and deployment configuration information"
           },
           {
-            "name": "DetailedDeploymentConfig",
+            "name": "DeploymentConfigWithBindings",
+            "name_plural": "DeploymentConfigsWithBindings",
             "children": "Binding",
             "parent_alias": "config",
             "child_alias": "binding",
@@ -154,13 +155,6 @@
         "doc": "Represents a versioned branch of a project",
         "combos": [
           {
-            "name": "ProjectBranch",
-            "name_plural": "ProjectBranches",
-            "child": "Project",
-            "is_always_linked": true,
-            "doc": "Combines project and branch information"
-          },
-          {
             "name": "DeployedBranch",
             "name_plural": "DeployedBranches",
             "child": "Deployment",
@@ -183,9 +177,10 @@
         "combo_prop": ["projectId", "name"],
         "props": [
           {
-            "ref": "project",
-            "doc": "Id of the project this branch / version is part of",
-            "with": "ofProject"
+            "name": "deploymentConfigId",
+            "ref": "deployment_config",
+            "doc": "Id of the deployment configuration which this branch versions",
+            "with": "ofDeploymentConfig"
           },
           {
             "name": "name",
@@ -507,7 +502,7 @@
           {
             "name": "relativeLibDirectory",
             "type": "Path(24-1024)",
-            "doc": "Path to the directory where library jars will be placed. \nRelative to the project's root root directory."
+            "doc": "Path to the directory where library jars will be placed. \nRelative to the project's root directrory."
           },
           {
             "name": "libraryFileName",

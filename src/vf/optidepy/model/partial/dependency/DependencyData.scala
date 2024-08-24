@@ -38,10 +38,9 @@ object DependencyData extends FromModelFactoryWithSchema[DependencyData]
   * Represents a dependency of a project / module from a specific library
   * @param dependentProjectId Id of the project which this dependency concerns
   * @param usedModuleId Id of the module the referenced project uses
-  * @param relativeLibDirectory Path to the directory where library jars will be placed. 
-  * Relative to the project's root root directory.
-  * @param libraryFileName Name of the library file matching this dependency. 
-  * Empty if not applicable.
+  * @param relativeLibDirectory Path to the directory where library jars will be placed.
+ *                             Relative to the project's root directory.
+  * @param libraryFileName Name of the library file matching this dependency. Empty if not applicable.
   * @param created Time when this dependency was registered
   * @param deprecatedAfter Time when this dependency was replaced or removed. None while active.
   * @author Mikko Hilpinen

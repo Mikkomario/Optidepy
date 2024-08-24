@@ -4,13 +4,13 @@ import utopia.flow.parse.file.FileExtensions._
 import utopia.vault.database.Connection
 import utopia.vault.nosql.view.ViewFactory
 import utopia.vault.sql.Condition
-import vf.optidepy.database.factory.deployment.DetailedDeploymentConfigDbFactory
+import vf.optidepy.database.factory.deployment.DeploymentConfigWithBindingsDbFactory
 import vf.optidepy.database.storable.deployment.BindingDbModel
-import vf.optidepy.model.combined.deployment.DetailedDeploymentConfig
+import vf.optidepy.model.combined.deployment.DeploymentConfigWithBindings
 
 import java.nio.file.Path
 
-object ManyDetailedDeploymentConfigsAccess extends ViewFactory[ManyDetailedDeploymentConfigsAccess]
+object ManyDeploymentConfigsWithBindingsAccess extends ViewFactory[ManyDeploymentConfigsWithBindingsAccess]
 {
 	// IMPLEMENTED	--------------------
 	
@@ -18,14 +18,14 @@ object ManyDetailedDeploymentConfigsAccess extends ViewFactory[ManyDetailedDeplo
 	  * @param condition Condition to apply to all requests
 	  * @return An access point that applies the specified filter condition (only)
 	  */
-	override def apply(condition: Condition): ManyDetailedDeploymentConfigsAccess = 
-		_ManyDetailedDeploymentConfigsAccess(Some(condition))
+	override def apply(condition: Condition): ManyDeploymentConfigsWithBindingsAccess =
+		_ManyDeploymentConfigsWithBindingsAccess(Some(condition))
 	
 	
 	// NESTED	--------------------
 	
-	private case class _ManyDetailedDeploymentConfigsAccess(override val accessCondition: Option[Condition]) 
-		extends ManyDetailedDeploymentConfigsAccess
+	private case class _ManyDeploymentConfigsWithBindingsAccess(override val accessCondition: Option[Condition])
+		extends ManyDeploymentConfigsWithBindingsAccess
 }
 
 /**
@@ -33,8 +33,8 @@ object ManyDetailedDeploymentConfigsAccess extends ViewFactory[ManyDetailedDeplo
   * @author Mikko Hilpinen
   * @since 09.08.2024
   */
-trait ManyDetailedDeploymentConfigsAccess 
-	extends ManyDeploymentConfigsAccessLike[DetailedDeploymentConfig, ManyDetailedDeploymentConfigsAccess]
+trait ManyDeploymentConfigsWithBindingsAccess
+	extends ManyDeploymentConfigsAccessLike[DeploymentConfigWithBindings, ManyDeploymentConfigsWithBindingsAccess]
 {
 	// COMPUTED	--------------------
 	
@@ -64,11 +64,11 @@ trait ManyDetailedDeploymentConfigsAccess
 	
 	// IMPLEMENTED	--------------------
 	
-	override def factory = DetailedDeploymentConfigDbFactory
+	override def factory = DeploymentConfigWithBindingsDbFactory
 	
 	override protected def self = this
 	
-	override def apply(condition: Condition): ManyDetailedDeploymentConfigsAccess = 
-		ManyDetailedDeploymentConfigsAccess(condition)
+	override def apply(condition: Condition): ManyDeploymentConfigsWithBindingsAccess =
+		ManyDeploymentConfigsWithBindingsAccess(condition)
 }
 

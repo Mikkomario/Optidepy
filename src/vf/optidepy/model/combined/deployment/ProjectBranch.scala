@@ -3,6 +3,7 @@ package vf.optidepy.model.combined.deployment
 import vf.optidepy.model.stored.deployment.Branch
 import vf.optidepy.model.stored.project.Project
 
+@deprecated("Deprecated for removal", "v1.2")
 object ProjectBranch
 {
 	// OTHER	--------------------
@@ -34,6 +35,7 @@ object ProjectBranch
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
+@deprecated("Deprecated for removal", "v1.2")
 trait ProjectBranch extends CombinedBranch[ProjectBranch]
 {
 	// ABSTRACT	--------------------

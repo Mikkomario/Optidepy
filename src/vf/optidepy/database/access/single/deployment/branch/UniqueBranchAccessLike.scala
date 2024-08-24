@@ -16,7 +16,7 @@ import java.time.Instant
   * @tparam A Type of read (branches -like) instances
   * @tparam Repr Type of this access point
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 23.08.2024, v1.2
   */
 trait UniqueBranchAccessLike[+A, +Repr] 
 	extends SingleModelAccess[A] with DistinctModelAccess[A, Option[A], Value] with FilterableView[Repr] 
@@ -25,10 +25,10 @@ trait UniqueBranchAccessLike[+A, +Repr]
 	// COMPUTED	--------------------
 	
 	/**
-	  * Id of the project this branch / version is part of. 
+	  * Id of the deployment configuration which this branch versions. 
 	  * None if no branch (or value) was found.
 	  */
-	def projectId(implicit connection: Connection) = pullColumn(model.projectId.column).int
+	def deploymentConfigId(implicit connection: Connection) = pullColumn(model.deploymentConfigId.column).int
 	
 	/**
 	  * Name of this branch. 

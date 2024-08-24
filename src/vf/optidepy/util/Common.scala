@@ -5,6 +5,7 @@ import utopia.flow.async.context.ThreadPool
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.json.JsonParser
 import utopia.flow.util.logging.{Logger, SysErrLogger}
+import utopia.vault.database.ConnectionPool
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
@@ -19,6 +20,8 @@ object Common
 	implicit val log: Logger = SysErrLogger
 	implicit val exc: ExecutionContext = new ThreadPool("Optidepy")
 	implicit val jsonParser: JsonParser = JsonBunny
+	
+	implicit val cPool: ConnectionPool = new ConnectionPool()
 	
 	val dataDirectory: Path = "data"
 }

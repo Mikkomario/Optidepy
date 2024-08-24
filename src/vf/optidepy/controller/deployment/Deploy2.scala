@@ -14,7 +14,7 @@ import utopia.flow.util.{ProgressTracker, TryCatch}
 import utopia.flow.view.immutable.caching.Lazy
 import utopia.flow.view.mutable.async.Volatile
 import vf.optidepy.controller.IndexCounter
-import vf.optidepy.model.combined.deployment.{DetailedProjectDeploymentConfig, PossiblyDeployedBranch}
+import vf.optidepy.model.combined.deployment.{ProjectDeploymentConfigWithBindings, PossiblyDeployedBranch}
 import vf.optidepy.model.partial.deployment.DeploymentData
 import vf.optidepy.model.template.deployment.HasBindingProps
 
@@ -58,7 +58,7 @@ object Deploy2
 	 * @param log Logging implementation for non-critical failures
 	 * @return Success or failure. Success contains the new deployment, if one was made.
 	 */
-	def apply(config: DetailedProjectDeploymentConfig, branch: PossiblyDeployedBranch,
+	def apply(config: ProjectDeploymentConfigWithBindings, branch: PossiblyDeployedBranch,
 	          includeChangesAfter: Option[Instant] = None,
 	          skipSeparateBuildDirectory: Boolean = false, skipFileRemoval: Boolean = false,
 	          fullRebuild: Boolean = false)
@@ -215,7 +215,7 @@ object Deploy2
 		}
 	}
 	
-	private def checkForRemovedFiles(project: DetailedProjectDeploymentConfig, branchName: String,
+	private def checkForRemovedFiles(project: ProjectDeploymentConfigWithBindings, branchName: String,
 	                                 buildDirectory: => Option[Path], deploymentIndex: => Int)
 	                                (implicit exc: ExecutionContext) =
 	{

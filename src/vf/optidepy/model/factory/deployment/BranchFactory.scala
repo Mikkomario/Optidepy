@@ -6,7 +6,7 @@ import java.time.Instant
   * Common trait for branch-related factories which allow construction with individual properties
   * @tparam A Type of constructed instances
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 23.08.2024, v1.2
   */
 trait BranchFactory[+A]
 {
@@ -17,6 +17,12 @@ trait BranchFactory[+A]
 	  * @return Copy of this item with the specified created
 	  */
 	def withCreated(created: Instant): A
+	
+	/**
+	  * @param deploymentConfigId New deployment config id to assign
+	  * @return Copy of this item with the specified deployment config id
+	  */
+	def withDeploymentConfigId(deploymentConfigId: Int): A
 	
 	/**
 	  * @param deprecatedAfter New deprecated after to assign
@@ -35,11 +41,5 @@ trait BranchFactory[+A]
 	  * @return Copy of this item with the specified name
 	  */
 	def withName(name: String): A
-	
-	/**
-	  * @param projectId New project id to assign
-	  * @return Copy of this item with the specified project id
-	  */
-	def withProjectId(projectId: Int): A
 }
 

@@ -14,7 +14,7 @@ import java.time.Instant
   * @tparam A Type of read (branches -like) instances
   * @tparam Repr Type of this access point
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 23.08.2024, v1.2
   */
 trait ManyBranchesAccessLike[+A, +Repr] 
 	extends ManyModelAccess[A] with Indexed with NullDeprecatableView[Repr]
@@ -22,9 +22,10 @@ trait ManyBranchesAccessLike[+A, +Repr]
 	// COMPUTED	--------------------
 	
 	/**
-	  * project ids of the accessible branches
+	  * deployment config ids of the accessible branches
 	  */
-	def projectIds(implicit connection: Connection) = pullColumn(model.projectId.column).map { v => v.getInt }
+	def deploymentConfigIds(implicit connection: Connection) = 
+		pullColumn(model.deploymentConfigId.column).map { v => v.getInt }
 	
 	/**
 	  * names of the accessible branches
@@ -71,17 +72,19 @@ trait ManyBranchesAccessLike[+A, +Repr]
 		putColumn(model.deprecatedAfter.column, newDeprecatedAfter)
 	
 	/**
-	  * @param projectId project id to target
-	  * @return Copy of this access point that only includes branches with the specified project id
+	  * @param deploymentConfigId deployment config id to target
+	  * @return Copy of this access point that only includes branches with the specified deployment config id
 	  */
-	def ofProject(projectId: Int) = filter(model.projectId.column <=> projectId)
+	def ofDeploymentConfig(deploymentConfigId: Int) = 
+		filter(model.deploymentConfigId.column <=> deploymentConfigId)
 	
 	/**
-	  * @param projectIds Targeted project ids
-	  * @return Copy of this access point that only includes branches where project id is within the specified
-	  *  value set
+	  * @param deploymentConfigIds Targeted deployment config ids
+	  * @return Copy of this access point that only includes branches where deployment config id is within the
+	  *  specified value set
 	  */
-	def ofProjects(projectIds: Iterable[Int]) = filter(model.projectId.column.in(projectIds))
+	def ofDeploymentConfigs(deploymentConfigIds: Iterable[Int]) = 
+		filter(model.deploymentConfigId.column.in(deploymentConfigIds))
 	
 	/**
 	  * @param areDefaults Targeted are defaults

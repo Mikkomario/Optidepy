@@ -35,10 +35,11 @@ object DbDeploymentConfigs
 	 * @param connection Implicit DB connection
 	 * @return Stored configurations
 	 */
-	def insert(projectId: Int, configs: Seq[NewDeploymentConfig])(implicit connection: Connection) = {
+	def insert(projectId: Int, configs: Seq[(NewDeploymentConfig, Option[Int])])(implicit connection: Connection) = {
 		// Inserts the configurations, so that they can be referenced
-		val storedConfigs = model.insertFrom(configs) { _.toDeploymentConfigData(projectId) } {
-			(inserted, data) => inserted -> data.bindings }
+		val storedConfigs = model
+			.insertFrom(configs) { case (config, moduleId) => config.toDeploymentConfigData(projectId, moduleId) } {
+				case (inserted, (data, _)) => inserted -> data.bindings }
 		// Next inserts the bindings
 		val storedBindingsPerConfig = bindingModel
 			.insert(storedConfigs.flatMap { case (config, bindings) => bindings.map { _.toBindingData(config.id) } })

@@ -9,7 +9,7 @@ import java.time.Instant
   * @tparam A Type of constructed instances
   * @tparam Repr Implementing type of this factory
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 23.08.2024, v1.2
   */
 trait BranchFactoryWrapper[A <: BranchFactory[A], +Repr] extends BranchFactory[Repr]
 {
@@ -32,14 +32,15 @@ trait BranchFactoryWrapper[A <: BranchFactory[A], +Repr] extends BranchFactory[R
 	
 	override def withCreated(created: Instant) = mapWrapped { _.withCreated(created) }
 	
+	override def withDeploymentConfigId(deploymentConfigId: Int) = 
+		mapWrapped { _.withDeploymentConfigId(deploymentConfigId) }
+	
 	override def withDeprecatedAfter(deprecatedAfter: Instant) = 
 		mapWrapped { _.withDeprecatedAfter(deprecatedAfter) }
 	
 	override def withIsDefault(isDefault: Boolean) = mapWrapped { _.withIsDefault(isDefault) }
 	
 	override def withName(name: String) = mapWrapped { _.withName(name) }
-	
-	override def withProjectId(projectId: Int) = mapWrapped { _.withProjectId(projectId) }
 	
 	
 	// OTHER	--------------------

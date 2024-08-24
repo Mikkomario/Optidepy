@@ -40,7 +40,7 @@ trait UniqueDependencyAccessLike[+A, +Repr]
 	
 	/**
 	  * Path to the directory where library jars will be placed. 
-	  * Relative to the project's root root directory. 
+	  * Relative to the project's root directrory.
 	  * None if no dependency (or value) was found.
 	  */
 	def relativeLibDirectory(implicit connection: Connection) = 

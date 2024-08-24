@@ -33,13 +33,13 @@ object ModuleReleaseData extends FromModelFactoryWithSchema[ModuleReleaseData]
   * @param moduleId Id of the released module
   * @param version Released version
   * @param jarName Name of the generated jar file.
-  * @param docId Id of the documentation of this release. None if there is no documentation specific to
-  *  this version.
+  * @param docId Id of the documentation of this release.
+ *              None if there is no documentation specific to this version.
   * @author Mikko Hilpinen
   * @since 09.08.2024, v1.2
   */
-case class ModuleReleaseData(moduleId: Int, version: Version = Version(1), jarName: String = "", 
-	docId: Option[Int] = None) 
+case class ModuleReleaseData(moduleId: Int, version: Version = Version(1), jarName: String = "",
+                             docId: Option[Int] = None)
 	extends ModuleReleaseFactory[ModuleReleaseData] with ModelConvertible
 {
 	// IMPLEMENTED	--------------------

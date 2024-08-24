@@ -1,5 +1,6 @@
 package vf.optidepy.model.combined.deployment
 
+import utopia.flow.parse.file.FileExtensions._
 import vf.optidepy.model.stored.deployment.DeploymentConfig
 import vf.optidepy.model.stored.project.Project
 
@@ -42,6 +43,14 @@ trait ProjectDeploymentConfig extends CombinedDeploymentConfig[ProjectDeployment
 	 * @return Deployed project
 	 */
 	def project: Project
+	
+	
+	// COMPUTED ------------------------
+	
+	/**
+	 * Directory that hosts all the input files. All input bindings are relative to this path by default.
+	 */
+	def inputDirectory = project.rootPath/config.relativeInputDirectory
 	
 	
 	// IMPLEMENTED	--------------------

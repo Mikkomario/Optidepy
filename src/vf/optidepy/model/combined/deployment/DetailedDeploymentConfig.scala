@@ -2,55 +2,17 @@ package vf.optidepy.model.combined.deployment
 
 import vf.optidepy.model.stored.deployment.{Binding, DeploymentConfig}
 
-object DetailedDeploymentConfig
-{
-	// OTHER	--------------------
-	
-	/**
-	  * @param config config to wrap
-	  * @param binding binding to attach to this config
-	  * @return Combination of the specified config and binding
-	  */
-	def apply(config: DeploymentConfig, binding: Seq[Binding]): DetailedDeploymentConfig = 
-		_DetailedDeploymentConfig(config, binding)
-	
-	
-	// NESTED	--------------------
-	
-	/**
-	  * @param config config to wrap
-	  * @param binding binding to attach to this config
-	  */
-	private case class _DetailedDeploymentConfig(config: DeploymentConfig, binding: Seq[Binding]) 
-		extends DetailedDeploymentConfig
-	{
-		// IMPLEMENTED	--------------------
-		
-		override protected def wrap(factory: DeploymentConfig) = copy(config = factory)
-	}
-}
-
 /**
-  * Includes individual deployment bindings with the general configuration
-  * @author Mikko Hilpinen
-  * @since 10.08.2024, v1.2
-  */
-trait DetailedDeploymentConfig extends CombinedDeploymentConfig[DetailedDeploymentConfig]
+ * Attaches binding, as well as branch information to a deployment configuration
+ * @param config The wrapped configuration
+ * @param bindings Bindings that specify how individual files or directories are deployed
+ * @param branches Branches used in this configuration, each connected to their latest deployment, if applicable
+ * @author Mikko Hilpinen
+ * @since 23.08.2024, v1.2
+ */
+case class DetailedDeploymentConfig(config: DeploymentConfig, bindings: Seq[Binding],
+                                    branches: Seq[PossiblyDeployedBranch])
+	extends DeploymentConfigWithBindings with CombinedDeploymentConfig[DetailedDeploymentConfig]
 {
-	// ABSTRACT	--------------------
-	
-	/**
-	 * @return The wrapped deployment config
-	 */
-	def config: DeploymentConfig
-	/**
-	  * Binding that are attached to this config
-	  */
-	def binding: Seq[Binding]
-	
-	
-	// IMPLEMENTED	--------------------
-	
-	override def deploymentConfig = config
+	override protected def wrap(factory: DeploymentConfig): DetailedDeploymentConfig = copy(config = factory)
 }
-

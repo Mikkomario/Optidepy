@@ -26,9 +26,10 @@ case class NewDeploymentConfig(name: String, outputDirectory: Path, relativeInpu
 	 * Converts this to deployment configuration data.
 	 * NB: The bindings are not included.
 	 * @param projectId Id of the project to assign this deployment to.
+	 * @param moduleId Id of the module to link to this configuration (optional)
 	 * @return Deployment config data based on this data.
 	 */
-	def toDeploymentConfigData(projectId: Int) = DeploymentConfigData(projectId, outputDirectory,
-		relativeInputDirectory, name, usesBuildDirectories = usesBuildDirectories,
-		fileDeletionEnabled = fileDeletionEnabled)
+	def toDeploymentConfigData(projectId: Int, moduleId: Option[Int] = None) = DeploymentConfigData(
+		projectId, outputDirectory, relativeInputDirectory, name, moduleId,
+		usesBuildDirectories = usesBuildDirectories, fileDeletionEnabled = fileDeletionEnabled)
 }

@@ -11,7 +11,7 @@ import vf.optidepy.model.stored.deployment.Branch
 /**
   * Used for reading branch data from the DB
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 23.08.2024, v1.2
   */
 object BranchDbFactory extends FromValidatedRowModelFactory[Branch] with Deprecatable
 {
@@ -32,7 +32,7 @@ object BranchDbFactory extends FromValidatedRowModelFactory[Branch] with Depreca
 	override def table = model.table
 	
 	override protected def fromValidatedModel(valid: Model) = 
-		Branch(valid(this.model.id.name).getInt, BranchData(valid(this.model.projectId.name).getInt, 
+		Branch(valid(this.model.id.name).getInt, BranchData(valid(this.model.deploymentConfigId.name).getInt, 
 			valid(this.model.name.name).getString, valid(this.model.created.name).getInstant, 
 			valid(this.model.deprecatedAfter.name).instant, valid(this.model.isDefault.name).getBoolean))
 }

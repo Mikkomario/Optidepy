@@ -12,10 +12,13 @@ import vf.optidepy.controller.dependency.IdeaFiles
 import vf.optidepy.database.access.many.deployment.config.DbDeploymentConfigs
 import vf.optidepy.database.access.many.project.DbProjectsWithModules
 import vf.optidepy.database.access.single.project.DbProject
+import vf.optidepy.database.storable.dependency.DependencyDbModel
 import vf.optidepy.database.storable.library.VersionedModuleDbModel
 import vf.optidepy.database.storable.project.ProjectDbModel
 import vf.optidepy.model.cached.deployment.{CachedBinding, NewDeploymentConfig}
 import vf.optidepy.model.cached.library.NewModule
+import vf.optidepy.model.combined.project.DetailedProject
+import vf.optidepy.model.partial.dependency.DependencyData
 import vf.optidepy.model.partial.project.ProjectData
 
 import java.nio.file.Path
@@ -38,7 +41,13 @@ object ProjectActions
 	
 	// OTHER    -------------------------
 	
-	// TODO: Refactor to use the new models
+	/**
+	 * Sets up a new project
+	 * @param rootDirectory Directory that contains all project files
+	 * @param log Implicit logging implementation
+	 * @param connection Implicit DB connection
+	 * @return Created project. None if the project-creation was canceled at some point.
+	 */
 	def setup(rootDirectory: Path)(implicit log: Logger, connection: Connection) = {
 		// Identifies project name
 		val defaultProjectName = rootDirectory.fileName
@@ -49,9 +58,29 @@ object ProjectActions
 		// Checks whether the project exists already
 		if (DbProject.withName(projectName).nonEmpty)
 			setupModules(rootDirectory) { modules =>
+				// The second parameter here is the index of the connected versioned module, if applicable
 				val deploymentConfig = {
-					if (StdIn.ask("Do you want to specify deployment settings for this project?", default = true))
+					if (StdIn.ask("Do you want to specify deployment settings for this project?", default = true)) {
 						Some(setupDeploymentConfig(rootDirectory, projectName)).filter { _.bindings.nonEmpty }
+							// Connects this deployment to a module, if desirable and possible
+							.map { deployment =>
+								val connectedModuleIndex = modules.emptyOneOrMany match {
+									case None => None
+									case Some(Left(onlyModule)) =>
+										if (StdIn.ask(s"Do you want to tie this deployment to versioned module ${
+											onlyModule.name }? This enables versioned deployments.", default = true))
+											Some(0)
+										else
+											None
+									case Some(Right(modules)) =>
+										println("If you want, you can connect this deployment to one of the versioned project modules. This enables versioned deployments.")
+										StdIn.selectFrom(
+											modules.zipWithIndex.map { case (m, index) => index -> m.name },
+											"modules", "connect to")
+								}
+								deployment -> connectedModuleIndex
+							}
+					}
 					else
 						None
 				}
@@ -68,13 +97,19 @@ object ProjectActions
 					val project = ProjectDbModel
 						.insert(ProjectData(projectName, rootDirectory, ideaPath.map { _.ideaDirectory }))
 					val storedModules = VersionedModuleDbModel.insert(modules.map { _.toModuleUnder(project.id) })
-					// TODO: Continue
-					val storedDeploymentConfig = ??? // DbDeploymentConfigs.insert(project.id, Single(deploymentConfig))
+					val storedDeploymentConfig = deploymentConfig match {
+						case Some(config) => DbDeploymentConfigs.insert(project.id, Single(config))
+						case None => Empty
+					}
+					val storedDependencies = DependencyDbModel.insert(
+						dependencies.map { case (dependency, relativeLibPath) =>
+							DependencyData(project.id, dependency.id, relativeLibPath)
+						})
 					
-					
-					???
+					// Combines and returns the project data
+					Some(DetailedProject(project, storedModules, storedDeploymentConfig, storedDependencies))
 				}
-			}
+			}.flatten
 		else {
 			println(s"Project with name \"$projectName\" already exists. Cancels project creation.")
 			None
@@ -134,6 +169,14 @@ object ProjectActions
 		NewDeploymentConfig(name, output, relativeInput, bindings, usesBuildDirectories, fileRemovalEnabled)
 	}
 	
+	/**
+	 * Interactively sets up project's dependencies to versioned modules from other projects
+	 * @param rootDirectory Project root directory
+	 * @param connection Implicit DB connection.
+	 * @return Created dependencies where each entry contains 2 values:
+	 *              1. The module this project depends on
+	 *              1. Relative path to the directory where the module jars will be placed
+	 */
 	private def setupDependencies(rootDirectory: Path)(implicit connection: Connection) = {
 		// Scans for projects with versioned modules
 		val projects = DbProjectsWithModules.havingModules.pull
