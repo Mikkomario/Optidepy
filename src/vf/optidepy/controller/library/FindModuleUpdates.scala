@@ -1,12 +1,11 @@
 package vf.optidepy.controller.library
 
 import utopia.flow.collection.CollectionExtensions._
-import utopia.flow.collection.immutable.Empty
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.{IterateLines, Regex}
 import utopia.flow.time.Today
 import utopia.flow.util.StringExtensions._
-import utopia.flow.util.Version
+import utopia.flow.util.{TryCatch, Version}
 import utopia.vault.database.Connection
 import vf.optidepy.database.access.many.library.module.DbVersionedModules
 import vf.optidepy.database.access.many.library.module.release.DbModuleReleases
@@ -29,15 +28,26 @@ object FindModuleUpdates
 	
 	// OTHER    ---------------------------
 	
-	def apply(project: Project)(implicit connection: Connection) = {
+	/**
+	 * Finds the current update state of all modules within the targeted project
+	 * @param project Targeted project
+	 * @param connection Implicit DB connection
+	 * @return Module update states of each of that project's modules.
+	 *         Contains failures where file system couldn't be accessed
+	 *         or where there was no suitable documentation found.
+	 */
+	def apply(project: Project)(implicit connection: Connection): TryCatch[Vector[ModuleUpdateState]] = {
 		// Finds the modules which belong to this project
 		val modules = DbVersionedModules.inProject(project.id).pull
 		// Finds the latest release for each of these modules
-		val projectModules = modules.map { module =>
-			// TODO: Continue implementation
-			???
-			// DbModuleReleases.ofModule(module.id).latest
-		}
+		val latestReleasePerModule = DbModuleReleases.ofModules(modules.map { _.id }).toMapBy { _.moduleId }
+		
+		// Finds the actual updates
+		modules
+			.map { module =>
+				apply(PossiblyReleasedProjectModule(module, project, latestReleasePerModule.get(module.id)))
+			}
+			.toTryCatch
 	}
 	
 	/**

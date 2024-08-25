@@ -21,7 +21,7 @@ object Deployment extends StoredFromModelFactory[DeploymentData, Deployment]
   * @param id id of this deployment in the database
   * @param data Wrapped deployment data
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 24.08.2024, v1.2
   */
 case class Deployment(id: Int, data: DeploymentData) 
 	extends StoredModelConvertible[DeploymentData] with FromIdFactory[Int, Deployment] 

@@ -135,7 +135,7 @@ object Deploy2
 							if (skipFileRemoval || lastDeploymentTime.isEmpty || !config.fileDeletionEnabled)
 								Success(Some(deployment))
 							else
-								checkForRemovedFiles(config, branch.name, buildDirectory, deployment.index)
+								checkForRemovedFiles(config, branch.name, buildDirectory, deployment.deploymentIndex)
 									.logToTry.map { _ => Some(deployment) }
 						}
 				}

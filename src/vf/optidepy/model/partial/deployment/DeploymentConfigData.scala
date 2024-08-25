@@ -114,6 +114,6 @@ case class DeploymentConfigData(projectId: Int, outputDirectory: Path, relativeI
 	 * @return A directory where that deployment should be stored
 	 */
 	def directoryForDeployment(branch: String, deployment: DeploymentData) =
-		outputDirectory/s"$branch-build-${ deployment.index }-${deployment.created.toLocalDate.toString}"
+		outputDirectory/s"$branch-build-${ deployment.deploymentIndex }-${deployment.created.toLocalDate.toString}"
 }
 

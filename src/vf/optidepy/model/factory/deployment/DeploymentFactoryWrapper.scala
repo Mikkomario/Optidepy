@@ -9,7 +9,7 @@ import java.time.Instant
   * @tparam A Type of constructed instances
   * @tparam Repr Implementing type of this factory
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 24.08.2024, v1.2
   */
 trait DeploymentFactoryWrapper[A <: DeploymentFactory[A], +Repr] extends DeploymentFactory[Repr]
 {
@@ -34,7 +34,10 @@ trait DeploymentFactoryWrapper[A <: DeploymentFactory[A], +Repr] extends Deploym
 	
 	override def withCreated(created: Instant) = mapWrapped { _.withCreated(created) }
 	
-	override def withIndex(index: Int) = mapWrapped { _.withIndex(index) }
+	override def withDeploymentIndex(deploymentIndex: Int) =
+		 mapWrapped { _.withDeploymentIndex(deploymentIndex) }
+	
+	override def withLatestUntil(latestUntil: Instant) = mapWrapped { _.withLatestUntil(latestUntil) }
 	
 	override def withVersion(version: Version) = mapWrapped { _.withVersion(version) }
 	

@@ -72,12 +72,14 @@ object DeploymentActions
 				val bindingsPerConfig = DbBindings.inConfigs(targetedBranches.map { _.config.id }).pull
 					.groupBy { _.configId }.withDefaultValue(Empty)
 				
+				// Loads latest deployment data
+				val latestDeploymentPerBranch = DbDeployments.ofBranches(targetedBranches.map { _.id })
+					.toMapBy { _.branchId }
+				
 				// Deploys the targeted branches
 				targetedBranches.foreach { branch =>
-					// TODO: Refactor this retrieval once the models contain "latestUntil"
-					val lastDeployment = DbDeployments.ofBranch(branch.id).latest.pull
 					_deploy(branch.config.withBindings(bindingsPerConfig(branch.deploymentConfigId)),
-						branch.branch.withDeployment(lastDeployment), since, fullRebuild)
+						branch.branch.withDeployment(latestDeploymentPerBranch.get(branch.id)), since, fullRebuild)
 				}
 			}
 		}
@@ -88,10 +90,8 @@ object DeploymentActions
 	                   (implicit connection: Connection, exc: ExecutionContext, log: Logger): Unit =
 	{
 		// Determines the next deployment index
-		implicit val counter: IndexCounter = new IndexCounter(DbDeployments.ofBranch(branch.id).latest
-			.deploymentIndex match
-		{
-			case Some(lastIndex) => lastIndex + 1
+		implicit val counter: IndexCounter = new IndexCounter(branch.deployment match {
+			case Some(deployment) => deployment.deploymentIndex + 1
 			case None => 1
 		})
 		
@@ -105,7 +105,7 @@ object DeploymentActions
 						println("Deployment complete!")
 						
 						// Stores the deployment into the DB
-						// TODO: Include version information, if present
+						branch.deployment.foreach { _.access.deprecate() }
 						DeploymentDbModel.insert(deployment)
 						
 						// May open the deployment directory afterwards

@@ -40,12 +40,12 @@ object Merge2
 		else
 			(targets.only match {
 				// Case: Only one target => Simply renames the directory
-				case Some((dep, dir)) => dir.rename(s"${branch.name}-merge-${ dep.index }-$Today")
+				case Some((dep, dir)) => dir.rename(s"${branch.name}-merge-${ dep.deploymentIndex }-$Today")
 				// Case: Multiple targets => Merges
 				case None =>
 					// Creates the target directory
-					(config.outputDirectory/s"${branch.name}-merge-${ targets.last._1.index }-to-${
-						targets.head._1.index }-$Today")
+					(config.outputDirectory/s"${branch.name}-merge-${ targets.last._1.deploymentIndex }-to-${
+						targets.head._1.deploymentIndex }-$Today")
 						.asExistingDirectory
 						.flatMap { targetDirectory =>
 							// Moves the latest copy of each file to the merge directory
