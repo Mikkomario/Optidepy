@@ -43,23 +43,19 @@ trait ManyModuleReleasesAccess
 	  * module ids of the accessible module releases
 	  */
 	def moduleIds(implicit connection: Connection) = pullColumn(model.moduleId.column).map { v => v.getInt }
-	
 	/**
 	  * versions of the accessible module releases
 	  */
 	def versions(implicit connection: Connection) = 
 		pullColumn(model.version.column).flatMap { _.string }.map { v => Version(v) }
-	
 	/**
 	  * jar names of the accessible module releases
 	  */
 	def jarNames(implicit connection: Connection) = pullColumn(model.jarName.column).flatMap { _.string }
-	
 	/**
 	  * doc ids of the accessible module releases
 	  */
 	def docIds(implicit connection: Connection) = pullColumn(model.docId.column).flatMap { v => v.int }
-	
 	/**
 	  * Unique ids of the accessible module releases
 	  */
@@ -74,7 +70,6 @@ trait ManyModuleReleasesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ModuleReleaseDbFactory
-	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyModuleReleasesAccess = ManyModuleReleasesAccess(condition)
@@ -94,7 +89,6 @@ trait ManyModuleReleasesAccess
 	  * @return Copy of this access point that only includes module releases with the specified module id
 	  */
 	def ofModule(moduleId: Int) = filter(model.moduleId.column <=> moduleId)
-	
 	/**
 	  * @param moduleIds Targeted module ids
 	  * @return Copy of this access point that only includes module releases where module id is within the

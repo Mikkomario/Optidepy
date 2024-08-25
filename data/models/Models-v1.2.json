@@ -225,15 +225,20 @@
             "doc": "Ordered index of this deployment. Relative to other deployments targeting the same branch."
           },
           {
-            "type": "creation",
-            "doc": "Time when this deployment was made"
-          },
-          {
             "name": "version",
             "type": "Option[Version]",
             "doc": "Deployed project version. None if versioning is not being used.",
             "index": true,
             "with": "ofVersion"
+          },
+          {
+            "type": "creation",
+            "doc": "Time when this deployment was made"
+          },
+          {
+            "name": "latestUntil",
+            "type": "deprecation",
+            "doc": "Timestamp after which this was no longer the latest deployment. None while this is the latest deployment."
           }
         ]
       }
@@ -258,6 +263,13 @@
             "parent_alias": "module",
             "child_alias": "release",
             "doc": "Includes a single release's information in a module"
+          },
+          {
+            "name": "PossiblyReleasedModule",
+            "child": "ModuleRelease",
+            "parent_alias": "module",
+            "child_alias": "release",
+            "doc": "Attaches a release to a module, but only if available."
           }
         ],
         "combo_prop": ["projectId", "name"],
@@ -269,9 +281,9 @@
           },
           {
             "name": "name",
-            "type": "NonEmptyString(12-255)",
+            "type": "String(12-255)",
             "index": true,
-            "doc": "Name of this module",
+            "doc": "Name of this module. May be empty (if this is the only module in this project)",
             "with": "withName"
           },
           {
@@ -465,6 +477,15 @@
             "type": "Option[Int]",
             "doc": "Id of the documentation of this release. None if there is no documentation specific to this version.",
             "with": "withDocumentation"
+          },
+          {
+            "type": "creation",
+            "doc": "Timestamp of this release"
+          },
+          {
+            "name": "latestUntil",
+            "type": "deprecation",
+            "doc": "Timestamp after which this was no longer the latest release. None while this is the latest release."
           }
         ]
       }

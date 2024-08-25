@@ -74,6 +74,7 @@ object DeploymentActions
 				
 				// Deploys the targeted branches
 				targetedBranches.foreach { branch =>
+					// TODO: Refactor this retrieval once the models contain "latestUntil"
 					val lastDeployment = DbDeployments.ofBranch(branch.id).latest.pull
 					_deploy(branch.config.withBindings(bindingsPerConfig(branch.deploymentConfigId)),
 						branch.branch.withDeployment(lastDeployment), since, fullRebuild)
@@ -104,6 +105,7 @@ object DeploymentActions
 						println("Deployment complete!")
 						
 						// Stores the deployment into the DB
+						// TODO: Include version information, if present
 						DeploymentDbModel.insert(deployment)
 						
 						// May open the deployment directory afterwards

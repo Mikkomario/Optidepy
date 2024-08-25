@@ -1,35 +1,76 @@
 package vf.optidepy.model.combined.library
 
-import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
-import vf.optidepy.model.factory.library.VersionedModuleFactoryWrapper
-import vf.optidepy.model.partial.library.VersionedModuleData
+import utopia.flow.parse.file.FileExtensions._
 import vf.optidepy.model.stored.library.VersionedModule
 import vf.optidepy.model.stored.project.Project
+
+object VersionedProjectModule
+{
+	// OTHER	--------------------
+	
+	/**
+	  * @param module module to wrap
+	  * @param project project to attach to this module
+	  * @return Combination of the specified module and project
+	  */
+	def apply(module: VersionedModule, project: Project): VersionedProjectModule = 
+		_VersionedProjectModule(module, project)
+	
+	
+	// NESTED	--------------------
+	
+	/**
+	  * @param module module to wrap
+	  * @param project project to attach to this module
+	  */
+	private case class _VersionedProjectModule(module: VersionedModule, project: Project) 
+		extends VersionedProjectModule
+	{
+		// IMPLEMENTED	--------------------
+		
+		override protected def wrap(factory: VersionedModule) = copy(module = factory)
+	}
+}
 
 /**
   * Combines project and module information
   * @author Mikko Hilpinen
-  * @since 09.08.2024, v1.2
+  * @since 24.08.2024, v1.2
   */
-case class VersionedProjectModule(module: VersionedModule, project: Project) 
-	extends Extender[VersionedModuleData] with HasId[Int] 
-		with VersionedModuleFactoryWrapper[VersionedModule, VersionedProjectModule]
+trait VersionedProjectModule extends CombinedVersionedModule[VersionedProjectModule]
 {
-	// COMPUTED	--------------------
+	// ABSTRACT	--------------------
 	
 	/**
-	  * Id of this module in the database
+	  * Wrapped versioned module
 	  */
-	def id = module.id
+	def module: VersionedModule
+	/**
+	  * The project that is attached to this module
+	  */
+	def project: Project
+	
+	
+	// COMPUTED ------------------------
+	
+	/**
+	 * @return Path to the version / change documentation for this module
+	 */
+	def changeListPath = project.rootPath/module.relativeChangeListPath
+	/**
+	 * @return Path to the directory where this module's jar files are placed
+	 */
+	def artifactDirectory = project.rootPath/module.relativeArtifactDirectory
 	
 	
 	// IMPLEMENTED	--------------------
 	
-	override def wrapped = module.data
+	override def versionedModule = module
 	
-	override protected def wrappedFactory = module
-	
-	override protected def wrap(factory: VersionedModule) = copy(module = factory)
+	override def toString = {
+		if (module.name.isEmpty || module.name == project.name)
+			project.name
+		else
+			s"${ project.name }/${ module.name }"
+	}
 }
-

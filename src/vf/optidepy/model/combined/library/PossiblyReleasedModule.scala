@@ -2,7 +2,7 @@ package vf.optidepy.model.combined.library
 
 import vf.optidepy.model.stored.library.{ModuleRelease, VersionedModule}
 
-object ReleasedModule
+object PossiblyReleasedModule
 {
 	// OTHER	--------------------
 	
@@ -11,8 +11,8 @@ object ReleasedModule
 	  * @param release release to attach to this module
 	  * @return Combination of the specified module and release
 	  */
-	def apply(module: VersionedModule, release: ModuleRelease): ReleasedModule = _ReleasedModule(module, 
-		release)
+	def apply(module: VersionedModule, release: Option[ModuleRelease]): PossiblyReleasedModule = 
+		_PossiblyReleasedModule(module, release)
 	
 	
 	// NESTED	--------------------
@@ -21,7 +21,8 @@ object ReleasedModule
 	  * @param module module to wrap
 	  * @param release release to attach to this module
 	  */
-	private case class _ReleasedModule(module: VersionedModule, release: ModuleRelease) extends ReleasedModule
+	private case class _PossiblyReleasedModule(module: VersionedModule, release: Option[ModuleRelease]) 
+		extends PossiblyReleasedModule
 	{
 		// IMPLEMENTED	--------------------
 		
@@ -30,11 +31,11 @@ object ReleasedModule
 }
 
 /**
-  * Includes a single release's information in a module
+  * Attaches a release to a module, but only if available.
   * @author Mikko Hilpinen
   * @since 24.08.2024, v1.2
   */
-trait ReleasedModule extends CombinedVersionedModule[ReleasedModule]
+trait PossiblyReleasedModule extends CombinedVersionedModule[PossiblyReleasedModule]
 {
 	// ABSTRACT	--------------------
 	
@@ -42,13 +43,15 @@ trait ReleasedModule extends CombinedVersionedModule[ReleasedModule]
 	  * Wrapped versioned module
 	  */
 	def module: VersionedModule
+	
 	/**
 	  * The release that is attached to this module
 	  */
-	def release: ModuleRelease
+	def release: Option[ModuleRelease]
 	
 	
 	// IMPLEMENTED	--------------------
 	
 	override def versionedModule = module
 }
+
