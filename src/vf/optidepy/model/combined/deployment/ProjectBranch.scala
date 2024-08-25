@@ -1,28 +1,22 @@
 package vf.optidepy.model.combined.deployment
 
 import vf.optidepy.model.stored.deployment.Branch
-import vf.optidepy.model.stored.project.Project
 
-@deprecated("Deprecated for removal", "v1.2")
 object ProjectBranch
 {
 	// OTHER	--------------------
 	
 	/**
 	  * @param branch branch to wrap
-	  * @param project project to attach to this branch
+	  * @param config The deployment configuration where this branch is used
 	  * @return Combination of the specified branch and project
 	  */
-	def apply(branch: Branch, project: Project): ProjectBranch = _ProjectBranch(branch, project)
+	def apply(branch: Branch, config: ProjectDeploymentConfig): ProjectBranch = _ProjectBranch(branch, config)
 	
 	
 	// NESTED	--------------------
 	
-	/**
-	  * @param branch branch to wrap
-	  * @param project project to attach to this branch
-	  */
-	private case class _ProjectBranch(branch: Branch, project: Project) extends ProjectBranch
+	private case class _ProjectBranch(branch: Branch, config: ProjectDeploymentConfig) extends ProjectBranch
 	{
 		// IMPLEMENTED	--------------------
 		
@@ -35,14 +29,26 @@ object ProjectBranch
   * @author Mikko Hilpinen
   * @since 10.08.2024, v1.2
   */
-@deprecated("Deprecated for removal", "v1.2")
 trait ProjectBranch extends CombinedBranch[ProjectBranch]
 {
 	// ABSTRACT	--------------------
 	
 	/**
-	  * The project that is attached to this branch
+	  * The configuration where this branch is used
 	  */
-	def project: Project
+	def config: ProjectDeploymentConfig
+	
+	
+	// COMPUTED --------------------
+	
+	/**
+	 * @return Project where this branch is used
+	 */
+	def project = config.project
+	
+	
+	// IMPLEMENTED  ----------------
+	
+	override def toString = s"$config/${ branch.name }"
 }
 

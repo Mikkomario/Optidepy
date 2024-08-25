@@ -47,23 +47,20 @@ trait ManyProjectBranchesAccess
 	  */
 	def projectNames(implicit connection: Connection) = pullColumn(projectModel.name.column)
 		.flatMap { _.string }
-	
 	/**
 	  * root paths of the accessible projects
 	  */
-	def projectRootPaths(implicit connection: Connection) = 
+	def projectRootPaths(implicit connection: Connection) =
 		pullColumn(projectModel.rootPath.column).flatMap { _.string }.map { v => v: Path }
-	
 	/**
 	  * creation times of the accessible projects
 	  */
-	def projectCreationTimes(implicit connection: Connection) = 
+	def projectCreationTimes(implicit connection: Connection) =
 		pullColumn(projectModel.created.column).map { v => v.getInstant }
-	
 	/**
 	  * deprecation times of the accessible projects
 	  */
-	def projectDeprecationTimes(implicit connection: Connection) = 
+	def projectDeprecationTimes(implicit connection: Connection) =
 		pullColumn(projectModel.deprecatedAfter.column).flatMap { v => v.instant }
 	
 	/**
@@ -75,7 +72,6 @@ trait ManyProjectBranchesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectBranchDbFactory
-	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyProjectBranchesAccess = ManyProjectBranchesAccess(condition)

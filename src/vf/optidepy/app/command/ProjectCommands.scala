@@ -11,7 +11,6 @@ import vf.optidepy.util.Common._
 import java.nio.file.Paths
 import scala.annotation.unused
 import scala.io.StdIn
-import scala.language.implicitConversions
 
 /**
  * An interface for accessing interactive project-related commands
@@ -19,7 +18,7 @@ import scala.language.implicitConversions
  * @author Mikko Hilpinen
  * @since 23.08.2024, v1.2
  */
-object ProjectCommands
+object ProjectCommands extends Commands
 {
 	// ATTRIBUTES   ----------------------------------
 	
@@ -46,10 +45,5 @@ object ProjectCommands
 	/**
 	 * Commands made available through this interface
 	 */
-	val commands = Single(setupProjectCommand)
-	
-	
-	// IMPLICIT --------------------------------------
-	
-	implicit def autoAccessCommands(@unused o: ProjectCommands.type): Seq[Command] = commands
+	override val commands = Single(setupProjectCommand)
 }

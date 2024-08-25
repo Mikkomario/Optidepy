@@ -17,29 +17,33 @@ trait BranchFactory[+A]
 	  * @return Copy of this item with the specified created
 	  */
 	def withCreated(created: Instant): A
-	
 	/**
 	  * @param deploymentConfigId New deployment config id to assign
 	  * @return Copy of this item with the specified deployment config id
 	  */
 	def withDeploymentConfigId(deploymentConfigId: Int): A
-	
 	/**
 	  * @param deprecatedAfter New deprecated after to assign
 	  * @return Copy of this item with the specified deprecated after
 	  */
 	def withDeprecatedAfter(deprecatedAfter: Instant): A
-	
 	/**
 	  * @param isDefault New is default to assign
 	  * @return Copy of this item with the specified is default
 	  */
 	def withIsDefault(isDefault: Boolean): A
-	
 	/**
 	  * @param name New name to assign
 	  * @return Copy of this item with the specified name
 	  */
 	def withName(name: String): A
+	
+	
+	// COMPUTED -----------------------
+	
+	/**
+	 * @return Copy of this branch marked as a default branch
+	 */
+	def asDefault = withIsDefault(true)
 }
 

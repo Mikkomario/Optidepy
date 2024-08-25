@@ -43,8 +43,8 @@ object BranchData extends FromModelFactoryWithSchema[BranchData]
   * @author Mikko Hilpinen
   * @since 23.08.2024, v1.2
   */
-case class BranchData(deploymentConfigId: Int, name: String, created: Instant = Now, 
-	deprecatedAfter: Option[Instant] = None, isDefault: Boolean = false) 
+case class BranchData(deploymentConfigId: Int, name: String = "", created: Instant = Now,
+                      deprecatedAfter: Option[Instant] = None, isDefault: Boolean = false)
 	extends BranchFactory[BranchData] with ModelConvertible
 {
 	// COMPUTED	--------------------
@@ -53,11 +53,15 @@ case class BranchData(deploymentConfigId: Int, name: String, created: Instant = 
 	  * Whether this branch has already been deprecated
 	  */
 	def isDeprecated = deprecatedAfter.isDefined
-	
 	/**
 	  * Whether this branch is still valid (not deprecated)
 	  */
 	def isValid = !isDeprecated
+	
+	/**
+	 * @return Whether this is not a default branch
+	 */
+	def nonDefault = !isDefault
 	
 	
 	// IMPLEMENTED	--------------------

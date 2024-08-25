@@ -47,19 +47,16 @@ trait ManyProjectDeploymentConfigsAccess
 	  */
 	def projectNames(implicit connection: Connection) = pullColumn(projectModel.name.column)
 		.flatMap { _.string }
-	
 	/**
 	  * root paths of the accessible projects
 	  */
 	def projectRootPaths(implicit connection: Connection) = 
 		pullColumn(projectModel.rootPath.column).flatMap { _.string }.map { v => v: Path }
-	
 	/**
 	  * creation times of the accessible projects
 	  */
 	def projectCreationTimes(implicit connection: Connection) = 
 		pullColumn(projectModel.created.column).map { v => v.getInstant }
-	
 	/**
 	  * deprecation times of the accessible projects
 	  */
@@ -75,7 +72,6 @@ trait ManyProjectDeploymentConfigsAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectDeploymentConfigDbFactory
-	
 	override protected def self = this
 	
 	override def apply(condition: Condition): ManyProjectDeploymentConfigsAccess = 
@@ -83,6 +79,21 @@ trait ManyProjectDeploymentConfigsAccess
 	
 	
 	// OTHER	--------------------
+	
+	/**
+	 * @param generalName General name part, which may represent project or deployment config name
+	 * @param specificName Specific name part,
+	 *                     targeting a specific deployment config within a generally targeted project (optional)
+	 * @return Access to configurations matching the specified name or names
+	 */
+	def matching(generalName: String, specificName: String = "") = {
+		// Case: Only general name specified => May match to project and/or config name
+		if (specificName.isEmpty)
+			filter(model.name <=> generalName || projectModel.name <=> generalName)
+		// Case: Both general and specific name specified => Expects to match project and config name
+		else
+			filter(projectModel.name <=> generalName && model.name <=> specificName)
+	}
 	
 	/**
 	  * Updates the deprecation times of the targeted projects

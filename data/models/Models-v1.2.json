@@ -93,7 +93,8 @@
           {
             "name": "name",
             "type": "String(16-255)",
-            "doc": "Name of this deployment configuration. May be empty."
+            "doc": "Name of this deployment configuration. May be empty.",
+            "with": "withName"
           },
           {
             "name": "moduleId",
@@ -184,8 +185,8 @@
           },
           {
             "name": "name",
-            "type": "NonEmptyString(8-128)",
-            "doc": "Name of this branch",
+            "type": "String(8-128)",
+            "doc": "Name of this branch. Empty if this branch has no name (which indicates that no branching is used).",
             "with": "withName"
           },
           {
@@ -202,7 +203,8 @@
             "name_plural": "areDefaults",
             "type": "Boolean",
             "doc": "Whether this is the default branch of the associated project",
-            "index": true
+            "index": true,
+            "mutable": true
           }
         ]
       },

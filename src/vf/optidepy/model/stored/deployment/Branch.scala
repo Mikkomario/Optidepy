@@ -3,6 +3,7 @@ package vf.optidepy.model.stored.deployment
 import utopia.flow.generic.model.template.ModelLike.AnyModel
 import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.deployment.branch.DbSingleBranch
+import vf.optidepy.model.combined.deployment.{PossiblyDeployedBranch, ProjectBranch, ProjectDeploymentConfig}
 import vf.optidepy.model.factory.deployment.BranchFactoryWrapper
 import vf.optidepy.model.partial.deployment.BranchData
 
@@ -42,5 +43,22 @@ case class Branch(id: Int, data: BranchData)
 	override def withId(id: Int) = copy(id = id)
 	
 	override protected def wrap(data: BranchData) = copy(data = data)
+	
+	
+	// OTHER    ------------------------
+	
+	/**
+	 * @param config Configuration attached to this branch
+	 * @return Copy of this branch with the specified configuration attached
+	 */
+	def inConfig(config: ProjectDeploymentConfig) = ProjectBranch(this, config)
+	
+	// OTHER    --------------------
+	
+	/**
+	 * @param deployment Deployment to include with this branch's information, if applicable.
+	 * @return Copy of this branch with the specified deployment included.
+	 */
+	def withDeployment(deployment: Option[Deployment]) = PossiblyDeployedBranch(this, deployment)
 }
 

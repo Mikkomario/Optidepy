@@ -1,7 +1,7 @@
 package vf.optidepy.app
 
 import utopia.flow.util.console.Console
-import vf.optidepy.app.command.ProjectCommands
+import vf.optidepy.app.command.{DeploymentCommands, ProjectCommands}
 import vf.optidepy.util.Common._
 
 /**
@@ -14,7 +14,7 @@ object OptidepyApp2
 {
 	// ATTRIBUTES   ------------------------------
 	
-	private val console = Console.static(ProjectCommands, "\nNext command", "exit")
+	private val console = Console.static(ProjectCommands ++ DeploymentCommands, "\nNext command", "exit")
 	
 	
 	// APP CODE ----------------------------------

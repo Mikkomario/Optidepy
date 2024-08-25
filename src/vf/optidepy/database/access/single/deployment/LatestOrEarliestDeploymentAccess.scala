@@ -1,6 +1,7 @@
 package vf.optidepy.database.access.single.deployment
 
 import utopia.vault.nosql.access.single.model.distinct.LatestOrEarliestModelAccess
+import utopia.vault.nosql.view.FilterableView
 import utopia.vault.sql.{Condition, OrderDirection}
 import vf.optidepy.model.stored.deployment.Deployment
 
@@ -30,4 +31,6 @@ object LatestOrEarliestDeploymentAccess
  * @author Mikko Hilpinen
  * @since 23.08.2024, v1.2
  */
-trait LatestOrEarliestDeploymentAccess extends UniqueDeploymentAccess with LatestOrEarliestModelAccess[Deployment]
+trait LatestOrEarliestDeploymentAccess
+	extends UniqueDeploymentAccess with LatestOrEarliestModelAccess[Deployment]
+		with FilterableView[UniqueDeploymentAccess]
