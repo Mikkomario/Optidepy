@@ -11,6 +11,8 @@ import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.util.logging.Logger
 import utopia.flow.util.{ProgressTracker, TryCatch}
+import utopia.flow.util.TryExtensions._
+import utopia.flow.util.EitherExtensions._
 import utopia.flow.view.immutable.caching.Lazy
 import utopia.flow.view.mutable.async.Volatile
 import vf.optidepy.controller.IndexCounter
@@ -106,7 +108,7 @@ object Deploy2
 					val targetFileCount = altered.size
 					println(s"Copying $targetFileCount files to ${outputDirectories.mkString(" and ")}...")
 					val actionQueue = new ActionQueue(maxParallelThreads)
-					val progressTracker = ProgressTracker.wrap(Volatile(0)) { _.toDouble / targetFileCount }
+					val progressTracker = ProgressTracker.wrap(Volatile.eventful(0)) { _.toDouble / targetFileCount }
 					progressTracker.addListener(ProgressListener.usingThreshold[Int](0.1) { e =>
 						println(s"${ e.value }/$targetFileCount files copied (${ (e.currentProgress * 100).toInt }%) - ${
 							e.projectedRemainingDuration.description } remaining")

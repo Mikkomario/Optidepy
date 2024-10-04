@@ -6,8 +6,8 @@ import utopia.flow.generic.factory.FromModelFactoryWithSchema
 import utopia.flow.generic.model.immutable.{Model, ModelDeclaration}
 import utopia.flow.generic.model.mutable.DataType.StringType
 import utopia.flow.generic.model.template.ModelConvertible
-import utopia.flow.operator.Identity
 import utopia.flow.parse.file.FileExtensions._
+import utopia.flow.util.TryExtensions._
 import vf.optidepy.model.dependency.ModuleDependency
 import vf.optidepy.model.deployment.ProjectDeployments
 import vf.optidepy.model.library.VersionedModuleWithReleases

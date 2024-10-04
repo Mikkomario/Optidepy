@@ -6,6 +6,8 @@ import utopia.flow.parse.string.{IterateLines, Regex}
 import utopia.flow.time.Today
 import utopia.flow.util.StringExtensions._
 import utopia.flow.util.{TryCatch, Version}
+import utopia.flow.util.TryExtensions._
+import utopia.flow.util.EitherExtensions._
 import utopia.vault.database.Connection
 import vf.optidepy.database.access.many.library.module.DbVersionedModules
 import vf.optidepy.database.access.many.library.module.release.DbModuleReleases

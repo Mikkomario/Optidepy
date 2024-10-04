@@ -2,9 +2,10 @@ package vf.optidepy.app.action
 
 import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.{Empty, Single}
-import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.operator.equality.EqualsExtensions._
 import utopia.flow.operator.equality.EqualsFunction
+import utopia.flow.parse.file.FileExtensions._
+import utopia.flow.util.EitherExtensions._
 import utopia.flow.util.StringExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger

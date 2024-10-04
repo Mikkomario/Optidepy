@@ -5,6 +5,7 @@ import utopia.flow.collection.immutable.{Empty, Pair, Single}
 import utopia.flow.collection.mutable.iterator.OptionsIterator
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
+import utopia.flow.util.TryExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
 import utopia.flow.util.logging.Logger
 import utopia.vault.database.Connection
@@ -34,7 +35,7 @@ object ProjectActions
 {
 	// ATTRIBUTES   ---------------------
 	
-	private val changeListDocumentNameRegex = Regex.any + (Regex("c") || Regex("C")).withinParenthesis +
+	private val changeListDocumentNameRegex = Regex.any + (Regex("c") || Regex("C")).withinParentheses +
 		Regex("hange") + Regex.any + Regex.escape('.') + Regex("md")
 	private val nameSplitterRegex = Regex.escape('-') || Regex.escape('_')
 	
@@ -120,7 +121,7 @@ object ProjectActions
 	// Returns None if canceled and Some with return value of 'f' if continued.
 	private def setupModules[A](rootDirectory: Path)(f: IndexedSeq[NewModule] => A)(implicit log: Logger) = {
 		// Looks for versioned modules
-		val (partialModules, modules) = findModules(rootDirectory).logToOption.getOrElse(Empty -> Empty)
+		val (partialModules, modules) = findModules(rootDirectory).log.getOrElse(Empty -> Empty)
 		// Prints the results
 		if (modules.isEmpty) {
 			if (partialModules.isEmpty)

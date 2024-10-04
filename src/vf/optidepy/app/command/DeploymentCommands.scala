@@ -1,10 +1,10 @@
 package vf.optidepy.app.command
 
-import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Single
 import utopia.flow.time.TimeExtensions._
-import utopia.flow.util.console.{ArgumentSchema, Command}
+import utopia.flow.util.TryExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
+import utopia.flow.util.console.{ArgumentSchema, Command}
 import vf.optidepy.app.action.DeploymentActions
 import vf.optidepy.util.Common._
 
@@ -35,7 +35,7 @@ object DeploymentCommands extends Commands
 			cPool.tryWith { implicit c =>
 				DeploymentActions.deploy(args("target").getString, args("branch").getString, since,
 					args("rebuild").getBoolean)
-			}.logFailure
+			}.log
 	}
 	
 	override val commands: Seq[Command] = Single(deployCommand)

@@ -1,8 +1,8 @@
 package vf.optidepy.controller.dependency
 
-import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.IterateLines
+import utopia.flow.util.TryExtensions._
 import utopia.flow.util.logging.Logger
 
 import java.nio.file.Path
@@ -53,10 +53,10 @@ object IdeaFiles
 			libraries
 				.iterateChildren { iter =>
 					iter.find { libraryFile =>
-						IterateLines.fromPath(libraryFile) { _.exists { _.contains(jarFileName) } }.getOrElseLog(false)
+						IterateLines.fromPath(libraryFile) { _.exists { _.contains(jarFileName) } }.log.getOrElse(false)
 					}
 				}
-				.getOrElseLog(None)
+				.log.flatten
 		
 		/* NB: Also needs to update META-INF/MANIFEST.MF
 		def updateArtifactJarReferences(previousJarName: String, newJarName: String,

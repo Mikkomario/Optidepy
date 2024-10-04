@@ -6,7 +6,9 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.Regex
 import utopia.flow.util.StringExtensions._
+import utopia.flow.util.TryExtensions._
 import utopia.flow.util.console.ConsoleExtensions._
+import utopia.flow.util.logging.Logger
 import utopia.flow.view.mutable.Pointer
 import utopia.flow.view.mutable.async.Volatile
 
@@ -42,7 +44,7 @@ object Standardize
 	 * @param root The directory within which renaming is performed
 	 * @param exc Implicit execution context
 	 */
-	def fileNamesUnder(root: Path)(implicit exc: ExecutionContext) = {
+	def fileNamesUnder(root: Path)(implicit exc: ExecutionContext, log: Logger) = {
 		val failuresBuilder = new VectorBuilder[(Path, Throwable, String)]()
 		val recursiveChoicesPointer = Volatile(Set[(Path, Boolean)]())
 		// Processes file names recursively

@@ -1,15 +1,14 @@
 package vf.optidepy.app.command
 
-import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.collection.immutable.Single
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.file.FileUtils
+import utopia.flow.util.TryExtensions._
 import utopia.flow.util.console.{ArgumentSchema, Command}
 import vf.optidepy.app.action.ProjectActions
 import vf.optidepy.util.Common._
 
 import java.nio.file.Paths
-import scala.annotation.unused
 import scala.io.StdIn
 
 /**
@@ -38,7 +37,7 @@ object ProjectCommands extends Commands
 						case Some(project) => println(s"Successfully set up ${ project.name }")
 						case None => println("Project creation canceled")
 					}
-				}.logFailure
+				}.log
 			}
 	}
 	

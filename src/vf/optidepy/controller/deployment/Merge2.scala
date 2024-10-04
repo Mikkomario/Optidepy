@@ -4,6 +4,8 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import utopia.flow.time.Today
+import utopia.flow.util.EitherExtensions._
+import utopia.flow.util.TryExtensions._
 import vf.optidepy.model.combined.deployment.BranchWithDeployments
 import vf.optidepy.model.partial.deployment.DeploymentConfigData
 
