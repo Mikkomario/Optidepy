@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
 import utopia.vault.sql.OrderBy
 import vf.optidepy.database.storable.library.DocLineLinkDbModel
 import vf.optidepy.model.partial.library.DocLineLinkData
@@ -31,7 +31,7 @@ object DocLineLinkDbFactory extends PlacedLinkDbFactoryLike[DocLineLink]
 	  * @param childId child id to assign to the new placed link
 	  * @param orderIndex order index to assign to the new placed link
 	  */
-	override protected def apply(model: AnyModel, id: Int, parentId: Int, childId: Int, orderIndex: Int) = 
+	override protected def apply(model: HasProperties, id: Int, parentId: Int, childId: Int, orderIndex: Int) =
 		DocLineLink(id, DocLineLinkData(parentId, childId, orderIndex))
 }
 

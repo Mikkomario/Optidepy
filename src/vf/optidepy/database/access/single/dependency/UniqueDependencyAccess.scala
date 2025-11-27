@@ -35,7 +35,7 @@ trait UniqueDependencyAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = DependencyDbFactory
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueDependencyAccess = UniqueDependencyAccess(condition)
 }

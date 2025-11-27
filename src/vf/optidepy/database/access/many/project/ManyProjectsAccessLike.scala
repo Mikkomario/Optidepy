@@ -60,7 +60,7 @@ trait ManyProjectsAccessLike[+A, +Repr]
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = ProjectDbModel
+	def model = ProjectDbModel
 	
 	
 	// OTHER	--------------------

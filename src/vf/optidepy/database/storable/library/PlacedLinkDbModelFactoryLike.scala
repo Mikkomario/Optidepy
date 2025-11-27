@@ -1,7 +1,7 @@
 package vf.optidepy.database.storable.library
 
 import utopia.vault.model.immutable.Storable
-import utopia.vault.model.template.FromIdFactory
+import utopia.vault.store.FromIdFactory
 import utopia.vault.nosql.storable.StorableFactory
 import vf.optidepy.model.factory.library.PlacedLinkFactory
 

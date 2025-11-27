@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.library.doc.text.DbSingleDocText
 import vf.optidepy.model.factory.library.DocTextFactoryWrapper
 import vf.optidepy.model.partial.library.DocTextData
@@ -12,7 +12,7 @@ object DocText extends StoredFromModelFactory[DocTextData, DocText]
 	
 	override def dataFactory = DocTextData
 	
-	override protected def complete(model: AnyModel, data: DocTextData) = 
+	override protected def complete(model: HasProperties, data: DocTextData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

@@ -4,10 +4,10 @@ import utopia.flow.collection.CollectionExtensions._
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.parse.string.{IterateLines, Regex}
 import utopia.flow.time.Today
-import utopia.flow.util.StringExtensions._
-import utopia.flow.util.{TryCatch, Version}
-import utopia.flow.util.TryExtensions._
 import utopia.flow.util.EitherExtensions._
+import utopia.flow.util.StringExtensions._
+import utopia.flow.util.TryExtensions._
+import utopia.flow.util.{TryCatch, Version}
 import utopia.vault.database.Connection
 import vf.optidepy.database.access.many.library.module.DbVersionedModules
 import vf.optidepy.database.access.many.library.module.release.DbModuleReleases
@@ -38,7 +38,7 @@ object FindModuleUpdates
 	 *         Contains failures where file system couldn't be accessed
 	 *         or where there was no suitable documentation found.
 	 */
-	def apply(project: Project)(implicit connection: Connection): TryCatch[Vector[ModuleUpdateState]] = {
+	def apply(project: Project)(implicit connection: Connection): TryCatch[Seq[ModuleUpdateState]] = {
 		// Finds the modules which belong to this project
 		val modules = DbVersionedModules.inProject(project.id).pull
 		// Finds the latest release for each of these modules

@@ -72,7 +72,7 @@ trait ManyProjectBranchesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectBranchDbFactory
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyProjectBranchesAccess = ManyProjectBranchesAccess(condition)
 	

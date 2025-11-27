@@ -64,14 +64,14 @@ trait ManyDependencyUpdatesAccess
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DependencyUpdateDbModel
+	def model = DependencyUpdateDbModel
 	
 	
 	// IMPLEMENTED	--------------------
 	
 	override def factory = DependencyUpdateDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override
 		 def apply(condition: Condition): ManyDependencyUpdatesAccess = ManyDependencyUpdatesAccess(condition)

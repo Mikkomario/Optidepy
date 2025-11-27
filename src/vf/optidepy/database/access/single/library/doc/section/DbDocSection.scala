@@ -20,7 +20,7 @@ object DbDocSection extends SingleRowModelAccess[DocSection] with UnconditionalV
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DocSectionDbModel
+	def model = DocSectionDbModel
 	
 	
 	// IMPLEMENTED	--------------------

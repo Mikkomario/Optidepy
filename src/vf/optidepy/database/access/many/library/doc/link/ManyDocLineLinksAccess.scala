@@ -49,12 +49,12 @@ trait ManyDocLineLinksAccess
 	
 	// IMPLEMENTED	--------------------
 	
-	override protected def self = this
+	override def self = this
 	override def factory = DocLineLinkDbFactory
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	override protected def model = DocLineLinkDbModel
+	override def model = DocLineLinkDbModel
 	
 	override def apply(condition: Condition): ManyDocLineLinksAccess = ManyDocLineLinksAccess(condition)
 	

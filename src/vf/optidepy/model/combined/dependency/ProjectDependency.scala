@@ -1,7 +1,7 @@
 package vf.optidepy.model.combined.dependency
 
 import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
+import utopia.vault.store.HasId
 import vf.optidepy.model.factory.dependency.DependencyFactoryWrapper
 import vf.optidepy.model.partial.dependency.DependencyData
 import vf.optidepy.model.stored.dependency.Dependency

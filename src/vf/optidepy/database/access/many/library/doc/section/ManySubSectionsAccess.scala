@@ -63,7 +63,7 @@ trait ManySubSectionsAccess
 	
 	override def factory = SubSectionDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManySubSectionsAccess = ManySubSectionsAccess(condition)
 }

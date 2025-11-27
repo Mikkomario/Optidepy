@@ -37,12 +37,12 @@ trait ManySubSectionLinksAccess
 {
 	// IMPLEMENTED	--------------------
 	
-	override protected def self = this
+	override def self = this
 	override def factory = SubSectionLinkDbFactory
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	override protected def model = SubSectionLinkDbModel
+	override def model = SubSectionLinkDbModel
 	
 	override def apply(condition: Condition): ManySubSectionLinksAccess = ManySubSectionLinksAccess(condition)
 	

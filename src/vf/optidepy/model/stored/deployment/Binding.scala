@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.deployment
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.deployment.binding.DbSingleBinding
 import vf.optidepy.model.factory.deployment.BindingFactoryWrapper
 import vf.optidepy.model.partial.deployment.BindingData
@@ -15,7 +15,7 @@ object Binding extends StoredFromModelFactory[BindingData, Binding]
 	
 	override def dataFactory = BindingData
 	
-	override protected def complete(model: AnyModel, data: BindingData) = 
+	override protected def complete(model: HasProperties, data: BindingData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

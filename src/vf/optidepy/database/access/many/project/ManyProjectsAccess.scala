@@ -35,7 +35,7 @@ trait ManyProjectsAccess
 	
 	override def factory = ProjectDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyProjectsAccess = ManyProjectsAccess(condition)
 }

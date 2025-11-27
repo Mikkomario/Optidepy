@@ -22,7 +22,7 @@ object DbDeploymentConfigWithBindings
 	/**
 	  * A database model (factory) used for interacting with linked configs
 	  */
-	protected def model = DeploymentConfigDbModel
+	def model = DeploymentConfigDbModel
 	/**
 	  * A database model (factory) used for interacting with the linked binding
 	  */

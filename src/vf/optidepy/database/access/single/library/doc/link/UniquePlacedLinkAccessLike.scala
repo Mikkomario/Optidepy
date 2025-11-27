@@ -24,7 +24,7 @@ trait UniquePlacedLinkAccessLike[+A, +Repr]
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model: PlacedLinkDbProps
+	def model: PlacedLinkDbProps
 	
 	
 	// COMPUTED	--------------------

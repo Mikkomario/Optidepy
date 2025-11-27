@@ -3,7 +3,8 @@ package vf.optidepy.model.library
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.{Constant, Model}
-import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.generic.model.template.{ModelConvertible, Property}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
 import utopia.flow.view.template.Extender
 
 import scala.util.Try
@@ -11,7 +12,7 @@ import scala.util.Try
 @deprecated("Will be replaced with the new models", "v1.2")
 object VersionedModuleWithReleases extends FromModelFactory[VersionedModuleWithReleases]
 {
-	override def apply(model: ModelLike[Property]): Try[VersionedModuleWithReleases] =
+	override def apply(model: HasProperties): Try[VersionedModuleWithReleases] =
 		VersionedModule(model).flatMap { module =>
 			model("releases").tryVectorWith { v => ModuleRelease(v.getModel) }.map { apply(module, _) }
 		}

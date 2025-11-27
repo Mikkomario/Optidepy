@@ -1,6 +1,6 @@
 package vf.optidepy.database.factory.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
 import utopia.vault.model.immutable.Table
 import utopia.vault.sql.OrderBy
 import vf.optidepy.database.props.library.PlacedLinkDbProps
@@ -39,7 +39,7 @@ object PlacedLinkDbFactory
 		  * @param childId child id to assign to the new placed link
 		  * @param orderIndex order index to assign to the new placed link
 		  */
-		override protected def apply(model: AnyModel, id: Int, parentId: Int, childId: Int, 
+		override protected def apply(model: HasProperties, id: Int, parentId: Int, childId: Int,
 			orderIndex: Int) = 
 			PlacedLink(id, PlacedLinkData(parentId, childId, orderIndex))
 	}

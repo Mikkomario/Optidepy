@@ -73,7 +73,7 @@ trait ManyReleasedModulesAccess
 	
 	override def factory = ReleasedModuleDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyReleasedModulesAccess = ManyReleasedModulesAccess(condition)
 	

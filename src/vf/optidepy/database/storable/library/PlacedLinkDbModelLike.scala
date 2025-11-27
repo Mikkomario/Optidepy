@@ -2,7 +2,7 @@ package vf.optidepy.database.storable.library
 
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.vault.model.immutable.Storable
-import utopia.vault.model.template.{FromIdFactory, HasId}
+import utopia.vault.store.{FromIdFactory, HasId}
 import vf.optidepy.database.props.library.PlacedLinkDbProps
 import vf.optidepy.model.factory.library.PlacedLinkFactory
 

@@ -64,13 +64,13 @@ trait ManyModuleReleasesAccess
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = ModuleReleaseDbModel
+	def model = ModuleReleaseDbModel
 	
 	
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ModuleReleaseDbFactory
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyModuleReleasesAccess = ManyModuleReleasesAccess(condition)
 	

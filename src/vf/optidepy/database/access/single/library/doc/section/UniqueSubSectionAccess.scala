@@ -65,7 +65,7 @@ trait UniqueSubSectionAccess
 	
 	override def factory = SubSectionDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueSubSectionAccess = UniqueSubSectionAccess(condition)
 }

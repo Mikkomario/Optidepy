@@ -4,7 +4,8 @@ import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.model.immutable.Value
 import utopia.flow.util.Version
 import utopia.vault.model.immutable.{DbPropertyDeclaration, Storable}
-import utopia.vault.model.template.{FromIdFactory, HasId, HasIdProperty}
+import utopia.vault.model.template.HasIdProperty
+import utopia.vault.store.{FromIdFactory, HasId}
 import utopia.vault.nosql.storable.StorableFactory
 import utopia.vault.nosql.storable.deprecation.NullDeprecatable
 import vf.optidepy.database.OptidepyTables

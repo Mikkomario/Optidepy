@@ -37,7 +37,7 @@ trait ManyDocSectionsAccessLike[+A, +Repr] extends ManyModelAccess[A] with Index
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DocSectionDbModel
+	def model = DocSectionDbModel
 	
 	
 	// OTHER	--------------------

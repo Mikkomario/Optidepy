@@ -79,7 +79,7 @@ trait UniqueProjectDeploymentConfigAccess
 	
 	override def factory = ProjectDeploymentConfigDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueProjectDeploymentConfigAccess = 
 		UniqueProjectDeploymentConfigAccess(condition)

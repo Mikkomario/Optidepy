@@ -3,7 +3,8 @@ package vf.optidepy.model.deployment
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.Model
-import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.generic.model.template.{ModelConvertible, Property}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
 import utopia.flow.parse.file.FileExtensions._
 import utopia.flow.time.TimeExtensions._
 import vf.optidepy.model.cached.deployment.CachedBinding
@@ -14,7 +15,7 @@ import scala.util.{Success, Try}
 @deprecated("Will be replaced with the new models", "v1.2")
 object ProjectDeploymentConfig extends FromModelFactory[ProjectDeploymentConfig]
 {
-	override def apply(model: ModelLike[Property]): Try[ProjectDeploymentConfig] = {
+	override def apply(model: HasProperties): Try[ProjectDeploymentConfig] = {
 		val inputOutput = model("output").string match {
 			case Some(out) => Success(model("input").string.map { Paths.get(_) } -> Paths.get(out))
 			case None => CachedBinding(model("root").getModel).map { b => Some(b.source) -> b.target }

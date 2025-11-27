@@ -75,7 +75,7 @@ trait UniquePossiblyReleasedModuleAccess
 	
 	override def factory = PossiblyReleasedModuleDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniquePossiblyReleasedModuleAccess = 
 		UniquePossiblyReleasedModuleAccess(condition)

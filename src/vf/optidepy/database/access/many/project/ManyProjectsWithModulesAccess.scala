@@ -80,7 +80,7 @@ trait ManyProjectsWithModulesAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectWithModulesDbFactory
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyProjectsWithModulesAccess = 
 		ManyProjectsWithModulesAccess(condition)

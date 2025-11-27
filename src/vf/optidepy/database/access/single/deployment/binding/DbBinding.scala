@@ -20,7 +20,7 @@ object DbBinding extends SingleRowModelAccess[Binding] with UnconditionalView wi
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = BindingDbModel
+	def model = BindingDbModel
 	
 	
 	// IMPLEMENTED	--------------------

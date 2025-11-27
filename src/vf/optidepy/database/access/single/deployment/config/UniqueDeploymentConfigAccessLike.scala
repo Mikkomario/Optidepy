@@ -93,7 +93,7 @@ trait UniqueDeploymentConfigAccessLike[+A, +Repr]
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DeploymentConfigDbModel
+	def model = DeploymentConfigDbModel
 	
 	
 	// OTHER	--------------------

@@ -44,7 +44,7 @@ trait ManyDocTextsAccessLike[+A, +Repr] extends ManyModelAccess[A] with Indexed 
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DocTextDbModel
+	def model = DocTextDbModel
 	
 	
 	// OTHER	--------------------

@@ -72,7 +72,7 @@ trait ManyProjectDeploymentConfigsAccess
 	// IMPLEMENTED	--------------------
 	
 	override def factory = ProjectDeploymentConfigDbFactory
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyProjectDeploymentConfigsAccess = 
 		ManyProjectDeploymentConfigsAccess(condition)

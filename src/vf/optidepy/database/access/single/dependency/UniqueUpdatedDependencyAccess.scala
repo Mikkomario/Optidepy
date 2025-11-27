@@ -65,7 +65,7 @@ trait UniqueUpdatedDependencyAccess
 	
 	override def factory = UpdatedDependencyDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueUpdatedDependencyAccess = 
 		UniqueUpdatedDependencyAccess(condition)

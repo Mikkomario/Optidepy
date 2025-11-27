@@ -76,7 +76,7 @@ trait ManyProjectDependenciesAccess
 	
 	override def factory = ProjectDependencyDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyProjectDependenciesAccess = 
 		ManyProjectDependenciesAccess(condition)

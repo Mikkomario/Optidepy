@@ -78,7 +78,7 @@ trait UniqueProjectBranchAccess
 	
 	override def factory = ProjectBranchDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueProjectBranchAccess = UniqueProjectBranchAccess(condition)
 	

@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.StoredFromModelFactory
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.StoredFromModelFactory
 import vf.optidepy.database.access.single.library.doc.link.DbSingleDocLineLink
 import vf.optidepy.model.factory.library.DocLineLinkFactoryWrapper
 import vf.optidepy.model.partial.library.{DocLineLinkData, PlacedLinkData}
@@ -12,7 +12,7 @@ object DocLineLink extends StoredFromModelFactory[DocLineLinkData, DocLineLink]
 	
 	override def dataFactory = DocLineLinkData
 	
-	override protected def complete(model: AnyModel, data: DocLineLinkData) = 
+	override protected def complete(model: HasProperties, data: DocLineLinkData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

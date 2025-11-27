@@ -35,7 +35,7 @@ trait ManyBranchesAccess
 	
 	override def factory = BranchDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyBranchesAccess = ManyBranchesAccess(condition)
 }

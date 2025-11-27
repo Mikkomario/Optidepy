@@ -1,7 +1,7 @@
 package vf.optidepy.model.combined.deployment
 
 import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
+import utopia.vault.store.HasId
 import vf.optidepy.model.factory.deployment.BranchFactoryWrapper
 import vf.optidepy.model.partial.deployment.BranchData
 import vf.optidepy.model.stored.deployment.Branch

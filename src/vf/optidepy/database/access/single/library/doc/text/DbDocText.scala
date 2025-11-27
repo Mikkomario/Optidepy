@@ -20,7 +20,7 @@ object DbDocText extends SingleRowModelAccess[DocText] with UnconditionalView wi
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DocTextDbModel
+	def model = DocTextDbModel
 	
 	
 	// IMPLEMENTED	--------------------

@@ -281,7 +281,7 @@ object Deploy2
 	                              (implicit exc: ExecutionContext): Try[Unit] =
 	{
 		// Divides the directly accessible files into directories and regular files
-		targetDirectory.iterateChildren { _.divideBy { _.isRegularFile }.map { _.toVector } }
+		targetDirectory.iterateChildren { _.divideToSeqsBy { _.isRegularFile } }
 			.flatMap { case Pair(subDirectories, files) =>
 				// Checks whether the regular files appear under some of the mapped bindings
 				if (files.nonEmpty) {

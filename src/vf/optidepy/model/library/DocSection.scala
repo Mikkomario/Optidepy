@@ -5,7 +5,8 @@ import utopia.flow.collection.mutable.iterator.{OptionsIterator, PollingIterator
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.Model
-import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.generic.model.template.{ModelConvertible, Property}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
 import utopia.flow.operator.MaybeEmpty
 
 import scala.util.Try
@@ -23,7 +24,7 @@ object DocSection extends FromModelFactory[DocSection]
 	
 	// IMPLEMENTED  -----------------------
 	
-	override def apply(model: ModelLike[Property]): Try[DocSection] =
+	override def apply(model: HasProperties): Try[DocSection] =
 		model("subSections").getVector.tryMap { v => apply(v.getModel) }.map { subSections =>
 			apply(model("header").getString, model("lines").getVector.map { _.getString }, subSections)
 		}

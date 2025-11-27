@@ -1,7 +1,7 @@
 package vf.optidepy.model.combined.library
 
 import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
+import utopia.vault.store.HasId
 import vf.optidepy.model.factory.library.VersionedModuleFactoryWrapper
 import vf.optidepy.model.partial.library.VersionedModuleData
 import vf.optidepy.model.stored.library.VersionedModule

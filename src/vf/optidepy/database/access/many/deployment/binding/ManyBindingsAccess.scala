@@ -65,14 +65,14 @@ trait ManyBindingsAccess
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = BindingDbModel
+	def model = BindingDbModel
 	
 	
 	// IMPLEMENTED	--------------------
 	
 	override def factory = BindingDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyBindingsAccess = ManyBindingsAccess(condition)
 	

@@ -38,7 +38,7 @@ trait ManyVersionedModulesAccess
 	
 	override def factory = VersionedModuleDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override
 		 def apply(condition: Condition): ManyVersionedModulesAccess = ManyVersionedModulesAccess(condition)

@@ -81,7 +81,7 @@ trait UniqueDependencyAccessLike[+A, +Repr]
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model = DependencyDbModel
+	def model = DependencyDbModel
 	
 	
 	// OTHER	--------------------

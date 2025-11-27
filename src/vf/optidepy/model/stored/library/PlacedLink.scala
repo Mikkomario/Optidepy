@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.StoredFromModelFactory
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.StoredFromModelFactory
 import vf.optidepy.model.partial.library.PlacedLinkData
 
 object PlacedLink extends StoredFromModelFactory[PlacedLinkData, PlacedLink]
@@ -10,7 +10,7 @@ object PlacedLink extends StoredFromModelFactory[PlacedLinkData, PlacedLink]
 	
 	override def dataFactory = PlacedLinkData
 	
-	override protected def complete(model: AnyModel, data: PlacedLinkData) = 
+	override protected def complete(model: HasProperties, data: PlacedLinkData) =
 		model("id").tryInt.map { apply(_, data) }
 	
 	

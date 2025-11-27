@@ -35,7 +35,7 @@ trait ManyDocTextsAccess
 	
 	override def factory = DocTextDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyDocTextsAccess = ManyDocTextsAccess(condition)
 }

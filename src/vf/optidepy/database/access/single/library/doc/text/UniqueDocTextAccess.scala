@@ -35,7 +35,7 @@ trait UniqueDocTextAccess
 	
 	override def factory = DocTextDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueDocTextAccess = UniqueDocTextAccess(condition)
 }

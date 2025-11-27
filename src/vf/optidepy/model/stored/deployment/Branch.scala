@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.deployment
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.deployment.branch.DbSingleBranch
 import vf.optidepy.model.combined.deployment.{PossiblyDeployedBranch, ProjectBranch, ProjectDeploymentConfig}
 import vf.optidepy.model.factory.deployment.BranchFactoryWrapper
@@ -13,7 +13,7 @@ object Branch extends StoredFromModelFactory[BranchData, Branch]
 	
 	override def dataFactory = BranchData
 	
-	override protected def complete(model: AnyModel, data: BranchData) = model("id").tryInt.map { apply(_, 
+	override protected def complete(model: HasProperties, data: BranchData) = model("id").tryInt.map { apply(_,
 		data) }
 }
 

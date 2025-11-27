@@ -37,7 +37,7 @@ trait UniqueDocSectionAccess
 	
 	override def factory = DocSectionDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueDocSectionAccess = UniqueDocSectionAccess(condition)
 }

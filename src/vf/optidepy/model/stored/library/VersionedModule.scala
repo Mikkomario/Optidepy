@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.library.module.DbSingleVersionedModule
 import vf.optidepy.model.factory.library.VersionedModuleFactoryWrapper
 import vf.optidepy.model.partial.library.VersionedModuleData
@@ -12,7 +12,7 @@ object VersionedModule extends StoredFromModelFactory[VersionedModuleData, Versi
 	
 	override def dataFactory = VersionedModuleData
 	
-	override protected def complete(model: AnyModel, data: VersionedModuleData) = 
+	override protected def complete(model: HasProperties, data: VersionedModuleData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

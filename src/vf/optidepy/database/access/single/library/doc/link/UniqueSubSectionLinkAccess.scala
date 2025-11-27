@@ -39,9 +39,9 @@ trait UniqueSubSectionLinkAccess
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	override protected def model = SubSectionLinkDbModel
+	override def model = SubSectionLinkDbModel
 	
-	override protected def self = this
+	override def self = this
 	
 	override
 		 def apply(condition: Condition): UniqueSubSectionLinkAccess = UniqueSubSectionLinkAccess(condition)

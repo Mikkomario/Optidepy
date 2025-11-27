@@ -72,7 +72,7 @@ trait ManyDeployedBranchesAccess
 	
 	override def factory = DeployedBranchDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override
 		 def apply(condition: Condition): ManyDeployedBranchesAccess = ManyDeployedBranchesAccess(condition)

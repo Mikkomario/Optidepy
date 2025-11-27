@@ -65,7 +65,7 @@ trait ManyDocSectionWithHeadersAccess
 	
 	override def factory = DocSectionWithHeaderDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyDocSectionWithHeadersAccess = 
 		ManyDocSectionWithHeadersAccess(condition)

@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.project
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.project.DbSingleProject
 import vf.optidepy.model.factory.project.ProjectFactoryWrapper
 import vf.optidepy.model.partial.project.ProjectData
@@ -12,7 +12,7 @@ object Project extends StoredFromModelFactory[ProjectData, Project]
 	
 	override def dataFactory = ProjectData
 	
-	override protected def complete(model: AnyModel, data: ProjectData) = 
+	override protected def complete(model: HasProperties, data: ProjectData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

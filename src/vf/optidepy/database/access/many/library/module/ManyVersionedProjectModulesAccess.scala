@@ -76,7 +76,7 @@ trait ManyVersionedProjectModulesAccess
 	
 	override def factory = VersionedProjectModuleDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyVersionedProjectModulesAccess = 
 		ManyVersionedProjectModulesAccess(condition)

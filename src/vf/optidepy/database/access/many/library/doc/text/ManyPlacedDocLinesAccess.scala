@@ -65,7 +65,7 @@ trait ManyPlacedDocLinesAccess
 	
 	override def factory = PlacedDocLineDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyPlacedDocLinesAccess = ManyPlacedDocLinesAccess(condition)
 }

@@ -45,7 +45,7 @@ trait UniqueProjectWithModulesAccess
 	
 	override def factory = ProjectWithModulesDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueProjectWithModulesAccess = 
 		UniqueProjectWithModulesAccess(condition)

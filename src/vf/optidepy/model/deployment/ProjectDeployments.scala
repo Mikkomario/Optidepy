@@ -5,7 +5,8 @@ import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.factory.FromModelFactory
 import utopia.flow.generic.model.immutable.{Constant, Model, Value}
 import utopia.flow.generic.model.mutable.DataType.{ModelType, VectorType}
-import utopia.flow.generic.model.template.{ModelConvertible, ModelLike, Property}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.flow.generic.model.template.ModelConvertible
 import utopia.flow.util.Mutate
 import utopia.flow.util.StringExtensions._
 import utopia.flow.view.template.Extender
@@ -25,7 +26,7 @@ object ProjectDeployments extends FromModelFactory[ProjectDeployments]
 	
 	// IMPLEMENTED  --------------------
 	
-	override def apply(model: ModelLike[Property]): Try[ProjectDeployments] =
+	override def apply(model: HasProperties): Try[ProjectDeployments] =
 		// Parses the standard project data first
 		ProjectDeploymentConfig(model).map { project =>
 			// Next, parses deployment data
@@ -34,7 +35,7 @@ object ProjectDeployments extends FromModelFactory[ProjectDeployments]
 				case Left(modelValue) =>
 					modelValue.model match {
 						case Some(depModel) =>
-							depModel.propertyMap.view.mapValues { c => deploymentsFromValue(c.value) }.toMap
+							depModel.propertiesIterator.map { p => p.name -> deploymentsFromValue(p.value) }.toMap
 						case None => Map[String, Vector[Deployment]]()
 					}
 				// Case: Vector input type (backwards-compatibility) => Parses deployments for the default branch

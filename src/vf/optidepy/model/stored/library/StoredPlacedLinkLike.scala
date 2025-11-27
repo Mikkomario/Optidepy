@@ -1,6 +1,6 @@
 package vf.optidepy.model.stored.library
 
-import utopia.vault.model.template.{FromIdFactory, Stored}
+import utopia.vault.store.{FromIdFactory, Stored}
 import vf.optidepy.model.factory.library.PlacedLinkFactoryWrapper
 import vf.optidepy.model.partial.library.PlacedLinkDataLike
 

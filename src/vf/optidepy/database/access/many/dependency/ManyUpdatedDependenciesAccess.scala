@@ -65,7 +65,7 @@ trait ManyUpdatedDependenciesAccess
 	
 	override def factory = UpdatedDependencyDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): ManyUpdatedDependenciesAccess = 
 		ManyUpdatedDependenciesAccess(condition)

@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.dependency
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.{FromIdFactory, StoredFromModelFactory, StoredModelConvertible}
 import vf.optidepy.database.access.single.dependency.DbSingleDependency
 import vf.optidepy.model.factory.dependency.DependencyFactoryWrapper
 import vf.optidepy.model.partial.dependency.DependencyData
@@ -12,7 +12,7 @@ object Dependency extends StoredFromModelFactory[DependencyData, Dependency]
 	
 	override def dataFactory = DependencyData
 	
-	override protected def complete(model: AnyModel, data: DependencyData) = 
+	override protected def complete(model: HasProperties, data: DependencyData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

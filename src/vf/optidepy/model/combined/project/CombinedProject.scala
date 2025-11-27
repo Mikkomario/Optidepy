@@ -1,7 +1,7 @@
 package vf.optidepy.model.combined.project
 
 import utopia.flow.view.template.Extender
-import utopia.vault.model.template.HasId
+import utopia.vault.store.HasId
 import vf.optidepy.model.factory.project.ProjectFactoryWrapper
 import vf.optidepy.model.partial.project.ProjectData
 import vf.optidepy.model.stored.project.Project

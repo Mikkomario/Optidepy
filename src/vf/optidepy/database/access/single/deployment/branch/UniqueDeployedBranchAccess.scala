@@ -75,7 +75,7 @@ trait UniqueDeployedBranchAccess
 	
 	override def factory = DeployedBranchDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override
 		 def apply(condition: Condition): UniqueDeployedBranchAccess = UniqueDeployedBranchAccess(condition)

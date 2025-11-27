@@ -1,7 +1,7 @@
 package vf.optidepy.model.stored.library
 
-import utopia.flow.generic.model.template.ModelLike.AnyModel
-import utopia.vault.model.template.StoredFromModelFactory
+import utopia.flow.generic.model.template.HasPropertiesLike.HasProperties
+import utopia.vault.store.StoredFromModelFactory
 import vf.optidepy.database.access.single.library.doc.link.DbSingleSubSectionLink
 import vf.optidepy.model.factory.library.SubSectionLinkFactoryWrapper
 import vf.optidepy.model.partial.library.{PlacedLinkData, SubSectionLinkData}
@@ -12,7 +12,7 @@ object SubSectionLink extends StoredFromModelFactory[SubSectionLinkData, SubSect
 	
 	override def dataFactory = SubSectionLinkData
 	
-	override protected def complete(model: AnyModel, data: SubSectionLinkData) = 
+	override protected def complete(model: HasProperties, data: SubSectionLinkData) =
 		model("id").tryInt.map { apply(_, data) }
 }
 

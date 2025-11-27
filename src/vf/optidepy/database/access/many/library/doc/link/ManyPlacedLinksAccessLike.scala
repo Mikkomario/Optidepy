@@ -22,7 +22,7 @@ trait ManyPlacedLinksAccessLike[+A, +Repr] extends ManyModelAccess[A] with Index
 	/**
 	  * Model which contains the primary database properties interacted with in this access point
 	  */
-	protected def model: PlacedLinkDbProps
+	def model: PlacedLinkDbProps
 	
 	
 	// COMPUTED	--------------------

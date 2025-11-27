@@ -45,7 +45,7 @@ trait UniqueDeploymentConfigWithBindingsAccess
 	
 	override def factory = DeploymentConfigWithBindingsDbFactory
 	
-	override protected def self = this
+	override def self = this
 	
 	override def apply(condition: Condition): UniqueDeploymentConfigWithBindingsAccess =
 		UniqueDeploymentConfigWithBindingsAccess(condition)

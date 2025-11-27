@@ -138,7 +138,7 @@ object Standardize
 		}
 	}
 	
-	private def renameDirectoryContents(directory: Path, renames: Vector[(Path, String)],
+	private def renameDirectoryContents(directory: Path, renames: Seq[(Path, String)],
 	                                    failuresBuilder: mutable.Growable[(Path, Throwable, String)],
 	                                    recursiveChoicesPointer: Pointer[Set[(Path, Boolean)]]) =
 	{

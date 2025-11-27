@@ -3,7 +3,8 @@ package vf.optidepy.database.storable.dependency
 import utopia.flow.generic.casting.ValueConversions._
 import utopia.flow.generic.model.immutable.Value
 import utopia.vault.model.immutable.{DbPropertyDeclaration, Storable}
-import utopia.vault.model.template.{FromIdFactory, HasId, HasIdProperty}
+import utopia.vault.model.template.HasIdProperty
+import utopia.vault.store.{FromIdFactory, HasId}
 import utopia.vault.nosql.storable.StorableFactory
 import vf.optidepy.database.OptidepyTables
 import vf.optidepy.model.factory.dependency.DependencyUpdateFactory
